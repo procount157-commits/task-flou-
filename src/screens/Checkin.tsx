@@ -2,6 +2,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
 
+import { DayTimeline, QuickHour } from './HourQuick';
 import { useAI } from './taskparts';
 import { useLang, useTheme } from '@/ctx/Lang';
 import { nowTime, today } from '@/lib/dates';
@@ -12,7 +13,7 @@ import { closeHourly } from '@/lib/phonelock';
 import { CHECKIN_DEFAULTS, CheckinSettings, notifyReport, scheduleCheckins } from '@/lib/notify';
 import { NoTelegramError, sendTelegram } from '@/lib/telegram';
 import type { ActivityLog } from '@/lib/types';
-import { Btn, Card, Empty, IconBtn, Input, Row, Screen, Section, Suggest, Toggle, Txt, notice } from '@/ui/kit';
+import { Btn, Card, Chips, Empty, IconBtn, Input, Row, Screen, Section, Suggest, Toggle, Txt, notice } from '@/ui/kit';
 import { TimeField } from '@/ui/pickers';
 import { AudioClip, VoiceToText } from '@/ui/shared';
 
@@ -46,6 +47,10 @@ export default function Checkin() {
   const [analyzing, setAnalyzing] = useState(false);
   const [open, setOpen] = useState<string | null>(null);
   const [typed, setTyped] = useState('');
+  // quick: the notification's four questions with buttons; talk: the spoken conversation with the coach
+  const [mode, setMode] = useKV<'quick' | 'talk'>('checkin:mode', 'quick');
+  const [fillHour, setFillHour] = useState<string | undefined>();
+  const talk = mode === 'talk' || !!params.auto;
   // null until the phone has answered; false means the hourly question cannot be delivered
   const [allowed, setAllowed] = useState<boolean | null>(null);
   useEffect(() => {
@@ -156,7 +161,9 @@ export default function Checkin() {
 
   return (
     <Screen>
-      <Card style={{ borderColor: c.primary, gap: 12 }}>
+      <Chips options={[{ value: 'quick' as const, label: `⚡ ${t.checkin.quickMode}` }, { value: 'talk' as const, label: `🎙 ${t.checkin.talkMode}` }]} value={talk ? 'talk' : 'quick'} onChange={(m) => { setMode(m); if (params.auto) router.setParams({ auto: '' }); }} />
+      {!talk ? <QuickHour key={fillHour ?? 'now'} hour={fillHour} onDone={() => setFillHour(undefined)} /> : null}
+      {talk ? <Card style={{ borderColor: c.primary, gap: 12 }}>
         <Row style={{ justifyContent: 'space-between' }}>
           <Txt v="small">{nowTime()} · {t.checkin.turn} {Math.min(answered + 1, TURNS)}/{TURNS}</Txt>
           {turns.length ? <Btn small kind="ghost" title={t.checkin.newSession} onPress={reset} /> : null}
@@ -183,7 +190,9 @@ export default function Checkin() {
             </Row>
           </>
         )}
-      </Card>
+      </Card> : null}
+
+      <DayTimeline from={settings.from} to={settings.to} onFill={(h) => { setMode('quick'); setFillHour(h); }} />
 
       <Section title={`${t.checkin.log} · ${day}`}>
         {!mine.length ? <Empty icon="🕐" text={t.checkin.empty} /> : mine.map((l) => (

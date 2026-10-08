@@ -243,6 +243,7 @@ const ar = {
     tab: 'جلسة الساعة', now: 'ماذا تفعل الآن؟ من ماذا تخاف؟ ولماذا أنت مشتت؟', cardTitle: 'ماذا تفعل الآن؟', cardLines: ['من ماذا تخاف؟', 'لماذا أنت مشتت؟'], cardTap: '🎙 اضغط وأجب بصوتك', newSession: 'جلسة جديدة', finish: 'إنهاء الجلسة', speak: 'اقرأ الأسئلة بصوت مسموع',
     thinking: 'يتأمل في إجابتك…', hear: '🔊 أعد السؤال', voiceOnly: '(تسجيل صوتي)', done: 'انتهت جلسة هذه الساعة — نلتقي في الساعة القادمة', turn: 'سؤال',
     closing: 'خلاصة الساعة: دوّنتُ إجاباتك. اختر الآن خطوة واحدة صغيرة للساعة القادمة تخدم أهم أهدافك وابدأ بها فوراً.',
+    quickMode: 'أسئلة سريعة', talkMode: 'محادثة صوتية', timeline: 'ساعات اليوم', fill: 'سجّل هذه الساعة',
     notif: {
       steps: [
         { q: 'ماذا فعلت في هذه الساعة بالضبط؟', input: true, choices: ['عمل مركز', 'اجتماع', 'سوشيال ميديا', 'راحة', 'دراسة', 'تضييع وقت'] },
@@ -586,6 +587,7 @@ const en: Translations = {
     tab: 'Hourly session', now: 'What are you doing now? What are you afraid of? Why are you distracted?', cardTitle: 'What are you doing now?', cardLines: ['What are you afraid of?', 'Why are you distracted?'], cardTap: '🎙 Tap and answer by voice', newSession: 'New session', finish: 'End session', speak: 'Read the questions aloud',
     thinking: 'Reflecting on your answer…', hear: '🔊 Repeat the question', voiceOnly: '(voice note)', done: 'This hour is done — see you at the next one', turn: 'Question',
     closing: 'Summary: your answers are saved. Now pick one small step for the next hour that serves your most important goal, and start it at once.',
+    quickMode: 'Quick questions', talkMode: 'Voice conversation', timeline: "Today's hours", fill: 'Log this hour',
     notif: {
       steps: [
         { q: 'What exactly did you do this hour?', input: true, choices: ['Focused work', 'Meeting', 'Social media', 'Rest', 'Study', 'Wasted time'] },
