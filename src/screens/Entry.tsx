@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { ScrollView, View } from 'react-native';
+import * as Linking from 'expo-linking';
+import { Platform, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAuth, useProfile } from '@/ctx/Auth';
 import { useLang, useTheme } from '@/ctx/Lang';
+import { APK_URL } from '@/lib/config';
 import { isDate, isTime, today } from '@/lib/dates';
 import { Btn, Card, Chips, Input, Progress, Row, Sheet, Txt } from '@/ui/kit';
 import { DaysPicker } from '@/ui/shared';
@@ -34,6 +36,7 @@ export function Landing() {
       <Txt v="muted">{t.landing.sub}</Txt>
       <Card>{t.landing.features.map((f) => <Txt key={f}>{f}</Txt>)}</Card>
       <Btn title={t.landing.cta} onPress={navigateToLogin} />
+      {Platform.OS === 'web' ? <Btn kind="ghost" title={t.landing.apk} onPress={() => Linking.openURL(APK_URL)} /> : null}
     </Shell>
   );
 }

@@ -2,6 +2,8 @@
 export const STRIPE_LINKS = { monthly: '', yearly: '' };
 export const PRICES = { monthly: 19, yearly: 190 };
 
+export const APK_URL = 'https://github.com/procount157-commits/task-flou-/releases/download/latest/hayati.apk';
+
 export const INVITE_LINK = 'hayati://join';
 
 // Keys come from EXPO_PUBLIC_* variables at build time (.env.local on this machine, repository secrets in CI),

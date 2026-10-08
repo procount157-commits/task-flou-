@@ -61,7 +61,7 @@ const ar = {
   },
   landing: {
     headline: 'اربط يومك برؤية حياتك', sub: 'نظام شخصي لإدارة الحياة: مهام، عادات، أهداف من 7 مستويات، يوميات، تركيز، مالية وتعلم — كلها محفوظة على جهازك.',
-    cta: 'ابدأ الآن', features: [
+    cta: 'ابدأ الآن', apk: '📱 تحميل تطبيق أندرويد (APK)', features: [
       '🎯 هرم أهداف من الحياة إلى الأسبوع', '✅ مهام يومية بنقاط ومستويات', '🔥 عادات بسلاسل ومكافآت', '📔 يوميات وتأمل موجه',
       '⏱ بومودو بأصوات محيطة', '💰 مالية شخصية وتقارير', '🎓 مركز تعلم ومحتوى', '🤖 مساعد ذكي يحلل بياناتك',
     ],
@@ -271,7 +271,7 @@ const en: Translations = {
   },
   landing: {
     headline: 'Tie your day to your life vision', sub: 'A personal life-management system: tasks, habits, a 7-level goal pyramid, journal, focus, finance and learning — all stored on your device.',
-    cta: 'Get started', features: [
+    cta: 'Get started', apk: '📱 Download the Android app (APK)', features: [
       '🎯 A goal pyramid from life down to the week', '✅ Daily tasks with points and levels', '🔥 Habits with streaks and rewards', '📔 Journal and guided reflection',
       '⏱ Pomodoro with ambient sounds', '💰 Personal finance and reports', '🎓 Learning and content hubs', '🤖 An AI coach that reads your data',
     ],
