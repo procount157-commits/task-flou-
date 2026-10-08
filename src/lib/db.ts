@@ -43,6 +43,9 @@ function commit(name: EntityName, next: any[]) {
 
 type Data<K extends EntityName> = Omit<EntityMap[K], keyof Base>;
 
+// Reads every store in the background so the first visit to a screen finds its data already in memory.
+export const preload = (names: EntityName[]) => Promise.all(names.map(ensure));
+
 export const db = {
   async list<K extends EntityName>(name: K): Promise<EntityMap[K][]> {
     await ensure(name);

@@ -4,7 +4,6 @@ import * as ImagePicker from 'expo-image-picker';
 import * as Linking from 'expo-linking';
 import * as Speech from 'expo-speech';
 import { Platform } from 'react-native';
-import * as XLSX from 'xlsx';
 
 import { AI_DEFAULTS } from './config';
 import { kv } from './db';
@@ -132,6 +131,7 @@ export function GenerateSpeech(text: string, lang: string) {
 // Reads the first sheet of an .xlsx/.xls/.csv file into rows keyed by lower-cased header.
 export async function ExtractDataFromUploadedFile(uri: string): Promise<Record<string, any>[]> {
   const buf = Platform.OS === 'web' ? await (await fetch(uri)).arrayBuffer() : await new File(uri).arrayBuffer();
+  const XLSX = await import('xlsx');
   const wb = XLSX.read(new Uint8Array(buf), { type: 'array', cellDates: true });
   const rows = XLSX.utils.sheet_to_json<Record<string, any>>(wb.Sheets[wb.SheetNames[0]], { defval: '', raw: false, dateNF: 'yyyy-mm-dd' });
   return rows.map((r) => Object.fromEntries(Object.entries(r).map(([k, v]) => [k.trim().toLowerCase(), typeof v === 'string' ? v.trim() : v])));

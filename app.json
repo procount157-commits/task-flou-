@@ -68,7 +68,16 @@
           "calendarPermission": "Add your tasks to your calendar"
         }
       ],
-      "expo-font"
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "./node_modules/@expo-google-fonts/cairo/400Regular/Cairo_400Regular.ttf",
+            "./node_modules/@expo-google-fonts/cairo/600SemiBold/Cairo_600SemiBold.ttf",
+            "./node_modules/@expo-google-fonts/cairo/700Bold/Cairo_700Bold.ttf"
+          ]
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": false,

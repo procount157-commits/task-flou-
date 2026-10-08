@@ -5,7 +5,7 @@ import { View } from 'react-native';
 import { useAI } from './taskparts';
 import { useLang, useTheme } from '@/ctx/Lang';
 import { nowTime, today } from '@/lib/dates';
-import { db, useEntity, useKV } from '@/lib/db';
+import { db, kv, useEntity, useKV } from '@/lib/db';
 import { GenerateSpeech, InvokeLLM } from '@/lib/integrations';
 import { CHECKIN_DEFAULTS, CheckinSettings, scheduleCheckins } from '@/lib/notify';
 import { NoTelegramError, sendTelegram } from '@/lib/telegram';
@@ -111,6 +111,7 @@ export default function Checkin() {
   const apply = async (next: CheckinSettings) => {
     await setSettings(next);
     await scheduleCheckins(next, t.checkin.now, t.checkin.bank);
+    await kv.set('sched:checkin', JSON.stringify([next, t.checkin.now]));
   };
   const summary = () => mine.map((l) => `${l.time} — ${(l.dialog ?? []).filter((d) => d.role === 'me').map((d) => d.text).join(' / ') || l.text || '🎤'}`).join('\n');
 

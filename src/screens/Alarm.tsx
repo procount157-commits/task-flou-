@@ -6,7 +6,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { BackHandler, Modal, Platform, Pressable, Vibration, View } from 'react-native';
 
 import { useLang, useTheme } from '@/ctx/Lang';
-import { useKV } from '@/lib/db';
+import { today } from '@/lib/dates';
+import { kv, useKV } from '@/lib/db';
 import { scheduleAlarms, silenceAlarm } from '@/lib/notify';
 import type { Alarm } from '@/lib/types';
 import { FormModal } from '@/ui/Form';
@@ -149,6 +150,7 @@ export default function AlarmScreen() {
   const save = async (next: Alarm[]) => {
     await setAlarms(next);
     await scheduleAlarms(next, t.alarm.ringing);
+    await kv.set('sched:alarms', JSON.stringify([today(), next]));
   };
   const stop = async () => {
     const id = ringing?.id;

@@ -1,18 +1,22 @@
 import { Ionicons } from '@expo/vector-icons';
 import { DarkTheme, DefaultTheme, ThemeProvider as NavThemeProvider, useRouter } from 'expo-router';
 import { Tabs } from 'expo-router/js-tabs';
-import { Cairo_400Regular, Cairo_600SemiBold, Cairo_700Bold, useFonts } from '@expo-google-fonts/cairo';
+import { Cairo_400Regular } from '@expo-google-fonts/cairo/400Regular';
+import { Cairo_600SemiBold } from '@expo-google-fonts/cairo/600SemiBold';
+import { Cairo_700Bold } from '@expo-google-fonts/cairo/700Bold';
+import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect } from 'react';
-import { Pressable, View } from 'react-native';
+import { Platform, Pressable, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AuthProvider, ProfileProvider, useAuth, useProfile } from '@/ctx/Auth';
 import { LangProvider, ThemeProvider, useLang, useTheme, useThemeCtl } from '@/ctx/Lang';
 import { PomodoroProvider } from '@/ctx/Pomodoro';
-import { useEntity, useKV } from '@/lib/db';
+import { today } from '@/lib/dates';
+import { kv, preload, useEntity, useKV } from '@/lib/db';
 import { CHECKIN_DEFAULTS, CheckinSettings, initNotifications, onNotificationOpen, scheduleAlarms, scheduleCheckins, syncReminders } from '@/lib/notify';
 import type { Alarm } from '@/lib/types';
 import { IntentionModal, Landing, Login, Onboarding } from '@/screens/Entry';
@@ -28,7 +32,7 @@ function ReminderSync() {
   const habits = useEntity('Habit').items;
   const tasks = useEntity('DailyTask').items;
   useEffect(() => {
-    const id = setTimeout(() => syncReminders(habits, tasks, { habit: t.notif.habit, task: t.notif.highTask }), 1500);
+    const id = setTimeout(() => syncReminders(habits, tasks, { habit: t.notif.habit, task: t.notif.highTask }), 8000);
     return () => clearTimeout(id);
   }, [habits, tasks, t]);
   return null;
@@ -99,10 +103,19 @@ function Background() {
   const [checkin] = useKV<CheckinSettings>('checkin', CHECKIN_DEFAULTS);
   useEffect(() => onNotificationOpen((url) => router.navigate(url as any)), [router]);
   useEffect(() => {
-    const id = setTimeout(() => {
-      scheduleAlarms(alarms, t.alarm.ringing);
-      scheduleCheckins(checkin, t.checkin.now, t.checkin.bank);
-    }, 3000);
+    // well after launch, and only when the bookings would actually differ from what is already scheduled
+    const id = setTimeout(async () => {
+      const alarmSig = JSON.stringify([today(), alarms]);
+      const checkinSig = JSON.stringify([checkin, t.checkin.now]);
+      if ((await kv.get('sched:alarms', '')) !== alarmSig) {
+        await scheduleAlarms(alarms, t.alarm.ringing);
+        await kv.set('sched:alarms', alarmSig);
+      }
+      if ((await kv.get('sched:checkin', '')) !== checkinSig) {
+        await scheduleCheckins(checkin, t.checkin.now, t.checkin.bank);
+        await kv.set('sched:checkin', checkinSig);
+      }
+    }, 6000);
     return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [alarms.length, checkin.enabled]);
@@ -120,7 +133,10 @@ function Gate() {
     if (!loading) SplashScreen.hideAsync().catch(() => {});
   }, [loading]);
   useEffect(() => {
-    if (user && onboardingComplete) initNotifications();
+    if (!user || !onboardingComplete) return;
+    initNotifications();
+    const id = setTimeout(() => preload(['DailyTask', 'Goal', 'Habit', 'HabitLog', 'ActivityLog', 'JournalEntry', 'PomodoroSession', 'Transaction', 'Reward']), 400);
+    return () => clearTimeout(id);
   }, [user, onboardingComplete]);
 
   let body: React.ReactNode;
@@ -148,9 +164,9 @@ function Gate() {
 }
 
 export default function RootLayout() {
-  // the app waits for Cairo so Arabic never flashes in the system font; a failed load falls back to it
+  // On the phone Cairo is built into the app, so nothing waits for it; only the web has to fetch it first.
   const [fontsLoaded, fontError] = useFonts({ Cairo_400Regular, Cairo_600SemiBold, Cairo_700Bold });
-  if (!fontsLoaded && !fontError) return null;
+  if (Platform.OS === 'web' && !fontsLoaded && !fontError) return null;
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
