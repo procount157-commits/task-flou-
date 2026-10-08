@@ -1,0 +1,52 @@
+name: Android APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      with_keys:
+        description: Bake the AI keys from repository secrets into the APK (personal build, never published as a release)
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: npx expo prebuild --platform android --no-install
+      - name: Build release APK
+        working-directory: android
+        env:
+          EXPO_PUBLIC_GROQ_KEY: ${{ inputs.with_keys && secrets.GROQ_KEY || '' }}
+          EXPO_PUBLIC_OPENROUTER_KEY: ${{ inputs.with_keys && secrets.OPENROUTER_KEY || '' }}
+        run: ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a,armeabi-v7a --no-daemon
+      - run: cp android/app/build/outputs/apk/release/app-release.apk hayati.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.with_keys && 'hayati-personal' || 'hayati' }}
+          path: hayati.apk
+          retention-days: ${{ inputs.with_keys && 1 || 30 }}
+      # only the key-free build is public
+      - name: Publish release
+        if: ${{ !inputs.with_keys }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete latest --yes --cleanup-tag || true
+          gh release create latest hayati.apk --title "Hayati APK" --notes "Built from ${GITHUB_SHA::7}. Add your AI key in Settings."
