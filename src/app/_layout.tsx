@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { DarkTheme, DefaultTheme, ThemeProvider as NavThemeProvider, useRouter } from 'expo-router';
 import { Tabs } from 'expo-router/js-tabs';
+import { Cairo_400Regular, Cairo_600SemiBold, Cairo_700Bold, useFonts } from '@expo-google-fonts/cairo';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect } from 'react';
@@ -75,7 +76,8 @@ function AppTabs() {
           tabBarActiveTintColor: c.primary,
           tabBarInactiveTintColor: c.muted,
           tabBarStyle: { backgroundColor: c.card, borderTopColor: c.border, direction: dir },
-          tabBarLabelStyle: { fontSize: 10 },
+          tabBarLabelStyle: { fontSize: 10, fontFamily: rtl ? 'Cairo_600SemiBold' : undefined },
+          headerTitleStyle: { fontFamily: rtl ? 'Cairo_700Bold' : undefined },
           sceneStyle: { backgroundColor: c.bg },
           // screens that are not on show stop re-rendering when data changes
           freezeOnBlur: true,
@@ -146,6 +148,9 @@ function Gate() {
 }
 
 export default function RootLayout() {
+  // the app waits for Cairo so Arabic never flashes in the system font; a failed load falls back to it
+  const [fontsLoaded, fontError] = useFonts({ Cairo_400Regular, Cairo_600SemiBold, Cairo_700Bold });
+  if (!fontsLoaded && !fontError) return null;
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>

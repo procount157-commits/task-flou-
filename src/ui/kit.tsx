@@ -1,14 +1,14 @@
 import { usePathname, useRouter } from 'expo-router';
 import React from 'react';
 import {
-  ActivityIndicator, Alert, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleProp, Switch, Text, TextInput,
-  TextInputProps, TextStyle, View, ViewStyle, useWindowDimensions,
+  ActivityIndicator, Alert, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleProp, Switch, TextInput, TextInputProps, TextStyle, View, ViewStyle, useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useLang, useTheme } from '@/ctx/Lang';
 import { usePomodoro } from '@/ctx/Pomodoro';
 import { fmtClock } from '@/lib/dates';
+import { Text, useFontFamily } from '@/ui/text';
 
 export function notice(msg: string, title = '') {
   if (Platform.OS === 'web') window.alert(title ? `${title}\n${msg}` : msg);
@@ -96,6 +96,7 @@ export function Input({ label, error, style, suggestions, ...p }: InputProps) {
   const c = useTheme();
   const { dir } = useLang();
   const value = p.value ?? '';
+  const fontFamily = useFontFamily();
   // long fields collect several picks; short ones are replaced by the pick
   const pick = (v: string) => p.onChangeText?.(p.multiline && value.trim() && !value.includes(v) ? `${value.trim()}، ${v}` : v);
   return (
@@ -105,7 +106,7 @@ export function Input({ label, error, style, suggestions, ...p }: InputProps) {
         placeholderTextColor={c.muted}
         {...p}
         style={[
-          { borderWidth: 1, borderColor: error ? c.danger : c.border, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, color: c.text, backgroundColor: c.card, fontSize: 14, textAlign: dir === 'rtl' ? 'right' : 'left', writingDirection: dir },
+          { borderWidth: 1, borderColor: error ? c.danger : c.border, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, color: c.text, backgroundColor: c.card, fontSize: 14, textAlign: dir === 'rtl' ? 'right' : 'left', writingDirection: dir, fontFamily },
           p.multiline ? { minHeight: 84, textAlignVertical: 'top' } : null,
           style,
         ]}

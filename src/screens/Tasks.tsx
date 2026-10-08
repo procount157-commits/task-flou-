@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Modal, Pressable, ScrollView, SectionList, Text, View } from 'react-native';
+import { Modal, Pressable, ScrollView, SectionList, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { QuickAdd, TaskDetail, TaskRow, useTaskActions } from './taskparts';
@@ -13,6 +13,7 @@ import { materializeRepeats, pick, sortTasks, tierOf } from '@/lib/logic';
 import { NoTelegramError, sendTelegram } from '@/lib/telegram';
 import type { DailyTask, TaskList } from '@/lib/types';
 import { Btn, Empty, Input, Loading, PomodoroBar, Row, Sheet, Txt, confirm, notice } from '@/ui/kit';
+import { Text } from '@/ui/text';
 
 type Section = { key: string; title: string; danger?: boolean; data: DailyTask[] };
 const SMART = [

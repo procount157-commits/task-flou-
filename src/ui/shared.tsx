@@ -2,13 +2,14 @@ import { AudioModule, RecordingPresets, createAudioPlayer, setAudioModeAsync, us
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, Easing, Platform, Pressable, Text, View, useWindowDimensions } from 'react-native';
+import { Animated, Easing, Platform, Pressable, View, useWindowDimensions } from 'react-native';
 
 import { Btn, Card, IconBtn, Input, Row, Txt, notice } from './kit';
 import { PALETTE, useLang, useTheme } from '@/ctx/Lang';
 import { addDays, parse, today, ymd } from '@/lib/dates';
 import { NoKeyError, TranscribeAudio, UploadFile } from '@/lib/integrations';
 import { pick } from '@/lib/logic';
+import { Text } from '@/ui/text';
 
 /* ───────── DaysPicker ───────── */
 // `emptyLabel` says what no selection means: every day for a habit or alarm, no repeat for a task.

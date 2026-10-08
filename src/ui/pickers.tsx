@@ -1,10 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 import { Btn, Chips, Row, Sheet, Txt } from './kit';
 import { useLang, useTheme } from '@/ctx/Lang';
 import { addDays, fmtDate, isDate, isTime, nowTime, pad, parse, today, ymd } from '@/lib/dates';
+import { Text } from '@/ui/text';
 
 type DateProps = { visible: boolean; value?: string; onChange: (v: string | undefined) => void; onClose: () => void; allowClear?: boolean; past?: boolean };
 

@@ -3,7 +3,7 @@ import { AudioPlayer, createAudioPlayer, setAudioModeAsync } from 'expo-audio';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Accelerometer } from 'expo-sensors';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { BackHandler, Modal, Platform, Pressable, Text, Vibration, View } from 'react-native';
+import { BackHandler, Modal, Platform, Pressable, Vibration, View } from 'react-native';
 
 import { useLang, useTheme } from '@/ctx/Lang';
 import { useKV } from '@/lib/db';
@@ -12,6 +12,7 @@ import type { Alarm } from '@/lib/types';
 import { FormModal } from '@/ui/Form';
 import { Badge, Btn, Card, Empty, Progress, Row, Screen, Toggle, Txt, confirm, opts } from '@/ui/kit';
 import { useCelebrate } from '@/ui/shared';
+import { Text } from '@/ui/text';
 
 const SIRENS: Record<Alarm['sound'], number> = {
   ambulance: require('../../assets/sounds/alarm_ambulance.wav'),

@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { memo, useEffect, useMemo, useState } from 'react';
-import { Pressable, Text, TextInput, View } from 'react-native';
+import { Pressable, TextInput, View } from 'react-native';
 
 import { TaskForm } from './forms';
 import { useAuth } from '@/ctx/Auth';
@@ -19,6 +19,7 @@ const NO_LISTS: TaskList[] = [];
 import { Btn, Chips, Input, Progress, Row, Sheet, Suggest, Txt, confirm, notice, opts } from '@/ui/kit';
 import { DateField, DatePickerSheet, TimeField } from '@/ui/pickers';
 import { DaysPicker, useCelebrate } from '@/ui/shared';
+import { Text, useFontFamily } from '@/ui/text';
 
 export const prioColor = (c: Colors, p?: Priority) => (p === 'high' ? c.danger : p === 'medium' ? c.warn : p === 'low' ? c.primary : c.muted);
 
@@ -135,6 +136,7 @@ export function QuickAdd({ defaultDate, extraSuggestions = [], listId }: { defau
   };
 
   const cycle: (Priority | undefined)[] = [undefined, 'high', 'medium', 'low'];
+  const fontFamily = useFontFamily();
   return (
     <View style={{ gap: 10, direction: dir }}>
       {lists.length ? <Chips scroll options={[{ value: '', label: `📥 ${t.tasks.inbox}` }, ...lists.map((l) => ({ value: l.id, label: l.name }))]} value={list ?? ''} onChange={(v) => setList(v || undefined)} /> : null}
@@ -151,7 +153,7 @@ export function QuickAdd({ defaultDate, extraSuggestions = [], listId }: { defau
       </Row>
       <Row gap={6}>
         <TextInput value={title} onChangeText={setTitle} placeholder={t.tasks.addTitle} placeholderTextColor={c.muted} onSubmitEditing={() => add(title)} submitBehavior="submit" returnKeyType="done"
-          style={{ flex: 1, backgroundColor: c.bg, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 9, color: c.text, fontSize: 15, textAlign: dir === 'rtl' ? 'right' : 'left', writingDirection: dir }} />
+          style={{ flex: 1, backgroundColor: c.bg, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 9, color: c.text, fontSize: 15, textAlign: dir === 'rtl' ? 'right' : 'left', writingDirection: dir, fontFamily }} />
         <Pressable onPress={() => setPickDate(true)} accessibilityRole="button" accessibilityLabel={t.c.pickDate} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 8, borderRadius: 10, backgroundColor: c.soft }}>
           <Ionicons name="calendar-outline" size={17} color={c.primary} />
           <Text style={{ color: c.primary, fontSize: 12 }}>{fmtDate(date, lang, t.c)}</Text>

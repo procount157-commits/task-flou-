@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, PanResponder, Text, View, ViewStyle, StyleProp } from 'react-native';
+import { Animated, PanResponder, View, ViewStyle, StyleProp } from 'react-native';
 
 import { useLang, useTheme } from '@/ctx/Lang';
+import { Text } from '@/ui/text';
 
 type Zone = { id: string; ref: React.RefObject<View | null> };
 type DragCtx = { zones: React.MutableRefObject<Map<string, Zone>>; setDragging: (v: boolean) => void; dragging: boolean };

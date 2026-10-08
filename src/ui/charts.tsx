@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import Svg, { Circle, Path, Polyline } from 'react-native-svg';
 
 import { Progress, Row, Txt } from './kit';
 import { useTheme } from '@/ctx/Lang';
+import { Text } from '@/ui/text';
 
 export type Point = { label: string; value: number; value2?: number; color?: string };
 

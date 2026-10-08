@@ -67,7 +67,8 @@
         {
           "calendarPermission": "Add your tasks to your calendar"
         }
-      ]
+      ],
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": false,
