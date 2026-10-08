@@ -7,6 +7,7 @@ import { useLang, useTheme } from '@/ctx/Lang';
 import { nowTime, today } from '@/lib/dates';
 import { db, kv, useEntity, useKV } from '@/lib/db';
 import { GenerateSpeech, InvokeLLM } from '@/lib/integrations';
+import { hourlyCard } from '@/lib/logic';
 import { CHECKIN_DEFAULTS, CheckinSettings, notifyReport, scheduleCheckins } from '@/lib/notify';
 import { NoTelegramError, sendTelegram } from '@/lib/telegram';
 import type { ActivityLog } from '@/lib/types';
@@ -19,7 +20,7 @@ type Turn = { role: 'ai' | 'me'; text: string };
 const TURNS = 3;
 // model instructions, not interface text: one job per reply keeps the three questions in order
 const STEPS = [
-  'Ask exactly ONE short question about the fear or the real motive behind what they just said they are doing. Do not ask about the next hour yet.',
+  'Ask exactly ONE short question that digs into the fear behind what they just said and why they are distracted. Do not ask about the next hour yet.',
   'Ask exactly ONE short question: what will they do in the next hour, and does it serve one specific goal of theirs? Name that goal.',
   'Do NOT ask anything. Give a three-sentence summary: whether they are moving toward their goals, the fear that surfaced, and one concrete step for the next hour.',
 ];
@@ -115,7 +116,8 @@ export default function Checkin() {
 
   const apply = async (next: CheckinSettings) => {
     await setSettings(next);
-    if (await scheduleCheckins(next, t.checkin.now, t.checkin.bank)) await kv.set('sched:checkin', JSON.stringify([next, t.checkin.now]));
+    const card = hourlyCard(t, goals);
+    if (await scheduleCheckins(next, card)) await kv.set('sched:checkin', JSON.stringify([next, card.title, card.goal]));
   };
   const summary = () => mine.map((l) => `${l.time} — ${(l.dialog ?? []).filter((d) => d.role === 'me').map((d) => d.text).join(' / ') || l.text || '🎤'}`).join('\n');
 

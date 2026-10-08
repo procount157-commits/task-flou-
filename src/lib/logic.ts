@@ -87,3 +87,10 @@ export async function grantReward(type: 'goal' | 'habit', src: { id: string; rew
   await db.create('Reward', { title: src.reward_title, icon: src.reward_icon, description: src.reward_description, type, linked_id: src.id, is_claimed: false });
   return true;
 }
+
+// The texts drawn on the hourly card: the fixed questions, the rotating deep ones, quotes, and the top open goal.
+export function hourlyCard(t: { checkin: { cardTitle: string; cardLines: string[]; bank: string[]; cardTap: string }; quotes: string[] }, goals: Goal[]) {
+  const open = goals.filter((g) => g.status !== 'completed' && g.status !== 'cancelled');
+  const top = open.find((g) => g.priority === 'high') ?? open[0];
+  return { title: t.checkin.cardTitle, lines: t.checkin.cardLines, questions: t.checkin.bank, quotes: t.quotes, goal: top?.title, tap: t.checkin.cardTap };
+}

@@ -1,9 +1,12 @@
 package expo.modules.phonelock
 
+import android.app.AlarmManager
+import android.app.PendingIntent
 import android.app.admin.DevicePolicyManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import androidx.core.content.ContextCompat
 import expo.modules.kotlin.exception.Exceptions
 import expo.modules.kotlin.modules.Module
@@ -16,6 +19,14 @@ class PhoneLockModule : Module() {
     get() = context.getSystemService(Context.DEVICE_POLICY_SERVICE) as DevicePolicyManager
   private val admin: ComponentName
     get() = ComponentName(context, LockAdminReceiver::class.java)
+
+  private fun lockIntent(code: Int, minutes: Int): PendingIntent =
+    PendingIntent.getBroadcast(
+      context,
+      20_000 + code,
+      Intent(context, LockAlarmReceiver::class.java).putExtra(LockAlarmReceiver.EXTRA_MINUTES, minutes),
+      PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+    )
 
   override fun definition() = ModuleDefinition {
     Name("PhoneLock")
@@ -69,6 +80,39 @@ class PhoneLockModule : Module() {
 
     Function("unpin") {
       appContext.currentActivity?.stopLockTask()
+    }
+
+    // Books a hard lock for a moment in the future; `code` identifies it so it can be cancelled.
+    Function("scheduleLock") { code: Int, atMillis: Double, minutes: Int ->
+      val alarms = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+      val pending = lockIntent(code, minutes)
+      val exact = Build.VERSION.SDK_INT < Build.VERSION_CODES.S || alarms.canScheduleExactAlarms()
+      if (exact) {
+        alarms.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, atMillis.toLong(), pending)
+      } else {
+        alarms.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, atMillis.toLong(), pending)
+      }
+      exact
+    }
+
+    Function("cancelLock") { code: Int ->
+      (context.getSystemService(Context.ALARM_SERVICE) as AlarmManager).cancel(lockIntent(code, 0))
+    }
+
+    // Turns the hourly question card on or off. `payload` is JSON with the texts to draw on it.
+    Function("setHourly") { enabled: Boolean, fromHour: Int, toHour: Int, payload: String ->
+      context.getSharedPreferences(Hourly.PREFS, Context.MODE_PRIVATE).edit()
+        .putBoolean("enabled", enabled)
+        .putInt("from", fromHour)
+        .putInt("to", toHour)
+        .putString("payload", payload)
+        .apply()
+      if (enabled) Hourly.scheduleNext(context) else Hourly.cancel(context)
+    }
+
+    // Shows the card straight away, for the test button.
+    Function("showHourly") {
+      Hourly.show(context, true)
     }
   }
 }

@@ -211,7 +211,7 @@ const ar = {
     notif: 'إذن الإشعارات', granted: 'مسموح', denied: 'غير مسموح — لن تصل مراجعة الساعة ولا المنبّه', allow: 'اسمح بالإشعارات', settings: 'افتح إعدادات التطبيق في الهاتف',
     booked: 'الإشعارات المحجوزة', hourly: 'مراجعة الساعة', alarms: 'المنبّه', reminders: 'تذكيرات', noneBooked: 'لا شيء محجوز — فعّل مراجعة الساعة من تبويب جلسة الساعة',
     battery: 'مهم: في إعدادات الهاتف ← التطبيقات ← حياتي، اجعل البطارية "غير مقيّدة" واسمح بالتشغيل التلقائي، وإلا يوقف الهاتف الإشعارات عند إغلاق التطبيق (خصوصاً Xiaomi و Huawei و Oppo و Samsung).',
-    testNow: 'أرسل إشعاراً الآن', test15: 'إشعار بعد 15 ثانية (أغلق التطبيق وانتظر)', testSiren: 'صفارة المنبّه بعد 15 ثانية', sent: 'تم — راقب شريط الإشعارات', failed: 'فشل — انظر سجل الأخطاء بالأسفل',
+    testNow: 'أرسل إشعاراً الآن', test15: 'إشعار بعد 15 ثانية (أغلق التطبيق وانتظر)', testSiren: 'صفارة المنبّه بعد 15 ثانية', testCard: '🟦 أظهر بطاقة الساعة الكبيرة الآن', sent: 'تم — راقب شريط الإشعارات', failed: 'فشل — انظر سجل الأخطاء بالأسفل',
     lock: 'قفل الهاتف', lockMissing: 'وحدة القفل غير موجودة في هذه النسخة', lockNoAdmin: 'الوحدة موجودة لكن صلاحية القفل لم تُمنح', lockReady: 'جاهز',
     calendar: 'تقويم الهاتف', calNone: 'لا يوجد تقويم قابل للكتابة أو لم يُمنح الإذن', calOk: 'تقاويم متاحة', ai: 'الذكاء الاصطناعي', aiNoKey: 'لا يوجد مفتاح — ثبّت النسخة الشخصية أو أضف مفتاحاً من الإعدادات',
     aiTest: 'اختبر الاتصال', aiOk: 'يعمل', errors: 'سجل الأخطاء', noErrors: 'لا أخطاء مسجلة', clear: 'امسح السجل', share: '📤 أرسل التقرير', version: 'النسخة', refresh: 'أعد الفحص',
@@ -225,6 +225,8 @@ const ar = {
     softNote: 'يبقيك داخل التطبيق فقط؛ يسمح أندرويد بالخروج بالضغط المطوّل على زرّي الرجوع والتطبيقات معاً.',
     unavailable: 'قفل الهاتف يعمل على تطبيق أندرويد فقط', withFocus: '🔒 اقفل الهاتف طوال مدة التركيز', needGrant: 'امنح صلاحية القفل أولاً من شاشة "قفل الهاتف"',
     explain: 'يستخدم تطبيق حياتي هذه الصلاحية لإطفاء الشاشة فقط أثناء فترات التركيز التي تبدؤها أنت.',
+    schedules: 'جدولة القفل', addSchedule: 'جدول قفل جديد', noSchedules: 'لا جداول — أضف وقتاً يُقفل فيه الهاتف تلقائياً', scheduleNote: 'يُقفل الهاتف تلقائياً في الوقت المحدد حتى لو كان التطبيق مغلقاً. بعد إعادة تشغيل الهاتف افتح التطبيق مرة ليُعاد الحجز.',
+    labels: ['وقت النوم', 'وقت العمل', 'وقت الدراسة', 'وقت الصلاة', 'بعد الاستيقاظ'], forMin: 'لمدة',
   },
   cal: {
     title: 'تقويم Google', auto: 'أضف كل مهمة جديدة إلى التقويم تلقائياً', choose: 'التقويم المستخدم', none: 'لم أجد تقويماً قابلاً للكتابة — أضف حساب Google إلى الهاتف واسمح بصلاحية التقويم',
@@ -237,7 +239,7 @@ const ar = {
     toTelegram: '✈️ أرسل الملخص إلى تيليجرام', empty: 'لا تسجيلات اليوم بعد — اضغط الميكروفون أو اختر اقتراحاً', journalDone: 'كُتبت اليومية من تسجيلاتك',
     system: 'هذه تسجيلات المستخدم كل ساعة لما كان يفعله اليوم مع مهامه المنجزة. اكتب تحليلاً موجزاً بالعربية بنص عادي بدون Markdown: 1) توزيع الوقت على الفئات بالساعات التقريبية 2) الوقت المنتج مقابل الضائع 3) أهم ثلاث ملاحظات 4) ثلاث توصيات عملية للغد.',
     needLogs: 'سجّل نشاطاً واحداً على الأقل أولاً',
-    tab: 'جلسة الساعة', now: 'ماذا تفعل الآن؟ وماذا فعلت في الساعة الماضية؟', newSession: 'جلسة جديدة', finish: 'إنهاء الجلسة', speak: 'اقرأ الأسئلة بصوت مسموع',
+    tab: 'جلسة الساعة', now: 'ماذا تفعل الآن؟ من ماذا تخاف؟ ولماذا أنت مشتت؟', cardTitle: 'ماذا تفعل الآن؟', cardLines: ['من ماذا تخاف؟', 'لماذا أنت مشتت؟'], cardTap: '🎙 اضغط وأجب بصوتك', newSession: 'جلسة جديدة', finish: 'إنهاء الجلسة', speak: 'اقرأ الأسئلة بصوت مسموع',
     thinking: 'يتأمل في إجابتك…', hear: '🔊 أعد السؤال', voiceOnly: '(تسجيل صوتي)', done: 'انتهت جلسة هذه الساعة — نلتقي في الساعة القادمة', turn: 'سؤال',
     closing: 'خلاصة الساعة: دوّنتُ إجاباتك. اختر الآن خطوة واحدة صغيرة للساعة القادمة تخدم أهم أهدافك وابدأ بها فوراً.',
     bank: [
@@ -524,7 +526,7 @@ const en: Translations = {
     notif: 'Notification permission', granted: 'Allowed', denied: 'Not allowed — the hourly review and the alarm cannot reach you', allow: 'Allow notifications', settings: "Open the app's phone settings",
     booked: 'Booked notifications', hourly: 'Hourly review', alarms: 'Alarm', reminders: 'Reminders', noneBooked: 'Nothing is booked — turn the hourly review on in the Hourly session tab',
     battery: 'Important: in phone Settings → Apps → Hayati, set Battery to "Unrestricted" and allow auto-start, or the phone stops notifications once the app is closed (especially Xiaomi, Huawei, Oppo and Samsung).',
-    testNow: 'Send a notification now', test15: 'Notification in 15 seconds (close the app and wait)', testSiren: 'Alarm siren in 15 seconds', sent: 'Done — watch the notification bar', failed: 'Failed — see the error log below',
+    testNow: 'Send a notification now', test15: 'Notification in 15 seconds (close the app and wait)', testSiren: 'Alarm siren in 15 seconds', testCard: '🟦 Show the big hourly card now', sent: 'Done — watch the notification bar', failed: 'Failed — see the error log below',
     lock: 'Phone lock', lockMissing: 'The lock module is not in this build', lockNoAdmin: 'The module is there but the lock permission was not granted', lockReady: 'Ready',
     calendar: 'Phone calendar', calNone: 'No writable calendar, or permission not granted', calOk: 'calendars available', ai: 'Artificial intelligence', aiNoKey: 'No key — install the personal build or add a key in Settings',
     aiTest: 'Test the connection', aiOk: 'Working', errors: 'Error log', noErrors: 'No errors recorded', clear: 'Clear the log', share: '📤 Send the report', version: 'Build', refresh: 'Check again',
@@ -538,6 +540,8 @@ const en: Translations = {
     softNote: 'Keeps you inside this app only; Android lets you leave by holding Back and Overview together.',
     unavailable: 'Phone lock works in the Android app only', withFocus: '🔒 Lock the phone for the whole focus period', needGrant: 'Grant the lock permission first on the "Phone lock" screen',
     explain: 'Hayati uses this permission only to turn the screen off during focus periods you start yourself.',
+    schedules: 'Lock schedule', addSchedule: 'New lock schedule', noSchedules: 'No schedules — add a time when the phone locks by itself', scheduleNote: 'The phone locks by itself at the set time even when the app is closed. After restarting the phone, open the app once so the bookings are restored.',
+    labels: ['Bedtime', 'Work time', 'Study time', 'Prayer time', 'After waking'], forMin: 'for',
   },
   cal: {
     title: 'Google Calendar', auto: 'Add every new task to the calendar automatically', choose: 'Calendar to use', none: 'No writable calendar found — add a Google account to the phone and allow calendar access',
@@ -550,7 +554,7 @@ const en: Translations = {
     toTelegram: '✈️ Send the summary to Telegram', empty: 'No entries today yet — tap the mic or pick a suggestion', journalDone: 'Journal written from your log',
     system: "These are the user's hourly notes on what they were doing today, with their finished tasks. Write a brief analysis in English as plain text without Markdown: 1) time split by category in approximate hours 2) productive versus wasted time 3) the three main observations 4) three practical recommendations for tomorrow.",
     needLogs: 'Log at least one activity first',
-    tab: 'Hourly session', now: 'What are you doing now? And what did you do in the last hour?', newSession: 'New session', finish: 'End session', speak: 'Read the questions aloud',
+    tab: 'Hourly session', now: 'What are you doing now? What are you afraid of? Why are you distracted?', cardTitle: 'What are you doing now?', cardLines: ['What are you afraid of?', 'Why are you distracted?'], cardTap: '🎙 Tap and answer by voice', newSession: 'New session', finish: 'End session', speak: 'Read the questions aloud',
     thinking: 'Reflecting on your answer…', hear: '🔊 Repeat the question', voiceOnly: '(voice note)', done: 'This hour is done — see you at the next one', turn: 'Question',
     closing: 'Summary: your answers are saved. Now pick one small step for the next hour that serves your most important goal, and start it at once.',
     bank: [

@@ -16,7 +16,9 @@ import { AuthProvider, ProfileProvider, useAuth, useProfile } from '@/ctx/Auth';
 import { LangProvider, ThemeProvider, useLang, useTheme, useThemeCtl } from '@/ctx/Lang';
 import { PomodoroProvider } from '@/ctx/Pomodoro';
 import { today } from '@/lib/dates';
-import { kv, preload, useEntity, useKV } from '@/lib/db';
+import { db, kv, preload, useEntity, useKV } from '@/lib/db';
+import { hourlyCard } from '@/lib/logic';
+import { LockSchedule, syncLockSchedules } from '@/lib/phonelock';
 import { installGlobalErrorLog } from '@/lib/errlog';
 import { CHECKIN_DEFAULTS, CheckinSettings, initNotifications, onNotificationOpen, scheduleAlarms, scheduleCheckins, syncReminders } from '@/lib/notify';
 import type { Alarm } from '@/lib/types';
@@ -106,10 +108,12 @@ function Background() {
     // well after launch, and only when the bookings would actually differ from what is already scheduled
     const id = setTimeout(async () => {
       const alarmSig = JSON.stringify([today(), alarms]);
-      const checkinSig = JSON.stringify([checkin, t.checkin.now]);
+      const card = hourlyCard(t, await db.list('Goal'));
+      const checkinSig = JSON.stringify([checkin, card.title, card.goal]);
       // the signature is only stored once the booking really happened, so a refused permission is retried
       if ((await kv.get('sched:alarms', '')) !== alarmSig && (await scheduleAlarms(alarms, t.alarm.ringing))) await kv.set('sched:alarms', alarmSig);
-      if ((await kv.get('sched:checkin', '')) !== checkinSig && (await scheduleCheckins(checkin, t.checkin.now, t.checkin.bank))) await kv.set('sched:checkin', checkinSig);
+      if ((await kv.get('sched:checkin', '')) !== checkinSig && (await scheduleCheckins(checkin, card))) await kv.set('sched:checkin', checkinSig);
+      syncLockSchedules(await kv.get<LockSchedule[]>('lock:schedules', []));
     }, 6000);
     return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps

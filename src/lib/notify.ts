@@ -3,6 +3,7 @@ import { Platform } from 'react-native';
 
 import { parse, today } from './dates';
 import { logError } from './errlog';
+import { HourlyCard, hourlyCardAvailable, setHourlyCard } from './phonelock';
 import type { Alarm, DailyTask, Habit } from './types';
 
 const native = Platform.OS !== 'web';
@@ -96,12 +97,21 @@ export type CheckinSettings = { enabled: boolean; from: string; to: string };
 export const CHECKIN_DEFAULTS: CheckinSettings = { enabled: true, from: '07:00', to: '23:00' };
 
 // One pinned notification per hour inside the chosen window; tapping it opens the check-in screen.
-export async function scheduleCheckins(s: CheckinSettings, question: string, prompts: string[] = []): Promise<boolean> {
+export async function scheduleCheckins(s: CheckinSettings, card: HourlyCard): Promise<boolean> {
   if (!native) return false;
+  const question = card.title;
+  const prompts = card.questions;
   const all = await Notifications.getAllScheduledNotificationsAsync().catch(() => []);
   await cancel(...all.map((n) => n.identifier).filter((id) => id.startsWith('checkin-')));
-  if (!s.enabled) return true;
+  const from = Number(s.from.slice(0, 2));
+  const to = Number(s.to.slice(0, 2));
+  if (!s.enabled) {
+    if (hourlyCardAvailable) setHourlyCard(false, from, to, card);
+    return true;
+  }
   if (!(await initNotifications())) return false;
+  // the big drawn card, posted by the phone itself every hour; the plain notifications below are the fallback
+  if (hourlyCardAvailable) return setHourlyCard(true, from, to, card);
   if (Platform.OS === 'android')
     await Notifications.setNotificationChannelAsync('checkin', { name: 'Hourly check-in', importance: Notifications.AndroidImportance.MAX, lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC });
   const start = Number(s.from.slice(0, 2));

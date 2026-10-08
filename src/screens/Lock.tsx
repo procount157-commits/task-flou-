@@ -3,9 +3,11 @@ import { AppState } from 'react-native';
 
 import { useLang, useTheme } from '@/ctx/Lang';
 import { useKV } from '@/lib/db';
-import { isLockAdmin, lockAvailable, lockScreenNow, MAX_LOCK_MINUTES, pinApp, removeLockAdmin, requestLockAdmin, startPhoneLock, unpinApp } from '@/lib/phonelock';
-import { Btn, Card, Chips, Empty, Row, Screen, Section, Txt, confirm } from '@/ui/kit';
+import { LockSchedule, isLockAdmin, lockAvailable, lockScreenNow, MAX_LOCK_MINUTES, pinApp, removeLockAdmin, requestLockAdmin, startPhoneLock, syncLockSchedules, unpinApp } from '@/lib/phonelock';
+import { FormModal } from '@/ui/Form';
+import { Btn, Card, Chips, Empty, Row, Screen, Section, Toggle, Txt, confirm } from '@/ui/kit';
 
+const NONE: LockSchedule[] = [];
 const DURATIONS = ['15', '25', '45', '60', '90', '120', String(MAX_LOCK_MINUTES)];
 
 // Hard lock: the screen is forced off for a chosen time. Soft lock: the app is pinned in front.
@@ -15,6 +17,12 @@ export default function Lock() {
   const [minutes, setMinutes] = useKV<string>('lock:minutes', '25');
   const [admin, setAdmin] = useState(false);
   const refresh = useCallback(() => setAdmin(isLockAdmin()), []);
+  const [schedules, setSchedules] = useKV<LockSchedule[]>('lock:schedules', NONE);
+  const [form, setForm] = useState<Partial<LockSchedule> | null>(null);
+  const saveSchedules = async (next: LockSchedule[]) => {
+    await setSchedules(next);
+    syncLockSchedules(next);
+  };
 
   // the permission is granted on a system screen, so it is re-read whenever the app comes back
   useEffect(() => {
@@ -44,6 +52,20 @@ export default function Lock() {
         </Card>
       </Section>
 
+      <Section title={`🗓 ${t.lock.schedules}`} right={<Btn small title={`+ ${t.c.add}`} disabled={!admin} onPress={() => setForm({})} />}>
+        <Txt v="small">{t.lock.scheduleNote}</Txt>
+        {!schedules.length ? <Txt v="muted">{t.lock.noSchedules}</Txt> : schedules.map((s) => (
+          <Card key={s.id}>
+            <Toggle label={`${s.time} · ${t.lock.forMin} ${s.minutes} ${t.c.minutes}${s.label ? ` · ${s.label}` : ''}`} value={s.enabled} onChange={(enabled) => saveSchedules(schedules.map((x) => (x.id === s.id ? { ...x, enabled } : x)))} />
+            <Row>
+              <Txt v="small" style={{ flex: 1 }}>{s.days.length && s.days.length < 7 ? [...s.days].sort().map((d) => t.daysShort[d]).join(' ') : t.alarm.everyDay}</Txt>
+              <Btn small kind="ghost" title={t.c.edit} onPress={() => setForm(s)} />
+              <Btn small kind="ghost" title={t.c.delete} onPress={() => saveSchedules(schedules.filter((x) => x.id !== s.id))} />
+            </Row>
+          </Card>
+        ))}
+      </Section>
+
       <Section title={t.lock.soft}>
         <Card>
           <Txt v="small">{t.lock.softNote}</Txt>
@@ -53,6 +75,18 @@ export default function Lock() {
           </Row>
         </Card>
       </Section>
+      <FormModal visible={!!form} title={form?.id ? t.c.edit : t.lock.addSchedule} onClose={() => setForm(null)}
+        initial={{ time: '22:30', days: [], minutes: '60', ...form, ...(form?.minutes ? { minutes: String(form.minutes) } : {}) }}
+        fields={[
+          { key: 'time', label: t.c.time, type: 'time', required: true },
+          { key: 'days', label: t.today.repeat, type: 'days' },
+          { key: 'minutes', label: t.lock.duration, type: 'select', options: DURATIONS.map((d) => ({ value: d, label: d })) },
+          { key: 'label', label: t.alarm.label, suggestions: t.lock.labels },
+        ]}
+        onSave={(v) => {
+          const item = { time: v.time, days: v.days ?? [], minutes: Number(v.minutes) || 60, label: v.label, enabled: true };
+          return saveSchedules(form?.id ? schedules.map((x) => (x.id === form.id ? { ...x, ...item, enabled: x.enabled } : x)) : [...schedules, { ...item, id: Date.now().toString(36) }]);
+        }} />
     </Screen>
   );
 }

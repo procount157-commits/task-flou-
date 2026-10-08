@@ -8,7 +8,9 @@ import { listWritableCalendars } from '@/lib/devicecal';
 import { LoggedError, clearErrors, getErrors } from '@/lib/errlog';
 import { InvokeLLM, getAI } from '@/lib/integrations';
 import { NotifyReport, initNotifications, notifyReport, testNotification } from '@/lib/notify';
-import { isLockAdmin, lockAvailable } from '@/lib/phonelock';
+import { hourlyCard } from '@/lib/logic';
+import { hourlyCardAvailable, isLockAdmin, lockAvailable, setHourlyCard, showHourlyCard } from '@/lib/phonelock';
+import { useEntity } from '@/lib/db';
 import { Btn, Card, Row, Screen, Section, Txt, notice } from '@/ui/kit';
 
 // A self-test: what the phone grants the app, what is booked, and what failed, in plain words.
@@ -21,6 +23,7 @@ export default function Check() {
   const [aiState, setAiState] = useState('');
   const [errors, setErrors] = useState<LoggedError[]>([]);
   const [admin, setAdmin] = useState(false);
+  const goals = useEntity('Goal').items;
 
   const refresh = useCallback(async () => {
     setN(await notifyReport());
@@ -86,6 +89,7 @@ export default function Check() {
           <Btn title={t.diag.testNow} onPress={() => test(0)} />
           <Btn kind="ghost" title={t.diag.test15} onPress={() => test(15)} />
           <Btn kind="ghost" title={`🚑 ${t.diag.testSiren}`} onPress={() => test(15, 'ambulance')} />
+          {hourlyCardAvailable ? <Btn title={t.diag.testCard} onPress={async () => { await initNotifications(); setHourlyCard(true, 0, 23, hourlyCard(t, goals)); notice(showHourlyCard() ? t.diag.sent : t.diag.failed); }} /> : null}
         </Card>
       </Section>
 
