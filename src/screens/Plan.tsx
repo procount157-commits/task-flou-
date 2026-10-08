@@ -25,6 +25,7 @@ export default function Plan() {
   const [busy, setBusy] = useState(false);
   const [plan, setPlan] = useState<PlanData | null>(null);
   const [off, setOff] = useState<Set<number>>(new Set());
+  const [offM, setOffM] = useState<Set<number>>(new Set());
   const [saving, setSaving] = useState(false);
   const day = today();
   const open = goals.filter((g) => g.status !== 'completed' && g.status !== 'cancelled');
@@ -38,6 +39,7 @@ export default function Plan() {
     if (p) {
       setPlan(p);
       setOff(new Set());
+      setOffM(new Set());
     }
   };
 
@@ -49,7 +51,7 @@ export default function Plan() {
       const existing = open.find((g) => g.title === goal.trim());
       const top = existing ?? (await db.create('Goal', { title: goal.trim(), level: h.level, status: 'in_progress', progress: 0, auto_progress: true, priority: 'high', due_date: addDays(day, horizon), description: plan.summary }));
       // the goal itself is already the top of the pyramid, so a milestone that just repeats it is dropped
-      await db.bulkCreate('Goal', plan.milestones.filter((m) => m.title !== top.title).map((m) => ({ title: m.title, level: h.milestone, parent_id: top.id, status: 'not_started' as const, progress: 0, priority: 'medium' as const, due_date: addDays(day, m.in_days) })));
+      await db.bulkCreate('Goal', plan.milestones.filter((m, i) => !offM.has(i) && m.title !== top.title).map((m) => ({ title: m.title, level: h.milestone, parent_id: top.id, status: 'not_started' as const, progress: 0, priority: 'medium' as const, due_date: addDays(day, m.in_days) })));
       let count = 0;
       for (const [i, x] of plan.tasks.entries()) {
         if (off.has(i)) continue;
@@ -98,9 +100,12 @@ export default function Plan() {
         <>
           {plan.summary ? <Card><Txt>💡 {plan.summary}</Txt></Card> : null}
           <Section title={`🏁 ${t.plan.milestones}`}>
-            {plan.milestones.filter((m) => m.title !== goal.trim()).map((m, i) => (
-              <Row key={i}><Badge text={fmtDate(addDays(day, m.in_days), lang, t.c)} color={c.primary} /><Txt style={{ flex: 1 }}>{m.title}</Txt></Row>
-            ))}
+            {plan.milestones.map((m, i) => (m.title === goal.trim() ? null : (
+              <Row key={i} style={{ opacity: offM.has(i) ? 0.45 : 1 }}>
+                <Check on={!offM.has(i)} onPress={() => setOffM((s) => { const n = new Set(s); if (n.has(i)) n.delete(i); else n.add(i); return n; })} />
+                <Badge text={fmtDate(addDays(day, m.in_days), lang, t.c)} color={c.primary} /><Txt style={{ flex: 1 }}>{m.title}</Txt>
+              </Row>
+            )))}
           </Section>
           <Section title={`✅ ${t.plan.tasks} (${plan.tasks.length - off.size})`}>
             {plan.tasks.map((x, i) => (
