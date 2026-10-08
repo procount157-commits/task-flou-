@@ -108,3 +108,45 @@ export async function readDeviceEvents(from: string, to: string): Promise<Device
     return [];
   }
 }
+
+export type SyncReport = { written: number; failed: number; calendar?: CalInfo; error?: string };
+
+// Writes every open task from today on to the chosen calendar, and says where they went.
+export async function syncAllTasks(): Promise<SyncReport> {
+  if (Platform.OS === 'web') return { written: 0, failed: 0, error: 'web' };
+  try {
+    const all = await listWritableCalendars();
+    if (!all.length) return { written: 0, failed: 0, error: 'none' };
+    const id = await targetCalendar();
+    const calendar = all.find((c) => c.id === id);
+    const day = new Date();
+    const from = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
+    const tasks = (await db.list('DailyTask')).filter((x) => !x.parent_id && !x.completed && x.date >= from);
+    let written = 0;
+    let failed = 0;
+    for (const task of tasks) {
+      try {
+        if (await saveTaskToCalendar(task)) written++;
+        else failed++;
+      } catch (e) {
+        failed++;
+        logError('calendar', e);
+      }
+    }
+    return { written, failed, calendar };
+  } catch (e) {
+    logError('calendar-sync', e);
+    return { written: 0, failed: 0, error: String((e as Error)?.message ?? e) };
+  }
+}
+
+// True when the chosen calendar belongs to a Google account, so events reach Google Calendar.
+export async function googleCalendarLinked(): Promise<boolean | null> {
+  if (Platform.OS === 'web') return null;
+  const perm = await Calendar.getCalendarPermissionsAsync().catch(() => null);
+  if (!perm?.granted) return false;
+  const all = await Calendar.getCalendarsAsync(Calendar.EntityTypes.EVENT).catch(() => []);
+  const id = await getCalendarId();
+  const chosen = all.find((c) => c.id === id) ?? all.find((c) => c.allowsModifications);
+  return chosen?.source?.type === 'com.google';
+}

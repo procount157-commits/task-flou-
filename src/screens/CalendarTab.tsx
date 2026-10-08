@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 
@@ -6,7 +7,7 @@ import { QuickAdd, TaskDetail, TaskRow, useTaskActions } from './taskparts';
 import { useLang, useTheme } from '@/ctx/Lang';
 import { addDays, fmtDate, parse, today } from '@/lib/dates';
 import { useEntity } from '@/lib/db';
-import { DeviceEvent, readDeviceEvents } from '@/lib/devicecal';
+import { DeviceEvent, googleCalendarLinked, readDeviceEvents } from '@/lib/devicecal';
 import { habitScheduled, logDone, sortTasks } from '@/lib/logic';
 import type { DailyTask } from '@/lib/types';
 import { Badge, Chips, Empty, PomodoroBar, Row, Sheet, Txt } from '@/ui/kit';
@@ -25,6 +26,12 @@ export default function CalendarTab() {
   const habits = useEntity('Habit').items;
   const logs = useEntity('HabitLog').items;
   const { toggle } = useTaskActions();
+  const router = useRouter();
+  // false when tasks are being written to a calendar that never reaches Google
+  const [linked, setLinked] = useState<boolean | null>(null);
+  useEffect(() => {
+    googleCalendarLinked().then(setLinked).catch(() => setLinked(null));
+  }, []);
   const [view, setView] = useState<ViewKey>('month');
   const [day, setDay] = useState(today());
   const [openId, setOpenId] = useState<string | null>(null);
@@ -71,6 +78,11 @@ export default function CalendarTab() {
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       <PomodoroBar />
+      {linked === false ? (
+        <Pressable onPress={() => router.push('/profile-settings')} accessibilityRole="button" style={{ direction: dir, margin: 10, marginBottom: 0, padding: 10, borderRadius: 10, borderWidth: 1, borderColor: c.warn, backgroundColor: c.card }}>
+          <Text style={{ color: c.warn, fontSize: 13, textAlign: dir === 'rtl' ? 'right' : 'left' }}>⚠️ {t.cal.notLinked}</Text>
+        </Pressable>
+      ) : null}
       <View style={{ direction: dir, padding: 10, gap: 8 }}>
         <Row style={{ justifyContent: 'space-between' }}>
           <Chips options={(['month', 'week', 'day'] as ViewKey[]).map((k) => ({ value: k, label: t.cal.views[k] }))} value={view} onChange={setView} />

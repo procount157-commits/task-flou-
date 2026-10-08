@@ -4,7 +4,7 @@ import { useAuth, useProfile } from '@/ctx/Auth';
 import { useLang, useTheme } from '@/ctx/Lang';
 import { isDate, isTime } from '@/lib/dates';
 import { useKV } from '@/lib/db';
-import { CalInfo, listWritableCalendars } from '@/lib/devicecal';
+import { CalInfo, listWritableCalendars, syncAllTasks } from '@/lib/devicecal';
 import { AISettings, getAI, setAI } from '@/lib/integrations';
 import { initNotifications } from '@/lib/notify';
 import { NoTelegramError, TG_DEFAULTS, TelegramSettings, detectChatId, getTelegram, sendTelegram, setTelegram } from '@/lib/telegram';
@@ -25,6 +25,7 @@ export default function ProfileSettings() {
   const [autoCal, setAutoCal] = useKV<boolean>('gcal:auto', true);
   const [calId, setCalId] = useKV<string>('gcal:id', '');
   const [calendars, setCalendars] = useState<CalInfo[] | null>(null);
+  const [syncing, setSyncing] = useState(false);
   const loadCalendars = async () => {
     const all = await listWritableCalendars().catch(() => []);
     setCalendars(all);
@@ -115,6 +116,15 @@ export default function ProfileSettings() {
           <Txt v="small">{t.cal.note}</Txt>
           <Toggle label={t.cal.auto} value={autoCal} onChange={async (on) => { await setAutoCal(on); if (on) loadCalendars(); }} />
           <Btn kind="ghost" title={t.cal.load} onPress={loadCalendars} />
+          <Btn title={syncing ? t.c.loading : `🔄 ${t.cal.syncAll}`} loading={syncing} onPress={async () => {
+            setSyncing(true);
+            const r = await syncAllTasks();
+            setSyncing(false);
+            if (r.error === 'none') return notice(t.cal.none, t.c.error);
+            if (r.error) return notice(r.error, t.c.error);
+            const where = r.calendar ? `${r.calendar.title}${r.calendar.account && r.calendar.account !== r.calendar.title ? ` · ${r.calendar.account}` : ''}` : '';
+            notice(t.cal.synced.replace('{n}', String(r.written)).replace('{cal}', where) + (r.failed ? `\n${t.cal.syncFailed.replace('{n}', String(r.failed))}` : ''));
+          }} />
           {calendars && !calendars.length ? <Txt v="small" color={c.danger}>{t.cal.none}</Txt> : null}
           {calendars?.length ? (
             <>

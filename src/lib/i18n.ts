@@ -233,7 +233,7 @@ const ar = {
   },
   cal: {
     title: 'تقويم Google', auto: 'أضف كل مهمة جديدة إلى التقويم تلقائياً', choose: 'التقويم المستخدم', none: 'لم أجد تقويماً قابلاً للكتابة — أضف حساب Google إلى الهاتف واسمح بصلاحية التقويم',
-    added: 'أُضيفت إلى التقويم ✓', load: 'اعرض تقاويم الهاتف', views: { month: 'شهر', week: 'أسبوع', day: 'يوم' }, allDay: 'طوال اليوم', fromGoogle: 'من تقويم الهاتف', note: 'تُكتب المهمة مباشرة في تقويم حساب Google على هاتفك وتظهر في Google Calendar بعد المزامنة، دون فتح أي رابط.',
+    added: 'أُضيفت إلى التقويم ✓', load: 'اعرض تقاويم الهاتف', views: { month: 'شهر', week: 'أسبوع', day: 'يوم' }, allDay: 'طوال اليوم', fromGoogle: 'من تقويم الهاتف', syncAll: 'زامِن كل مهامي القادمة الآن', synced: 'تمت كتابة {n} مهمة في التقويم: {cal}', syncFailed: 'تعذّرت {n} مهمة — انظر سجل الأخطاء في فحص التطبيق', notLinked: 'مهامك لا تصل إلى Google Calendar بعد — اضغط هنا واختر تقويم حساب Google', note: 'تُكتب المهمة مباشرة في تقويم حساب Google على هاتفك وتظهر في Google Calendar بعد المزامنة، دون فتح أي رابط.',
   },
   checkin: {
     title: 'ماذا فعلت؟', question: 'ماذا كنت تفعل في الساعة الماضية؟', enable: 'اسألني كل ساعة بإشعار ثابت', from: 'من', to: 'إلى',
@@ -578,6 +578,7 @@ const en: Translations = {
     labels: ['Bedtime', 'Work time', 'Study time', 'Prayer time', 'After waking'], forMin: 'for',
   },
   cal: {
+    syncAll: 'Sync all my upcoming tasks now', synced: '{n} tasks written to the calendar: {cal}', syncFailed: '{n} tasks failed — see the error log in App check', notLinked: 'Your tasks do not reach Google Calendar yet — tap here and pick your Google account calendar',
     title: 'Google Calendar', auto: 'Add every new task to the calendar automatically', choose: 'Calendar to use', none: 'No writable calendar found — add a Google account to the phone and allow calendar access',
     added: 'Added to the calendar ✓', load: 'Show the phone calendars', views: { month: 'Month', week: 'Week', day: 'Day' }, allDay: 'All day', fromGoogle: 'From the phone calendar', note: "Tasks are written straight into your Google account's calendar on the phone and appear in Google Calendar after sync, with no link to open.",
   },
