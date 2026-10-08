@@ -184,7 +184,7 @@ const ar = {
       'اكشف نقاط الضعف في حياتي', 'ما الخطوة القادمة الأهم؟', 'لماذا لا أُنجز كل مهام يومي؟', 'كيف أحسّن إنتاجيتي بناءً على بياناتي؟',
     ],
     localNote: 'لا يوجد مفتاح API — هذا ملخص محلي لبياناتك بدون تحليل ذكاء اصطناعي:', welcome: 'أهلاً! أنا أقرأ بياناتك الحقيقية. اسألني أي شيء.',
-    system: 'أنت مدرب حياة ذكي. حلل بيانات المستخدم التالية وأجب بالعربية بإيجاز وبتوصيات عملية محددة مبنية على الأرقام.',
+    system: 'أنت مدرب حياة ذكي. حلل بيانات المستخدم التالية وأجب بالعربية بإيجاز وبتوصيات عملية محددة مبنية على الأرقام. اكتب نصاً عادياً فقط: بدون Markdown وبدون جداول وبدون رموز HTML.',
   },
   settings: {
     profile: 'البيانات الشخصية', ai: 'الذكاء الاصطناعي', aiHint: 'أي خدمة متوافقة مع OpenAI (مثل Groq المجاني). المفتاح يُحفظ على جهازك فقط.',
@@ -394,7 +394,7 @@ const en: Translations = {
       'Reveal the weak points in my life', 'What is the most important next step?', "Why don't I finish all my daily tasks?", 'How do I improve productivity based on my data?',
     ],
     localNote: 'No API key — this is a local summary of your data without AI analysis:', welcome: 'Hi! I read your real data. Ask me anything.',
-    system: "You are a smart life coach. Analyze the user's data below and answer in English, briefly, with specific practical advice grounded in the numbers.",
+    system: "You are a smart life coach. Analyze the user's data below and answer in English, briefly, with specific practical advice grounded in the numbers. Write plain text only: no Markdown, no tables, no HTML.",
   },
   settings: {
     profile: 'Personal details', ai: 'Artificial intelligence', aiHint: 'Any OpenAI-compatible service (such as the free Groq tier). The key stays on your device.',

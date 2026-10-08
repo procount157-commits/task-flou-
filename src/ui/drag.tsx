@@ -81,14 +81,16 @@ export function Draggable({ children, onDrop, selfZone, style }: { children: Rea
       onPanResponderMove: Animated.event([null, { dx: pos.x, dy: pos.y }], { useNativeDriver: false }),
       onPanResponderRelease: async (_e, g) => {
         const { ctx: cx, onDrop: drop, selfZone: self } = live.current;
+        // the gesture state is reset as soon as this handler yields, so read it before measuring
+        const { moveX, moveY, dx, dy } = g;
         const rects = cx ? await Promise.all([...cx.zones.current.values()].map(measure)) : [];
         // the delete zone wins over whatever lies beneath it
-        const hits = rects.filter((r) => r && r.id !== self && g.moveX >= r.x && g.moveX <= r.x + r.w && g.moveY >= r.y && g.moveY <= r.y + r.h);
+        const hits = rects.filter((r) => r && r.id !== self && moveX >= r.x && moveX <= r.x + r.w && moveY >= r.y && moveY <= r.y + r.h);
         const hit = hits.find((r) => r!.id === 'delete') ?? hits.find((r) => r!.id.startsWith('item:')) ?? hits[0];
         setHeld(false);
         cx?.setDragging(false);
         pos.setValue({ x: 0, y: 0 });
-        if (hit && (Math.abs(g.dx) > 6 || Math.abs(g.dy) > 6)) drop(hit.id);
+        if (hit && (Math.abs(dx) > 6 || Math.abs(dy) > 6)) drop(hit.id);
       },
       onPanResponderTerminate: () => {
         setHeld(false);
@@ -102,7 +104,7 @@ export function Draggable({ children, onDrop, selfZone, style }: { children: Rea
     <Animated.View style={[style, { transform: pos.getTranslateTransform(), zIndex: held ? 999 : 0, elevation: held ? 12 : 0, opacity: held ? 0.9 : 1 }]}>
       <View style={{ flexDirection: 'row', alignItems: 'stretch' }}>
         <View {...responder.panHandlers} accessibilityLabel={t.c.move} style={{ justifyContent: 'center', paddingHorizontal: 6 }}>
-          <Text style={{ color: c.muted, fontSize: 18 }}>⠿</Text>
+          <Text selectable={false} style={{ color: c.muted, fontSize: 18 }}>⠿</Text>
         </View>
         <View style={{ flex: 1 }}>{children}</View>
       </View>

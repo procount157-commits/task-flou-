@@ -87,13 +87,13 @@ export function CelebrationProvider({ children }: { children: React.ReactNode })
     <CelebrationCtx.Provider value={celebrate}>
       {children}
       {shown ? (
-        <Pressable key={shown.id} onPress={() => setShown(null)} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' }}>
+        <View key={shown.id} pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' }}>
           <Confetti />
           <View style={{ backgroundColor: c.card, borderRadius: 16, padding: 22, marginHorizontal: 30, borderWidth: 1, borderColor: c.border, direction: dir, alignItems: 'center', gap: 6, elevation: 8 }}>
             <Text style={{ fontSize: 40 }}>🎉</Text>
             <Txt v="sub" center>{shown.message}</Txt>
           </View>
-        </Pressable>
+        </View>
       ) : null}
     </CelebrationCtx.Provider>
   );
