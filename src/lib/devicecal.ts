@@ -94,6 +94,8 @@ export async function readDeviceEvents(from: string, to: string): Promise<Device
     const perm = await Calendar.getCalendarPermissionsAsync();
     if (!perm.granted) return [];
     const calendars = await Calendar.getCalendarsAsync(Calendar.EntityTypes.EVENT);
+    // a phone with no calendar account has nothing to read, and Android refuses an empty list
+    if (!calendars.length) return [];
     const end = parse(addDays(to, 1));
     const events = await Calendar.getEventsAsync(calendars.map((c) => c.id), parse(from), end);
     return events.map((e) => {
