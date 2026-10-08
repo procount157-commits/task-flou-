@@ -128,8 +128,10 @@ export function RewardPicker({ value, onChange }: { value: RewardValue; onChange
 
 /* ───────── VoiceToText ───────── */
 // Mic button: record → keep the file → transcribe → hand the text (and the recording's URI) back.
-export function VoiceToText({ onText, compact }: { onText: (text: string, audioUri: string) => void; compact?: boolean }) {
+// `autoStart` begins recording as soon as the button appears; `big` draws the large round microphone.
+export function VoiceToText({ onText, compact, autoStart, big }: { onText: (text: string, audioUri: string) => void; compact?: boolean; autoStart?: boolean; big?: boolean }) {
   const { t, lang } = useLang();
+  const c = useTheme();
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const [state, setState] = useState<'idle' | 'recording' | 'busy'>('idle');
 
@@ -164,6 +166,19 @@ export function VoiceToText({ onText, compact }: { onText: (text: string, audioU
     }
   };
 
+  useEffect(() => {
+    if (autoStart) start();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  if (big)
+    return (
+      <Pressable onPress={state === 'recording' ? stop : start} disabled={state === 'busy'} accessibilityRole="button" accessibilityLabel={state === 'recording' ? t.c.stopRecord : t.c.record}
+        style={{ alignSelf: 'center', width: 112, height: 112, borderRadius: 56, alignItems: 'center', justifyContent: 'center', backgroundColor: state === 'recording' ? c.danger : c.primary, opacity: state === 'busy' ? 0.5 : 1, elevation: 4 }}>
+        <Text style={{ fontSize: 44 }}>{state === 'recording' ? '⏹' : state === 'busy' ? '⏳' : '🎙'}</Text>
+        <Text style={{ color: '#fff', fontSize: 11 }}>{state === 'recording' ? t.c.stopRecord : state === 'busy' ? t.c.transcribing : t.c.record}</Text>
+      </Pressable>
+    );
   if (compact) return <IconBtn icon={state === 'recording' ? '⏹' : state === 'busy' ? '⏳' : '🎤'} onPress={state === 'recording' ? stop : start} disabled={state === 'busy'} label={state === 'recording' ? t.c.stopRecord : t.c.record} />;
   return (
     <Btn kind={state === 'recording' ? 'danger' : 'ghost'} small loading={state === 'busy'}

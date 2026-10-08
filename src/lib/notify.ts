@@ -86,10 +86,11 @@ export async function syncReminders(habits: Habit[], tasks: DailyTask[], labels:
 
 /* ───────── hourly check-in ───────── */
 export type CheckinSettings = { enabled: boolean; from: string; to: string };
-export const CHECKIN_DEFAULTS: CheckinSettings = { enabled: false, from: '08:00', to: '22:00' };
+// on by default: the hourly question is the heart of the app
+export const CHECKIN_DEFAULTS: CheckinSettings = { enabled: true, from: '07:00', to: '23:00' };
 
 // One pinned notification per hour inside the chosen window; tapping it opens the check-in screen.
-export async function scheduleCheckins(s: CheckinSettings, question: string) {
+export async function scheduleCheckins(s: CheckinSettings, question: string, prompts: string[] = []) {
   if (!native) return;
   const all = await Notifications.getAllScheduledNotificationsAsync().catch(() => []);
   await cancel(...all.map((n) => n.identifier).filter((id) => id.startsWith('checkin-')));
@@ -101,7 +102,8 @@ export async function scheduleCheckins(s: CheckinSettings, question: string) {
   for (let h = start; h <= end; h++)
     await Notifications.scheduleNotificationAsync({
       identifier: `checkin-${h}`,
-      content: { title: '🎙 ' + question, body: `${String(h - 1).padStart(2, '0')}:00 – ${String(h).padStart(2, '0')}:00`, sound: true, sticky: true, autoDismiss: false, priority: Notifications.AndroidNotificationPriority.MAX, data: { url: '/checkin' } },
+      // each hour carries a different question to think about; tapping opens the session with the microphone already on
+      content: { title: '🎙 ' + question, body: prompts.length ? prompts[h % prompts.length] : `${String(h).padStart(2, '0')}:00`, sound: true, sticky: true, autoDismiss: false, priority: Notifications.AndroidNotificationPriority.MAX, data: { url: '/checkin?auto=1' } },
       trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour: h, minute: 0, channelId: 'checkin' },
     }).catch(() => {});
 }

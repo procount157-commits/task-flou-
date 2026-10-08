@@ -281,6 +281,9 @@ export interface ActivityLog extends Base {
   time: string;
   text?: string;
   audio_url?: string;
+  // the reflective exchange that followed: the coach's questions and the spoken answers
+  dialog?: { role: 'ai' | 'me'; text: string }[];
+  audio_urls?: string[];
 }
 
 export type Alarm = { id: string; time: string; days: number[]; sound: 'ambulance' | 'whistle' | 'wail'; challenge: 'steps' | 'math'; enabled: boolean; label?: string };
