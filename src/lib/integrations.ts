@@ -1,5 +1,6 @@
 import * as DocumentPicker from 'expo-document-picker';
 import { File, Paths } from 'expo-file-system';
+import * as LegacyFS from 'expo-file-system/legacy';
 import * as ImagePicker from 'expo-image-picker';
 import * as Linking from 'expo-linking';
 import * as Speech from 'expo-speech';
@@ -123,6 +124,26 @@ export const suggestGifts = async (recipient: string, occasion: string, min: num
   return (JSON.parse(m[0]) as unknown[]).map(String).slice(0, 5);
 };
 
+// The whole file as bytes. Read as base64 through the long-standing API: on the phone the newer
+// File.bytes() came back nearly empty for a 124 KB recording.
+async function readFileBytes(uri: string): Promise<Uint8Array> {
+  const b64 = await LegacyFS.readAsStringAsync(uri, { encoding: LegacyFS.EncodingType.Base64 });
+  const table = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+  const lookup = new Uint8Array(256);
+  for (let i = 0; i < table.length; i++) lookup[table.charCodeAt(i)] = i;
+  const clean = b64.replace(/[^A-Za-z0-9+/]/g, '');
+  const out = new Uint8Array(Math.floor((clean.length * 3) / 4));
+  let o = 0;
+  for (let i = 0; i < clean.length; i += 4) {
+    const a = lookup[clean.charCodeAt(i)], b = lookup[clean.charCodeAt(i + 1)];
+    const c = lookup[clean.charCodeAt(i + 2)], d = lookup[clean.charCodeAt(i + 3)];
+    out[o++] = (a << 2) | (b >> 4);
+    if (i + 2 < clean.length) out[o++] = ((b & 15) << 4) | (c >> 2);
+    if (i + 3 < clean.length) out[o++] = ((c & 3) << 6) | d;
+  }
+  return out.subarray(0, o);
+}
+
 // A multipart/form-data body from text fields and one file, as bytes.
 function multipart(fields: [string, string][], file: { field: string; name: string; type: string; data: Uint8Array }) {
   const boundary = `----hayati${Date.now().toString(16)}${Math.random().toString(16).slice(2)}`;
@@ -146,7 +167,7 @@ export async function TranscribeAudio(uri: string, lang: string): Promise<string
   // the request body is built by hand: the phone's fetch rejects React Native's {uri} form parts
   const raw = (uri.split('?')[0].split('.').pop() ?? '').toLowerCase();
   const ext = ['m4a', 'mp4', 'aac', 'webm', 'mp3', 'wav', 'ogg', '3gp'].includes(raw) ? raw : Platform.OS === 'web' ? 'webm' : 'm4a';
-  const audio = Platform.OS === 'web' ? new Uint8Array(await (await fetch(uri)).arrayBuffer()) : await new File(uri).bytes();
+  const audio = Platform.OS === 'web' ? new Uint8Array(await (await fetch(uri)).arrayBuffer()) : await readFileBytes(uri);
   // an m4a header alone is about a kilobyte: anything that small holds no sound
   if (audio.length < 1500) throw new Error('EMPTY_AUDIO');
   let first: unknown;
