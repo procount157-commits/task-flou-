@@ -4,6 +4,7 @@ import React, { memo, useEffect, useMemo, useState } from 'react';
 import { Pressable, TextInput, View } from 'react-native';
 
 import { TaskForm } from './forms';
+import { StepRunner, TimeboxPanel } from './Timebox';
 import { useAuth } from '@/ctx/Auth';
 import { Colors, useLang, useTheme } from '@/ctx/Lang';
 import { usePomodoro } from '@/ctx/Pomodoro';
@@ -195,6 +196,7 @@ export function TaskDetail({ taskId, onClose }: { taskId: string | null; onClose
   const [sub, setSub] = useState('');
   const [busy, setBusy] = useState(false);
   const [full, setFull] = useState(false);
+  const [running, setRunning] = useState(false);
 
   useEffect(() => {
     setTitle(task?.title ?? '');
@@ -260,6 +262,7 @@ export function TaskDetail({ taskId, onClose }: { taskId: string | null; onClose
           <Pressable onPress={() => toggle(s)} hitSlop={8} accessibilityRole="checkbox" accessibilityState={{ checked: !!s.completed }} accessibilityLabel={s.title}>
             <Ionicons name={s.completed ? 'checkbox' : 'square-outline'} size={22} color={s.completed ? c.muted : c.primary} />
           </Pressable>
+          {s.minutes ? <Txt v="small" color={c.primary}>{s.time ? `${s.time} · ` : ''}{s.minutes} {t.timebox.min}</Txt> : null}
           <Txt style={{ flex: 1, textDecorationLine: s.completed ? 'line-through' : 'none' }} color={s.completed ? c.muted : c.text}>{s.title}</Txt>
           <Pressable onPress={() => tasks.remove(s.id)} hitSlop={8} accessibilityRole="button" accessibilityLabel={t.c.delete}><Ionicons name="close" size={18} color={c.muted} /></Pressable>
         </Row>
@@ -269,6 +272,8 @@ export function TaskDetail({ taskId, onClose }: { taskId: string | null; onClose
         <Btn small title={t.c.add} disabled={!sub.trim()} onPress={() => addSub(sub)} />
       </Row>
       <Btn kind="ghost" title={`🤖 ${t.c.aiSplit}`} loading={busy} onPress={aiSplit} />
+      <TimeboxPanel task={task} steps={subs} onRun={() => setRunning(true)} />
+      {running ? <StepRunner task={task} steps={subs} onClose={() => setRunning(false)} /> : null}
 
       <Txt v="muted">{t.today.repeat}</Txt>
       <DaysPicker value={task.repeat_days ?? []} onChange={(repeat_days) => patch({ repeat_days })} emptyLabel={t.c.none} />

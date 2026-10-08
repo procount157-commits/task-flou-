@@ -87,6 +87,28 @@ export async function llmList(prompt: string, lang: string): Promise<string[]> {
   return (Array.isArray(arr) ? arr : []).map((x) => (typeof x === 'string' ? x : x?.title ?? x?.step ?? JSON.stringify(x))).map((s) => String(s).trim()).filter(Boolean).slice(0, 5);
 }
 
+// Splits a session of `total` minutes into concrete timed blocks, e.g. an hour of study into 10-minute steps.
+export async function timeboxTask(title: string, total: number, notes: string | undefined, lang: string): Promise<{ minutes: number; step: string }[]> {
+  const text = await InvokeLLM(
+    `Plan a ${total}-minute work session for this task: "${title}"${notes ? ` (notes: ${notes})` : ''}. ` +
+      'Split it into consecutive timed blocks of 5 to 15 minutes. Each block is one concrete physical action that starts with a verb, ' +
+      'at most 9 words (for studying, e.g. open the book and sit at the desk, read section 1, summarise in your own words, test yourself). ' +
+      `The minutes must add up to exactly ${total}. Reply ONLY with a JSON array like [{"minutes": 10, "step": "..."}], text in ${lang === 'ar' ? 'Arabic' : 'English'}.`,
+    0.5,
+  );
+  const m = text.match(/\[[\s\S]*\]/);
+  if (!m) throw new Error('bad AI reply');
+  const raw = (JSON.parse(m[0]) as any[])
+    .map((x) => ({ minutes: Math.max(1, Math.round(Number(x?.minutes) || 0)), step: String(x?.step ?? x?.title ?? '').trim() }))
+    .filter((x) => x.step)
+    .slice(0, 16);
+  if (!raw.length) throw new Error('bad AI reply');
+  // the model's arithmetic is not trusted: the last block absorbs any difference
+  const sum = raw.reduce((a, x) => a + x.minutes, 0);
+  raw[raw.length - 1].minutes = Math.max(1, raw[raw.length - 1].minutes + total - sum);
+  return raw;
+}
+
 export const splitTask = (title: string, lang: string) => llmList(`Break this task into concrete, ordered steps: "${title}".`, lang);
 
 export const splitGoal = (title: string, description: string | undefined, from: string, to: string, lang: string) =>

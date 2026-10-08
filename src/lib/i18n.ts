@@ -100,6 +100,7 @@ const ar = {
     tpl: { exercise: 'تمارين رياضية', reading: 'قراءة', water: 'شرب الماء', meditation: 'التأمل', journal: 'كتابة اليومية', sleep: 'النوم مبكراً', noPhone: 'عدم الهاتف بعد الاستيقاظ' },
   },
   goals: {
+    deleteTree: 'تحت هذا الهدف {g} هدفاً فرعياً و{t} مهمة. ماذا تحذف؟', deleteOnly: 'الهدف وحده', deleteAll: 'الهدف وكل ما تحته',
     add: 'إضافة هدف', parent: 'الهدف الأعلى', children: 'أهداف فرعية', lifeSummary: 'ملخص الحياة', autoProgress: 'احسب التقدم من الأهداف الفرعية',
     dueDate: 'تاريخ الاستحقاق', empty: 'لا أهداف في هذا المستوى', lowest: 'هذا أدنى مستوى — لا يمكن تقسيمه', suggestions: 'أهداف فرعية مقترحة',
     count: 'عدد الأهداف', completion: 'نسبة الإنجاز', rewards: 'المكافآت', level: 'المستوى', importCsv: 'استيراد أهداف من CSV',
@@ -283,6 +284,11 @@ const ar = {
     missing: 'أضف رمز البوت ورقم المحادثة من الإعدادات أولاً', noChat: 'لم أجد رسالة — أرسل /start للبوت ثم أعد المحاولة', hello: 'تم ربط تطبيق حياتي بتيليجرام ✓',
     sendPlan: '✈️ أرسل خطة اليوم إلى تيليجرام', plan: 'خطة اليوم',
   },
+  timebox: {
+    title: 'قسّم المهمة على الوقت', min: 'د', split: 'قسّمها بالذكاء إلى خطوات على {n} دقيقة', pick: 'اختر الخطوات التي تريدها ثم اضغط قبول',
+    accept: 'قبول', start: 'ابدأ الخطوات بالمؤقّت', next: 'التالي', allDone: 'أنهيت كل الخطوات 🎉', pause: 'إيقاف مؤقت', resume: 'متابعة',
+    doneNext: 'تمّت — الخطوة التالية', finish: 'إنهاء',
+  },
   navbar: {
     title: 'تخصيص الشريط السفلي', hint: 'اختر الشاشات التي تظهر في الشريط السفلي ورتّبها بالأسهم. الشريط يتمرر جانبياً إذا كثرت. اضغط مطولاً على الشريط في أي وقت لتعود هنا.',
     inBar: 'في الشريط', available: 'أضف إلى الشريط', allIn: 'كل الشاشات موجودة في الشريط', reset: 'استعادة الترتيب الافتراضي',
@@ -437,6 +443,7 @@ const en: Translations = {
     tpl: { exercise: 'Exercise', reading: 'Reading', water: 'Drink water', meditation: 'Meditation', journal: 'Write journal', sleep: 'Sleep early', noPhone: 'No phone after waking' },
   },
   goals: {
+    deleteTree: 'This goal has {g} sub-goals and {t} tasks under it. What should be deleted?', deleteOnly: 'Only the goal', deleteAll: 'The goal and everything under it',
     add: 'Add goal', parent: 'Parent goal', children: 'sub-goals', lifeSummary: 'Life summary', autoProgress: 'Compute progress from sub-goals',
     dueDate: 'Due date', empty: 'No goals at this level', lowest: 'This is the lowest level — it cannot be split', suggestions: 'Suggested sub-goals',
     count: 'Goals', completion: 'Completion', rewards: 'Rewards', level: 'Level', importCsv: 'Import goals from CSV',
@@ -619,6 +626,11 @@ const en: Translations = {
     hint: 'Create a bot with @BotFather, paste the token here, send /start to the bot from your account, then press "Detect the chat".', sent: 'Sent to Telegram ✓',
     missing: 'Add the bot token and chat ID in Settings first', noChat: 'No message found — send /start to the bot and try again', hello: 'Hayati is now linked to Telegram ✓',
     sendPlan: "✈️ Send today's plan to Telegram", plan: "Today's plan",
+  },
+  timebox: {
+    title: 'Split the task over time', min: 'min', split: 'Let AI split it into steps over {n} minutes', pick: 'Tick the steps you want, then accept',
+    accept: 'Accept', start: 'Start the steps with a timer', next: 'Next', allDone: 'All steps done 🎉', pause: 'Pause', resume: 'Resume',
+    doneNext: 'Done — next step', finish: 'Finish',
   },
   navbar: {
     title: 'Customize the bottom bar', hint: 'Pick the screens shown in the bottom bar and order them with the arrows. The bar scrolls sideways when there are many. Long-press the bar any time to come back here.',

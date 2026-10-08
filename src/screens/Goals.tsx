@@ -1,12 +1,13 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { View } from 'react-native';
+import { Alert, Platform, View } from 'react-native';
 
 import { GoalForm } from './forms';
 import { useAI } from './taskparts';
 import { useLang, useTheme } from '@/ctx/Lang';
 import { isDate, today } from '@/lib/dates';
 import { db, useEntity } from '@/lib/db';
+import { removeTaskFromCalendar } from '@/lib/devicecal';
 import { exportGoal } from '@/lib/gcal';
 import { ExtractDataFromUploadedFile, col, pickDocument, splitGoal } from '@/lib/integrations';
 import { avg, childLevel, goalProgress, grantReward, LEVELS, pct } from '@/lib/logic';
@@ -65,12 +66,40 @@ export default function Goals() {
     setProposal(null);
   };
 
-  const remove = (g: Goal) =>
-    confirm(t.c.confirmDelete, async () => {
-      // children are kept but detached, so deleting a parent never silently wipes a subtree
+  // Everything hanging under a goal: its sub-goals at every level, and the tasks linked to any of them.
+  const subtree = (g: Goal) => {
+    const ids = new Set([g.id]);
+    for (let grew = true; grew; ) {
+      grew = false;
+      for (const x of goals.items) if (x.parent_id && ids.has(x.parent_id) && !ids.has(x.id)) (ids.add(x.id), (grew = true));
+    }
+    return ids;
+  };
+  const remove = async (g: Goal) => {
+    const ids = subtree(g);
+    const tasks = (await db.list('DailyTask')).filter((x) => x.goal_id && ids.has(x.goal_id));
+    const detachOnly = async () => {
       for (const k of goals.items.filter((x) => x.parent_id === g.id)) await goals.update(k.id, { parent_id: undefined });
       await goals.remove(g.id);
-    }, t.c.delete, t.c.cancel);
+    };
+    const everything = async () => {
+      const taskIds = new Set(tasks.map((x) => x.id));
+      for (const x of tasks) await removeTaskFromCalendar(x);
+      await db.removeWhere('DailyTask', (x) => taskIds.has(x.id) || (!!x.parent_id && taskIds.has(x.parent_id)));
+      await db.removeWhere('Goal', (x) => ids.has(x.id));
+    };
+    if (ids.size === 1 && !tasks.length) return confirm(t.c.confirmDelete, detachOnly, t.c.delete, t.c.cancel);
+    const msg = t.goals.deleteTree.replace('{g}', String(ids.size - 1)).replace('{t}', String(tasks.length));
+    if (Platform.OS === 'web') {
+      if (window.confirm(msg)) everything();
+      return;
+    }
+    Alert.alert(g.title, msg, [
+      { text: t.c.cancel, style: 'cancel' },
+      { text: t.goals.deleteOnly, onPress: detachOnly },
+      { text: t.goals.deleteAll, style: 'destructive', onPress: everything },
+    ]);
+  };
 
   const importCsv = async () => {
     const doc = await pickDocument(['text/csv', 'text/comma-separated-values', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', '*/*']);
