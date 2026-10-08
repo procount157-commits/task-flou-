@@ -8,6 +8,7 @@ import { nowTime, today } from '@/lib/dates';
 import { db, useKV } from '@/lib/db';
 import { addPoints, POINTS } from '@/lib/logic';
 import { cancel, scheduleAt } from '@/lib/notify';
+import { startPhoneLock } from '@/lib/phonelock';
 
 export const SOUNDS: Record<string, number> = {
   white: require('../../assets/sounds/white.wav'),
@@ -39,7 +40,7 @@ export type Session = {
   startedAt: number;
 };
 export type Completed = { taskTitle: string; focusMinutes: number; sessions: number; cycles: number };
-export type PomoSettings = { focusMin: number; breakMin: number; sound: string; volume: number };
+export type PomoSettings = { focusMin: number; breakMin: number; sound: string; volume: number; lockPhone?: boolean };
 const DEFAULTS: PomoSettings = { focusMin: 90, breakMin: 20, sound: 'none', volume: 0.5 };
 const KEY = 'pomodoro:session';
 const NOTIF_IDS = Array.from({ length: 12 }, (_, i) => `pomo-${i}`);
@@ -196,6 +197,8 @@ export function PomodoroProvider({ children }: { children: React.ReactNode }) {
       isActive: !!s,
       startSession: ({ taskId, taskTitle, subTasks = [] }) => {
         setCompleted(null);
+        // the hard lock covers the focus period only, never the break
+        if (settings.lockPhone) startPhoneLock(settings.focusMin);
         const t0 = Date.now();
         setNow(t0);
         apply({

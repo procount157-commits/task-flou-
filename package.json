@@ -9,6 +9,7 @@
     "@react-navigation/drawer": "^7.14.3",
     "expo": "~57.0.27",
     "expo-audio": "~57.0.5",
+    "expo-calendar": "~57.0.5",
     "expo-constants": "~57.0.21",
     "expo-device": "~57.0.2",
     "expo-document-picker": "~57.0.3",

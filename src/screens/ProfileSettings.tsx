@@ -3,10 +3,12 @@ import React, { useEffect, useState } from 'react';
 import { useAuth, useProfile } from '@/ctx/Auth';
 import { useLang, useTheme } from '@/ctx/Lang';
 import { isDate, isTime } from '@/lib/dates';
+import { useKV } from '@/lib/db';
+import { CalInfo, listWritableCalendars } from '@/lib/devicecal';
 import { AISettings, getAI, setAI } from '@/lib/integrations';
 import { initNotifications } from '@/lib/notify';
 import { NoTelegramError, TG_DEFAULTS, TelegramSettings, detectChatId, getTelegram, sendTelegram, setTelegram } from '@/lib/telegram';
-import { Btn, Card, Input, Screen, Section, Txt, notice } from '@/ui/kit';
+import { Btn, Card, Chips, Input, Screen, Section, Toggle, Txt, notice } from '@/ui/kit';
 import { DateField, TimeField } from '@/ui/pickers';
 import { DaysPicker } from '@/ui/shared';
 
@@ -20,6 +22,14 @@ export default function ProfileSettings() {
   const [ai, setAi] = useState<AISettings | null>(null);
   const [error, setError] = useState('');
   const [tg, setTg] = useState<TelegramSettings>(TG_DEFAULTS);
+  const [autoCal, setAutoCal] = useKV<boolean>('gcal:auto', false);
+  const [calId, setCalId] = useKV<string>('gcal:id', '');
+  const [calendars, setCalendars] = useState<CalInfo[] | null>(null);
+  const loadCalendars = async () => {
+    const all = await listWritableCalendars().catch(() => []);
+    setCalendars(all);
+    if (all.length && !all.some((x) => x.id === calId)) await setCalId(all[0].id);
+  };
 
   useEffect(() => {
     if (!profile) return;
@@ -97,6 +107,21 @@ export default function ProfileSettings() {
           {aiField('fallbackKey', `${t.settings.apiKey} 2`, true)}
           {aiField('fallbackModel', `${t.settings.model} 2`)}
           <Btn title={t.c.save} onPress={async () => { if (ai) { await setAI(ai); notice(t.settings.saved); } }} />
+        </Card>
+      </Section>
+
+      <Section title={`📅 ${t.cal.title}`}>
+        <Card>
+          <Txt v="small">{t.cal.note}</Txt>
+          <Toggle label={t.cal.auto} value={autoCal} onChange={async (on) => { await setAutoCal(on); if (on) loadCalendars(); }} />
+          <Btn kind="ghost" title={t.cal.load} onPress={loadCalendars} />
+          {calendars && !calendars.length ? <Txt v="small" color={c.danger}>{t.cal.none}</Txt> : null}
+          {calendars?.length ? (
+            <>
+              <Txt v="muted">{t.cal.choose}</Txt>
+              <Chips options={calendars.map((x) => ({ value: x.id, label: `${x.title}${x.account && x.account !== x.title ? ` · ${x.account}` : ''}` }))} value={calId} onChange={setCalId} />
+            </>
+          ) : null}
         </Card>
       </Section>
 

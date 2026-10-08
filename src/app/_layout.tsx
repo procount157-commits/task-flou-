@@ -41,7 +41,7 @@ const TABS: { name: string; icon: keyof typeof Ionicons.glyphMap }[] = [
   { name: 'habits', icon: 'flame-outline' },
   { name: 'more', icon: 'apps-outline' },
 ];
-const HIDDEN = ['dashboard', 'today', 'matrix', 'checkin', 'alarm', 'journal', 'progress', 'analytics', 'motivation', 'brainstorm', 'kolb', 'finance', 'invite', 'pricing', 'content', 'learning', 'goals/[level]', 'profile-settings', 'join', 'explore'];
+const HIDDEN = ['dashboard', 'today', 'matrix', 'checkin', 'alarm', 'lock', 'journal', 'progress', 'analytics', 'motivation', 'brainstorm', 'kolb', 'finance', 'invite', 'pricing', 'content', 'learning', 'goals/[level]', 'profile-settings', 'join', 'explore'];
 
 function AppTabs() {
   const c = useTheme();
@@ -50,7 +50,7 @@ function AppTabs() {
   const rtl = dir === 'rtl';
   const titles: Record<string, string> = {
     index: t.nav.tasks, calendar: t.nav.calendar, 'ai-coach': t.nav.aiCoach, pomodoro: t.nav.focus, habits: t.nav.habits, more: t.nav.more,
-    dashboard: t.nav.dashboard, matrix: t.tasks.matrix, checkin: t.checkin.title, alarm: t.alarm.title, journal: t.nav.journal, progress: t.nav.progress,
+    dashboard: t.nav.dashboard, matrix: t.tasks.matrix, checkin: t.checkin.title, alarm: t.alarm.title, lock: t.lock.title, journal: t.nav.journal, progress: t.nav.progress,
     analytics: t.nav.analytics, motivation: t.nav.motivation, brainstorm: t.nav.brainstorm, kolb: t.nav.kolb, finance: t.nav.finance, invite: t.nav.invite,
     pricing: t.nav.pricing, content: t.nav.content, learning: t.nav.learning, 'goals/[level]': t.nav.goals, 'profile-settings': t.nav.settings,
   };

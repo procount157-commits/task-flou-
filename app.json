@@ -30,7 +30,9 @@
         "SCHEDULE_EXACT_ALARM",
         "USE_EXACT_ALARM",
         "WAKE_LOCK",
-        "HIGH_SAMPLING_RATE_SENSORS"
+        "HIGH_SAMPLING_RATE_SENSORS",
+        "READ_CALENDAR",
+        "WRITE_CALENDAR"
       ]
     },
     "web": {
@@ -58,6 +60,12 @@
             "./assets/sounds/alarm_whistle.wav",
             "./assets/sounds/alarm_wail.wav"
           ]
+        }
+      ],
+      [
+        "expo-calendar",
+        {
+          "calendarPermission": "Add your tasks to your calendar"
         }
       ]
     ],

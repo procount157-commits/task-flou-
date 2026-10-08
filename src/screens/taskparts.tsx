@@ -9,6 +9,7 @@ import { Colors, useLang, useTheme } from '@/ctx/Lang';
 import { usePomodoro } from '@/ctx/Pomodoro';
 import { fmtDate, today } from '@/lib/dates';
 import { db, useEntity, useKV } from '@/lib/db';
+import { autoSyncTask, removeTaskFromCalendar, saveTaskToCalendar } from '@/lib/devicecal';
 import { exportTask } from '@/lib/gcal';
 import { NoKeyError, SendEmail, splitTask, suggestTasks } from '@/lib/integrations';
 import { addPoints, POINTS } from '@/lib/logic';
@@ -47,7 +48,10 @@ export function useTaskActions() {
         if (!task.parent_id) await addPoints(done ? POINTS[task.priority ?? 'medium'] : -POINTS[task.priority ?? 'medium']);
         if (done && !task.parent_id) celebrate(undefined, 2200);
       },
-      remove: (task: DailyTask) => db.removeWhere('DailyTask', (x) => x.id === task.id || x.parent_id === task.id),
+      remove: async (task: DailyTask) => {
+        await removeTaskFromCalendar(task);
+        await db.removeWhere('DailyTask', (x) => x.id === task.id || x.parent_id === task.id);
+      },
     }),
     [celebrate],
   );
@@ -117,8 +121,10 @@ export function QuickAdd({ defaultDate, extraSuggestions = [], listId }: { defau
   const add = async (text: string) => {
     const clean = text.trim();
     if (!clean) return;
-    await db.create('DailyTask', { title: clean, date, priority: prio, completed: false, repeat_days: [], list_id: list });
+    const made = await db.create('DailyTask', { title: clean, date, priority: prio, completed: false, repeat_days: [], list_id: list });
     setTitle('');
+    setAiItems((xs) => xs.filter((x) => x !== clean));
+    autoSyncTask(made.id);
   };
 
   const askAI = async () => {
@@ -136,6 +142,11 @@ export function QuickAdd({ defaultDate, extraSuggestions = [], listId }: { defau
         <Pressable onPress={askAI} disabled={busy} accessibilityRole="button" accessibilityLabel={t.sug.suggestAI} style={{ paddingHorizontal: 11, paddingVertical: 6, borderRadius: 999, backgroundColor: c.primary, opacity: busy ? 0.5 : 1 }}>
           <Text style={{ color: c.onPrimary, fontSize: 13 }}>{busy ? t.c.aiWorking : t.sug.suggestAI}</Text>
         </Pressable>
+        {aiItems.length > 1 ? (
+          <Pressable onPress={async () => { for (const x of aiItems) await add(x); }} accessibilityRole="button" style={{ paddingHorizontal: 11, paddingVertical: 6, borderRadius: 999, backgroundColor: c.success }}>
+            <Text style={{ color: '#fff', fontSize: 13 }}>{t.sug.addAll} ({aiItems.length})</Text>
+          </Pressable>
+        ) : null}
         <View style={{ flex: 1 }}><Suggest items={suggestions} onPick={add} /></View>
       </Row>
       <Row gap={6}>
@@ -183,7 +194,16 @@ export function TaskDetail({ taskId, onClose }: { taskId: string | null; onClose
   }, [taskId]);
 
   if (!task) return <Sheet visible={false} onClose={onClose} />;
-  const patch = (p: Partial<DailyTask>) => tasks.update(task.id, p);
+  const patch = async (p: Partial<DailyTask>) => {
+    await tasks.update(task.id, p);
+    if ('date' in p || 'time' in p || 'end_time' in p || 'title' in p) autoSyncTask(task.id);
+  };
+  // straight into the phone's calendar; the web link is only the fallback
+  const toCalendar = async () => {
+    const ok = await saveTaskToCalendar(task).catch(() => false);
+    if (ok) notice(t.cal.added);
+    else exportTask(task);
+  };
   const saveText = () => {
     if (title.trim() && (title.trim() !== task.title || notes !== (task.notes ?? ''))) patch({ title: title.trim(), notes });
   };
@@ -247,7 +267,7 @@ export function TaskDetail({ taskId, onClose }: { taskId: string | null; onClose
 
       <Row gap={0}>
         {action('timer-outline', t.today.pomodoro, () => { close(); pomodoro.startSession({ taskId: task.id, taskTitle: task.title, subTasks: subs.filter((s) => !s.completed).map((s) => s.title) }); router.push('/pomodoro'); })}
-        {action('calendar-outline', t.c.gcal, () => exportTask(task))}
+        {action(task.calendar_event_id ? 'calendar' : 'calendar-outline', t.c.gcal, toCalendar)}
         {action('mail-outline', t.today.remind, remind)}
         {action('link-outline', t.tasks.moreOptions, () => setFull(true))}
         {action('trash-outline', t.c.delete, () => confirm(t.c.confirmDelete, () => { onClose(); remove(task); }, t.c.delete, t.c.cancel), c.danger)}

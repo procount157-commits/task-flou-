@@ -20,6 +20,7 @@ export default function More() {
     { title: t.nav.tasks, tiles: [
       { label: t.nav.dashboard, path: '/dashboard', icon: 'home-outline' }, { label: t.tasks.matrix, path: '/matrix', icon: 'grid-outline' },
       { label: t.checkin.title, path: '/checkin', icon: 'mic-outline' }, { label: t.alarm.title, path: '/alarm', icon: 'alarm-outline' },
+      { label: t.lock.title, path: '/lock', icon: 'lock-closed-outline' },
     ] },
     { title: t.nav.progress, tiles: [
       { label: t.nav.journal, path: '/journal', icon: 'book-outline' }, { label: t.nav.analytics, path: '/analytics', icon: 'stats-chart-outline' },

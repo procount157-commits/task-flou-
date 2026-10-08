@@ -9,7 +9,8 @@ import { useEntity } from '@/lib/db';
 import { GenerateSpeech, splitTask } from '@/lib/integrations';
 import { sortTasks } from '@/lib/logic';
 import type { DailyTask } from '@/lib/types';
-import { Btn, Card, Chips, Empty, Input, Progress, Row, Screen, Section, Stat, Txt } from '@/ui/kit';
+import { isLockAdmin, lockAvailable } from '@/lib/phonelock';
+import { Btn, Card, Chips, Empty, Input, Progress, Row, Screen, Section, Stat, Toggle, Txt, notice } from '@/ui/kit';
 
 const BREATH = [{ key: 'inhale', ms: 4000, to: 1 }, { key: 'hold', ms: 4000, to: 1 }, { key: 'exhale', ms: 6000, to: 0.45 }] as const;
 
@@ -142,6 +143,7 @@ export default function Pomodoro() {
             <View style={{ flex: 1 }}><Input label={`🎯 ${t.pomo.focusMin}`} value={focus} onChangeText={setFocus} onBlur={commitMinutes} keyboardType="number-pad" /></View>
             <View style={{ flex: 1 }}><Input label={`⏸ ${t.pomo.breakMin}`} value={brk} onChangeText={setBrk} onBlur={commitMinutes} keyboardType="number-pad" /></View>
           </Row>
+          {lockAvailable ? <Toggle label={t.lock.withFocus} value={!!p.settings.lockPhone} onChange={(lockPhone) => (lockPhone && !isLockAdmin() ? notice(t.lock.needGrant) : p.setSettings({ ...p.settings, lockPhone }))} /> : null}
           <Section title={t.pomo.pickTask} right={<Btn small title={`▶ ${t.pomo.freeSession}`} onPress={() => p.startSession({ taskTitle: t.pomo.freeSession })} />}>
             {pending.length ? pending.map((x) => (
               <Card key={x.id}>

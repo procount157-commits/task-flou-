@@ -206,6 +206,19 @@ const ar = {
     empty: 'لا دعوات بعد', role: 'الدور',
   },
   notif: { highTask: 'مهمة عالية الأولوية', habit: 'تذكير بالعادة' },
+  lock: {
+    title: 'قفل الهاتف', grant: 'امنح صلاحية قفل الشاشة', granted: 'صلاحية القفل مفعّلة ✓', remove: 'إلغاء صلاحية القفل (مطلوب قبل حذف التطبيق)',
+    duration: 'مدة القفل بالدقائق', start: '🔒 اقفل الهاتف الآن', lockOnce: 'إطفاء الشاشة مرة واحدة',
+    warn: 'القفل القهري: تُطفأ الشاشة فوراً، وكلما فتحتها تُطفأ من جديد حتى تنتهي المدة. لا يوجد زر إلغاء. للطوارئ فقط: أعد تشغيل الهاتف لينتهي القفل. المكالمات الواردة تبقى تعمل.',
+    confirm: 'سيُقفل الهاتف ولن تستطيع استخدامه حتى انتهاء المدة. متأكد؟', soft: 'الوضع الخفيف', pin: '📌 ثبّت التطبيق (منع الخروج منه)', unpin: 'إلغاء التثبيت',
+    softNote: 'يبقيك داخل التطبيق فقط؛ يسمح أندرويد بالخروج بالضغط المطوّل على زرّي الرجوع والتطبيقات معاً.',
+    unavailable: 'قفل الهاتف يعمل على تطبيق أندرويد فقط', withFocus: '🔒 اقفل الهاتف طوال مدة التركيز', needGrant: 'امنح صلاحية القفل أولاً من شاشة "قفل الهاتف"',
+    explain: 'يستخدم تطبيق حياتي هذه الصلاحية لإطفاء الشاشة فقط أثناء فترات التركيز التي تبدؤها أنت.',
+  },
+  cal: {
+    title: 'تقويم Google', auto: 'أضف كل مهمة جديدة إلى التقويم تلقائياً', choose: 'التقويم المستخدم', none: 'لم أجد تقويماً قابلاً للكتابة — أضف حساب Google إلى الهاتف واسمح بصلاحية التقويم',
+    added: 'أُضيفت إلى التقويم ✓', load: 'اعرض تقاويم الهاتف', note: 'تُكتب المهمة مباشرة في تقويم حساب Google على هاتفك وتظهر في Google Calendar بعد المزامنة، دون فتح أي رابط.',
+  },
   checkin: {
     title: 'ماذا فعلت؟', question: 'ماذا كنت تفعل في الساعة الماضية؟', enable: 'اسألني كل ساعة بإشعار ثابت', from: 'من', to: 'إلى',
     quick: ['عمل مركز', 'اجتماع', 'دراسة', 'هاتف وسوشيال', 'راحة', 'أكل', 'رياضة', 'مواصلات', 'صلاة', 'مع الأهل', 'نوم', 'تضييع وقت'],
@@ -256,7 +269,7 @@ const ar = {
     ideas: ['فكرة مشروع', 'فكرة محتوى', 'تحسين في العمل', 'شيء أريد تعلمه'],
     content: ['نصيحة سريعة', 'قصة نجاح', 'شرح مبسط', 'سؤال للمتابعين', 'خلف الكواليس'],
     kolb: ['نعم', 'لا', 'إلى حد ما', 'لا أعرف بعد', 'قلق', 'ثقة', 'ضيق الوقت', 'قلة التحضير'],
-    suggestAI: '✨ اقترح لي مهام', suggested: 'اقتراحات',
+    suggestAI: '✨ اقترح لي مهام', suggested: 'اقتراحات', addAll: '➕ أضف الكل',
   },
   tasks: {
     lists: { today: 'اليوم', tomorrow: 'غداً', week: 'الأيام السبعة القادمة', all: 'الكل', done: 'المكتملة' },
@@ -477,6 +490,19 @@ const en: Translations = {
     empty: 'No invitations yet', role: 'Role',
   },
   notif: { highTask: 'High-priority task', habit: 'Habit reminder' },
+  lock: {
+    title: 'Phone lock', grant: 'Grant the screen-lock permission', granted: 'Lock permission is on ✓', remove: 'Remove the lock permission (needed before uninstalling)',
+    duration: 'Lock length in minutes', start: '🔒 Lock the phone now', lockOnce: 'Turn the screen off once',
+    warn: 'Hard lock: the screen goes off at once, and every time you turn it on it goes off again until the time is up. There is no cancel button. Emergencies only: restart the phone to end the lock. Incoming calls still work.',
+    confirm: 'The phone will lock and you will not be able to use it until the time is up. Sure?', soft: 'Soft mode', pin: '📌 Pin the app (no leaving it)', unpin: 'Unpin',
+    softNote: 'Keeps you inside this app only; Android lets you leave by holding Back and Overview together.',
+    unavailable: 'Phone lock works in the Android app only', withFocus: '🔒 Lock the phone for the whole focus period', needGrant: 'Grant the lock permission first on the "Phone lock" screen',
+    explain: 'Hayati uses this permission only to turn the screen off during focus periods you start yourself.',
+  },
+  cal: {
+    title: 'Google Calendar', auto: 'Add every new task to the calendar automatically', choose: 'Calendar to use', none: 'No writable calendar found — add a Google account to the phone and allow calendar access',
+    added: 'Added to the calendar ✓', load: 'Show the phone calendars', note: "Tasks are written straight into your Google account's calendar on the phone and appear in Google Calendar after sync, with no link to open.",
+  },
   checkin: {
     title: 'What did I do?', question: 'What were you doing in the last hour?', enable: 'Ask me every hour with a pinned notification', from: 'From', to: 'To',
     quick: ['Deep work', 'Meeting', 'Study', 'Phone & social', 'Rest', 'Eating', 'Exercise', 'Commute', 'Prayer', 'Family', 'Sleep', 'Wasting time'],
@@ -527,7 +553,7 @@ const en: Translations = {
     ideas: ['Project idea', 'Content idea', 'Work improvement', 'Something to learn'],
     content: ['Quick tip', 'Success story', 'Simple explainer', 'Question for followers', 'Behind the scenes'],
     kolb: ['Yes', 'No', 'Somewhat', 'Not sure yet', 'Anxiety', 'Confidence', 'Lack of time', 'Poor preparation'],
-    suggestAI: '✨ Suggest tasks for me', suggested: 'Suggestions',
+    suggestAI: '✨ Suggest tasks for me', suggested: 'Suggestions', addAll: '➕ Add all',
   },
   tasks: {
     lists: { today: 'Today', tomorrow: 'Tomorrow', week: 'Next 7 days', all: 'All', done: 'Completed' },
