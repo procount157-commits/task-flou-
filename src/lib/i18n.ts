@@ -242,6 +242,17 @@ const ar = {
     tab: 'جلسة الساعة', now: 'ماذا تفعل الآن؟ من ماذا تخاف؟ ولماذا أنت مشتت؟', cardTitle: 'ماذا تفعل الآن؟', cardLines: ['من ماذا تخاف؟', 'لماذا أنت مشتت؟'], cardTap: '🎙 اضغط وأجب بصوتك', newSession: 'جلسة جديدة', finish: 'إنهاء الجلسة', speak: 'اقرأ الأسئلة بصوت مسموع',
     thinking: 'يتأمل في إجابتك…', hear: '🔊 أعد السؤال', voiceOnly: '(تسجيل صوتي)', done: 'انتهت جلسة هذه الساعة — نلتقي في الساعة القادمة', turn: 'سؤال',
     closing: 'خلاصة الساعة: دوّنتُ إجاباتك. اختر الآن خطوة واحدة صغيرة للساعة القادمة تخدم أهم أهدافك وابدأ بها فوراً.',
+    notif: {
+      steps: [
+        { q: 'ماذا فعلت في هذه الساعة بالضبط؟', input: true, choices: ['عمل مركز', 'اجتماع', 'سوشيال ميديا', 'راحة', 'دراسة', 'تضييع وقت'] },
+        { q: 'هل أنت مشتت؟', input: false, choices: ['مركز 🎯', 'مشتت 😵', 'نوعاً ما'] },
+        { q: 'هل أنت قريب من أهدافك أم بعيد؟', input: false, choices: ['قريب 🟢', 'بعيد 🔴', 'في المنتصف 🟡'] },
+        { q: 'هل أنت خائف من شيء؟', input: true, choices: ['لا', 'الفشل', 'المال', 'المستقبل', 'رأي الناس'] },
+      ],
+      typeLabel: 'اكتب إجابتك…', replyLabel: '✍️ أجب', voiceLabel: '🎙 بالصوت', doneTitle: '✅ سُجّلت جلسة هذه الساعة', analyzing: '🤖 المساعد يحلل إجاباتك…',
+      system: 'أنت مدرب حياة صارم ورحيم. هذه إجابات المستخدم عن ساعته الماضية. اكتب بالعربية بنص عادي بلا Markdown، في ثلاث جمل قصيرة فقط: حكمك هل الساعة خدمت أهدافه، الخوف أو التشتت الذي يظهر، وخطوة واحدة محددة للساعة القادمة.',
+      fromNotif: '(من الإشعار)',
+    },
     bank: [
       'ما الذي تتجنبه الآن بانشغالك بهذا؟',
       'لو لم يكن الخوف موجوداً، ماذا كنت ستفعل في هذه الساعة؟',
@@ -564,6 +575,17 @@ const en: Translations = {
     tab: 'Hourly session', now: 'What are you doing now? What are you afraid of? Why are you distracted?', cardTitle: 'What are you doing now?', cardLines: ['What are you afraid of?', 'Why are you distracted?'], cardTap: '🎙 Tap and answer by voice', newSession: 'New session', finish: 'End session', speak: 'Read the questions aloud',
     thinking: 'Reflecting on your answer…', hear: '🔊 Repeat the question', voiceOnly: '(voice note)', done: 'This hour is done — see you at the next one', turn: 'Question',
     closing: 'Summary: your answers are saved. Now pick one small step for the next hour that serves your most important goal, and start it at once.',
+    notif: {
+      steps: [
+        { q: 'What exactly did you do this hour?', input: true, choices: ['Focused work', 'Meeting', 'Social media', 'Rest', 'Study', 'Wasted time'] },
+        { q: 'Are you distracted?', input: false, choices: ['Focused 🎯', 'Distracted 😵', 'Somewhat'] },
+        { q: 'Are you close to your goals or far?', input: false, choices: ['Close 🟢', 'Far 🔴', 'In between 🟡'] },
+        { q: 'Are you afraid of something?', input: true, choices: ['No', 'Failure', 'Money', 'The future', "People's opinion"] },
+      ],
+      typeLabel: 'Type your answer…', replyLabel: '✍️ Answer', voiceLabel: '🎙 Voice', doneTitle: "✅ This hour's session is saved", analyzing: '🤖 The coach is reading your answers…',
+      system: "You are a strict but kind life coach. These are the user's answers about their last hour. Write plain text without Markdown, three short sentences only: whether the hour served their goals, the fear or distraction that shows, and one specific step for the next hour.",
+      fromNotif: '(from the notification)',
+    },
     bank: [
       'What are you avoiding by being busy with this?',
       'If fear were absent, what would you do in this hour?',

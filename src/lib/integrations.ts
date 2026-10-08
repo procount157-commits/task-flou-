@@ -51,6 +51,12 @@ function routes(ai: AISettings, kind: 'main' | 'fallback'): Route[] {
   return list.filter((r, i) => r.key && list.findIndex((o) => o.key === r.key && o.url === r.url) === i);
 }
 
+// The same routes for native code that calls the AI on its own (the hourly notification).
+export const aiRoutes = async () => {
+  const ai = await getAI();
+  return [...routes(ai, 'main'), ...routes(ai, 'fallback')];
+};
+
 // Chat completion against OpenAI-compatible endpoints: the main service first, the fallback if it fails.
 export async function InvokeLLM(input: Msg[] | string, temperature = 0.6): Promise<string> {
   const ai = await getAI();

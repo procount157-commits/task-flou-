@@ -16,6 +16,8 @@ type PhoneLockNative = {
   cancelLock(code: number): void;
   setHourly(enabled: boolean, fromHour: number, toHour: number, payload: string): void;
   showHourly(): void;
+  takeHourly?(): string;
+  closeHourly?(): void;
   scheduleAlarm(code: number, atMillis: number, id: string, sound: string, label: string): void;
   clearAlarms(): void;
   startRinging(id: string, sound: string, label: string): void;
@@ -72,11 +74,21 @@ export function syncLockSchedules(list: LockSchedule[]) {
 }
 
 /* ───────── hourly question card ───────── */
-export type HourlyCard = { title: string; lines: string[]; questions: string[]; quotes: string[]; goal?: string; tap: string };
+export type HourlyStep = { q: string; input: boolean; choices: string[] };
+export type HourlyCard = {
+  title: string; lines: string[]; questions: string[]; quotes: string[]; goal?: string; tap: string;
+  // the session asked inside the notification, and how the phone reaches the AI for its closing reading
+  steps?: HourlyStep[]; typeLabel?: string; replyLabel?: string; voiceLabel?: string; doneTitle?: string; analyzing?: string; system?: string;
+  ai?: { url: string; key: string; model: string }[];
+};
+export type HourlyAnswered = { date: string; time: string; answers: { q: string; a: string }[]; insight?: string };
 export const hourlyCardAvailable = !!native && typeof native.setHourly === 'function';
 export const setHourlyCard = (enabled: boolean, fromHour: number, toHour: number, card: HourlyCard) =>
   safe((m) => (m.setHourly(enabled, fromHour, toHour, JSON.stringify(card)), true), false);
 export const showHourlyCard = () => safe((m) => (m.showHourly(), true), false);
+export const takeHourlyAnswers = (): HourlyAnswered[] =>
+  safe((m) => (typeof m.takeHourly === 'function' ? JSON.parse(m.takeHourly() || '[]') : []), []);
+export const closeHourly = () => safe((m) => m.closeHourly?.(), undefined);
 
 /* ───────── ringing alarm ───────── */
 

@@ -46,12 +46,20 @@ PY
 shot() { sleep ${2:-3}; adb exec-out screencap -p > "out/step-$1.png"; adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1 && adb shell cat /sdcard/ui.xml | grep -o 'text="[^"]*"' | sed 's/text="//;s/"$//' | grep -v '^$' > "out/step-$1.txt"; }
 go() { adb shell am start -W -a android.intent.action.VIEW -d "hayati:///$1" $PKG >/dev/null; sleep 5; }
 
-go brainstorm; tap 'فكرة مشروع'; shot brainstorm-filled 1; tap 'حفظ'; shot brainstorm-saved
-go ai-coach; tap 'الخطوة القادمة'; shot ai-wait 2; shot ai-reply 25
-go kolb; tap 'جلسة جديدة'; shot kolb-new
-go journal; tap 'جيد'; tap 'التالي'; shot journal-step2
-go content; tap 'إضافة محتوى'; shot content-add
-go index; shot tasks
+# the hourly session, answered entirely from the notification bar
+adb shell pm grant $PKG android.permission.POST_NOTIFICATIONS || true
+go check; adb shell input swipe 500 1500 500 300 300; sleep 1; adb shell input swipe 500 1500 500 300 300; sleep 1
+tap 'بطاقة الساعة'; sleep 3
+adb shell cmd statusbar expand-notifications; shot notif-1 2
+tap 'عمل مركز'; shot notif-2 2
+tap 'مركز 🎯'; shot notif-3 2
+tap 'قريب'; shot notif-4 2
+tap 'لا'; shot notif-done 3
+shot notif-ai 20
+adb shell dumpsys notification --noredact | grep -A3 'android.text\|android.bigText' | head -40 > out/notif-dump.txt
+adb shell cmd statusbar collapse
+adb shell am force-stop $PKG; adb shell monkey -p $PKG 1 >/dev/null; sleep 10
+go checkin; shot checkin-history 2
 adb shell "run-as $PKG cat databases/RKStorage" > out/RKStorage-after
 grep -E 'ReactNativeJS|AndroidRuntime|FATAL|hayati' out/logcat.txt > out/js.txt || true
 kill %1 || true

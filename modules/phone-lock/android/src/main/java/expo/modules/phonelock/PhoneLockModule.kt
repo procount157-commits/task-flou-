@@ -120,6 +120,16 @@ class PhoneLockModule : Module() {
       Hourly.show(context, true)
     }
 
+    // Sessions answered inside the notification since the app last looked, as a JSON array.
+    Function("takeHourly") {
+      HourlySession.take(context)
+    }
+
+    // The session was finished in the app, so the pinned question is taken down.
+    Function("closeHourly") {
+      HourlySession.close(context)
+    }
+
     /* alarms */
 
     Function("scheduleAlarm") { code: Int, atMillis: Double, id: String, sound: String, label: String ->

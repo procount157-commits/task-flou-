@@ -8,6 +8,7 @@ import { nowTime, today } from '@/lib/dates';
 import { db, kv, useEntity, useKV } from '@/lib/db';
 import { GenerateSpeech, InvokeLLM } from '@/lib/integrations';
 import { hourlyCard } from '@/lib/logic';
+import { closeHourly } from '@/lib/phonelock';
 import { CHECKIN_DEFAULTS, CheckinSettings, notifyReport, scheduleCheckins } from '@/lib/notify';
 import { NoTelegramError, sendTelegram } from '@/lib/telegram';
 import type { ActivityLog } from '@/lib/types';
@@ -55,6 +56,10 @@ export default function Checkin() {
   const mine = logs.items.filter((l) => l.date === day).sort((a, b) => a.time.localeCompare(b.time));
   const answered = turns.filter((x) => x.role === 'me').length;
   const finished = answered >= TURNS && !busy;
+  // answered here by voice, so the same hour's question no longer waits pinned in the notification bar
+  useEffect(() => {
+    if (finished) closeHourly();
+  }, [finished]);
   const question = [...turns].reverse().find((x) => x.role === 'ai')?.text ?? t.checkin.now;
 
   const say = (text: string) => speak && GenerateSpeech(text, lang);

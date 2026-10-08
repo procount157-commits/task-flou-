@@ -7,7 +7,7 @@ on:
     inputs:
       routes:
         description: Space-separated routes to open
-        default: index brainstorm ai-coach
+        default: checkin
 jobs:
   test:
     runs-on: ubuntu-latest

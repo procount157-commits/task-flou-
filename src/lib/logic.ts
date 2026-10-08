@@ -1,3 +1,4 @@
+import type { Translations } from './i18n';
 import { addDays, today, weekday } from './dates';
 import { db, kv } from './db';
 import type { DailyTask, Goal, GoalLevel, Habit, HabitLog, Priority } from './types';
@@ -89,8 +90,12 @@ export async function grantReward(type: 'goal' | 'habit', src: { id: string; rew
 }
 
 // The texts drawn on the hourly card: the fixed questions, the rotating deep ones, quotes, and the top open goal.
-export function hourlyCard(t: { checkin: { cardTitle: string; cardLines: string[]; bank: string[]; cardTap: string }; quotes: string[] }, goals: Goal[]) {
+export function hourlyCard(t: Translations, goals: Goal[]) {
   const open = goals.filter((g) => g.status !== 'completed' && g.status !== 'cancelled');
   const top = open.find((g) => g.priority === 'high') ?? open[0];
-  return { title: t.checkin.cardTitle, lines: t.checkin.cardLines, questions: t.checkin.bank, quotes: t.quotes, goal: top?.title, tap: t.checkin.cardTap };
+  const n = t.checkin.notif;
+  return {
+    title: t.checkin.cardTitle, lines: t.checkin.cardLines, questions: t.checkin.bank, quotes: t.quotes, goal: top?.title, tap: t.checkin.cardTap,
+    steps: n.steps, typeLabel: n.typeLabel, replyLabel: n.replyLabel, voiceLabel: n.voiceLabel, doneTitle: n.doneTitle, analyzing: n.analyzing, system: n.system,
+  };
 }

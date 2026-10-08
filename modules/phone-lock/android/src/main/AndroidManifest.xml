@@ -28,6 +28,8 @@
             </intent-filter>
         </receiver>
 
+        <receiver android:name=".HourlyActionReceiver" android:exported="false"/>
+
         <receiver android:name=".LockAlarmReceiver" android:exported="false"/>
 
         <receiver android:name=".AlarmReceiver" android:exported="false"/>

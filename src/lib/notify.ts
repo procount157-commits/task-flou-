@@ -3,6 +3,7 @@ import { Platform } from 'react-native';
 
 import { parse, today } from './dates';
 import { logError } from './errlog';
+import { aiRoutes } from './integrations';
 import { HourlyCard, hourlyCardAvailable, nativeAlarmAvailable, setHourlyCard, syncNativeAlarms } from './phonelock';
 import type { Alarm, DailyTask, Habit } from './types';
 
@@ -111,7 +112,7 @@ export async function scheduleCheckins(s: CheckinSettings, card: HourlyCard): Pr
   }
   if (!(await initNotifications())) return false;
   // the big drawn card, posted by the phone itself every hour; the plain notifications below are the fallback
-  if (hourlyCardAvailable) return setHourlyCard(true, from, to, card);
+  if (hourlyCardAvailable) return setHourlyCard(true, from, to, { ...card, ai: await aiRoutes().catch(() => []) });
   if (Platform.OS === 'android')
     await Notifications.setNotificationChannelAsync('checkin', { name: 'Hourly check-in', importance: Notifications.AndroidImportance.MAX, lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC });
   const start = Number(s.from.slice(0, 2));

@@ -18,8 +18,8 @@ import { PomodoroProvider } from '@/ctx/Pomodoro';
 import { today } from '@/lib/dates';
 import { db, kv, preload, useEntity, useKV } from '@/lib/db';
 import { hourlyCard } from '@/lib/logic';
-import { LockSchedule, ringingAlarmId, syncLockSchedules } from '@/lib/phonelock';
-import { installGlobalErrorLog } from '@/lib/errlog';
+import { LockSchedule, ringingAlarmId, syncLockSchedules, takeHourlyAnswers } from '@/lib/phonelock';
+import { installGlobalErrorLog, logError } from '@/lib/errlog';
 import { CHECKIN_DEFAULTS, CheckinSettings, initNotifications, onNotificationOpen, scheduleAlarms, scheduleCheckins, syncReminders } from '@/lib/notify';
 import type { Alarm } from '@/lib/types';
 import { IntentionModal, Landing, Login, Onboarding } from '@/screens/Entry';
@@ -104,9 +104,17 @@ function Background() {
   const [alarms] = useKV<Alarm[]>('alarms', NO_ALARMS);
   const [checkin] = useKV<CheckinSettings>('checkin', CHECKIN_DEFAULTS);
   useEffect(() => onNotificationOpen((url) => router.navigate(url as any)), [router]);
-  // however the app is opened, a ringing alarm takes over the screen
+  // however the app is opened, a ringing alarm takes over the screen, and sessions answered in the
+  // notification bar are filed in the check-in history
   useEffect(() => {
     const check = () => {
+      for (const h of takeHourlyAnswers()) {
+        const dialog = [
+          ...h.answers.flatMap((x) => [{ role: 'ai' as const, text: x.q }, { role: 'me' as const, text: x.a }]),
+          ...(h.insight ? [{ role: 'ai' as const, text: h.insight }] : []),
+        ];
+        db.create('ActivityLog', { date: h.date, time: h.time, text: h.answers[0]?.a ?? '', dialog }).catch((e) => logError('hourly-import', e));
+      }
       const id = ringingAlarmId();
       if (id) router.navigate(`/alarm?ring=${id}` as any);
     };
@@ -119,7 +127,7 @@ function Background() {
     const id = setTimeout(async () => {
       const alarmSig = JSON.stringify([today(), alarms]);
       const card = hourlyCard(t, await db.list('Goal'));
-      const checkinSig = JSON.stringify([checkin, card.title, card.goal]);
+      const checkinSig = JSON.stringify(['session-v1', checkin, card.title, card.goal]);
       // the signature is only stored once the booking really happened, so a refused permission is retried
       if ((await kv.get('sched:alarms', '')) !== alarmSig && (await scheduleAlarms(alarms, t.alarm.ringing))) await kv.set('sched:alarms', alarmSig);
       if ((await kv.get('sched:checkin', '')) !== checkinSig && (await scheduleCheckins(checkin, card))) await kv.set('sched:checkin', checkinSig);

@@ -28,8 +28,8 @@ import java.util.Calendar
  */
 object Hourly {
   const val PREFS = "hourly"
-  private const val CHANNEL = "hourly-card"
-  private const val NOTIFICATION_ID = 7342
+  const val CHANNEL = "hourly-card"
+  const val NOTIFICATION_ID = 7342
   private const val ALARM_CODE = 9101
   private const val SIZE = 1080
   private const val MARGIN = 84f
@@ -69,6 +69,15 @@ object Hourly {
     if (!force && (hour < prefs.getInt("from", 7) || hour > prefs.getInt("to", 23))) return
 
     val payload = try { JSONObject(prefs.getString("payload", "{}") ?: "{}") } catch (e: Exception) { JSONObject() }
+    val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      manager.createNotificationChannel(NotificationChannel(CHANNEL, "Hourly question", NotificationManager.IMPORTANCE_HIGH))
+    }
+    // the questions are answered inside the notification itself when the app sent them
+    if ((payload.optJSONArray("steps")?.length() ?: 0) > 0) {
+      HourlySession.start(context)
+      return
+    }
     val title = payload.optString("title", "What are you doing now?")
     val lines = payload.optJSONArray("lines")
     // a different deep question and quote each hour of each day
@@ -81,10 +90,6 @@ object Hourly {
 
     val card = drawCard(context, time, title, lines, question, goal, quote, tap)
 
-    val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-      manager.createNotificationChannel(NotificationChannel(CHANNEL, "Hourly question", NotificationManager.IMPORTANCE_HIGH))
-    }
     val open = Intent(Intent.ACTION_VIEW, Uri.parse("hayati://checkin?auto=1"))
       .setPackage(context.packageName)
       .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
@@ -115,7 +120,7 @@ object Hourly {
   private fun face(context: Context, file: String, fallback: Typeface): Typeface =
     try { Typeface.createFromAsset(context.assets, "fonts/$file") } catch (e: Exception) { fallback }
 
-  private fun drawCard(context: Context, time: String, title: String, lines: JSONArray?, question: String, goal: String, quote: String, tap: String): Bitmap {
+  fun drawCard(context: Context, time: String, title: String, lines: JSONArray?, question: String, goal: String, quote: String, tap: String): Bitmap {
     val bitmap = Bitmap.createBitmap(SIZE, SIZE, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
     val background = Paint(Paint.ANTI_ALIAS_FLAG)
