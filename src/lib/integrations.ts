@@ -147,6 +147,8 @@ export async function TranscribeAudio(uri: string, lang: string): Promise<string
   const raw = (uri.split('?')[0].split('.').pop() ?? '').toLowerCase();
   const ext = ['m4a', 'mp4', 'aac', 'webm', 'mp3', 'wav', 'ogg', '3gp'].includes(raw) ? raw : Platform.OS === 'web' ? 'webm' : 'm4a';
   const audio = Platform.OS === 'web' ? new Uint8Array(await (await fetch(uri)).arrayBuffer()) : await new File(uri).bytes();
+  // an m4a header alone is about a kilobyte: anything that small holds no sound
+  if (audio.length < 1500) throw new Error('EMPTY_AUDIO');
   let first: unknown;
   for (const r of all) {
     const { body, type } = multipart([['model', ai.sttModel], ['language', lang]], { field: 'file', name: `audio.${ext}`, type: `audio/${ext === 'webm' ? 'webm' : 'm4a'}`, data: audio });

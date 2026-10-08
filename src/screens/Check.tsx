@@ -1,3 +1,4 @@
+import { Asset } from 'expo-asset';
 import Constants from 'expo-constants';
 import * as Linking from 'expo-linking';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -6,7 +7,7 @@ import { AppState, Share, View } from 'react-native';
 import { useLang, useTheme } from '@/ctx/Lang';
 import { listWritableCalendars } from '@/lib/devicecal';
 import { LoggedError, clearErrors, getErrors } from '@/lib/errlog';
-import { InvokeLLM, aiRoutes, getAI } from '@/lib/integrations';
+import { InvokeLLM, TranscribeAudio, aiRoutes, getAI } from '@/lib/integrations';
 import { NotifyReport, initNotifications, notifyReport, testNotification } from '@/lib/notify';
 import { hourlyCard } from '@/lib/logic';
 import { hourlyCardAvailable, isLockAdmin, lockAvailable, setHourlyCard, showHourlyCard } from '@/lib/phonelock';
@@ -89,6 +90,16 @@ export default function Check() {
           <Btn title={t.diag.testNow} onPress={() => test(0)} />
           <Btn kind="ghost" title={t.diag.test15} onPress={() => test(15)} />
           <Btn kind="ghost" title={`🚑 ${t.diag.testSiren}`} onPress={() => test(15, 'ambulance')} />
+          <Btn title={`🎤 ${t.diag.testStt}`} onPress={async () => {
+            // a short Arabic clip shipped with the app, sent through the same path as a real recording
+            try {
+              const [clip] = await Asset.loadAsync(require('../../assets/sounds/stt-test.m4a'));
+              const text = await TranscribeAudio(clip.localUri ?? clip.uri, 'ar');
+              notice(text || '—', `✓ ${t.diag.sttOk}`);
+            } catch (e) {
+              notice(String((e as Error)?.message ?? e), t.diag.failed);
+            }
+          }} />
           {hourlyCardAvailable ? <Btn title={t.diag.testCard} onPress={async () => { await initNotifications(); setHourlyCard(true, 0, 23, { ...hourlyCard(t, goals), ai: await aiRoutes() }); notice(showHourlyCard() ? t.diag.sent : t.diag.failed); }} /> : null}
         </Card>
       </Section>

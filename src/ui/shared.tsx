@@ -168,7 +168,8 @@ export function VoiceToText({ onText, compact, autoStart, big }: { onText: (text
     } catch (e) {
       // the recording itself is still worth keeping when only the transcription failed
       if (saved) onText('', saved);
-      notice(e instanceof NoKeyError ? t.c.aiNeedKey : String(e), e instanceof NoKeyError ? '' : t.c.aiError);
+      const empty = e instanceof Error && e.message === 'EMPTY_AUDIO';
+      notice(e instanceof NoKeyError ? t.c.aiNeedKey : empty ? t.c.emptyAudio : String(e), e instanceof NoKeyError || empty ? '' : t.c.aiError);
     } finally {
       setState('idle');
     }

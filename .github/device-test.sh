@@ -51,7 +51,13 @@ adb shell pm grant $PKG android.permission.RECORD_AUDIO || true
 go brainstorm; shot voice-0 1
 tap 'تسجيل صوتي'; shot voice-recording 4
 tap 'إيقاف'; shot voice-after 3; shot voice-after-10 10
-adb shell dumpsys media.audio_flinger | grep -i -A2 "input" | head -20 > out/audio-in.txt
+adb shell "run-as $PKG ls -la files cache 2>&1" > out/recordings.txt
+adb shell "run-as $PKG sh -c 'find . -name \"*.m4a\" -exec ls -la {} \\;'" >> out/recordings.txt 2>&1
+# a real Arabic clip shipped with the app, through the same transcription path
+adb shell input keyevent KEYCODE_BACK; sleep 1
+go check
+for k in 1 2 3 4 5; do adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb shell cat /sdcard/ui.xml | grep -q 'تحويل الصوت' && break; adb shell input swipe 500 1500 500 500 300; sleep 1; done
+tap 'تحويل الصوت'; shot stt-test 12
 adb shell "run-as $PKG cat databases/RKStorage" > out/RKStorage-after
 grep -E 'ReactNativeJS|AndroidRuntime|FATAL|hayati' out/logcat.txt > out/js.txt || true
 kill %1 || true
