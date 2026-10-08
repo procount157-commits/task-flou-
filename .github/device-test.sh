@@ -55,7 +55,7 @@ adb shell am broadcast -n $PKG/expo.modules.phonelock.HourlyReceiver; sleep 3
 adb shell cmd statusbar expand-notifications; shot notif-1 2
 tap 'عمل مركز'; shot notif-2 2
 tap 'مركز 🎯'; shot notif-3 2
-tap 'قريب'; shot notif-4 2
+tap 'قريب 🟢'; shot notif-4 2
 tap 'لا'; shot notif-done 3
 shot notif-ai 20
 adb shell dumpsys notification --noredact | grep -A3 'android.text\|android.bigText' | head -40 > out/notif-dump.txt
