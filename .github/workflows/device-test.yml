@@ -7,7 +7,7 @@ on:
     inputs:
       routes:
         description: Space-separated routes to open
-        default: checkin
+        default: brainstorm
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -65,6 +65,7 @@ jobs:
           arch: x86_64
           target: google_apis
           disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -no-boot-anim -camera-back none
           script: bash .github/device-test.sh
       - if: always()
         uses: actions/upload-artifact@v4
