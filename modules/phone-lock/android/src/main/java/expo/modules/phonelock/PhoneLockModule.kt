@@ -8,11 +8,16 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import androidx.core.content.ContextCompat
+import android.media.RingtoneManager
+import android.net.Uri
+import expo.modules.kotlin.Promise
 import expo.modules.kotlin.exception.Exceptions
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
 
 class PhoneLockModule : Module() {
+  private var tonePromise: Promise? = null
+
   private val context: Context
     get() = appContext.reactContext ?: throw Exceptions.ReactContextLost()
   private val policy: DevicePolicyManager
@@ -114,5 +119,68 @@ class PhoneLockModule : Module() {
     Function("showHourly") {
       Hourly.show(context, true)
     }
+
+    /* alarms */
+
+    Function("scheduleAlarm") { code: Int, atMillis: Double, id: String, sound: String, label: String ->
+      Alarms.schedule(context, code, atMillis.toLong(), id, sound, label)
+    }
+
+    Function("clearAlarms") {
+      Alarms.clear(context)
+    }
+
+    // Starts ringing now: the alarm's own test button, and the ringing screen when the service is not up yet.
+    Function("startRinging") { id: String, sound: String, label: String ->
+      if (AlarmService.ringingId.isEmpty()) {
+        ContextCompat.startForegroundService(
+          context,
+          Intent(context, AlarmService::class.java).putExtra(Alarms.EXTRA_ID, id).putExtra(Alarms.EXTRA_SOUND, sound).putExtra(Alarms.EXTRA_LABEL, label)
+        )
+      }
+    }
+
+    Function("stopRinging") {
+      context.stopService(Intent(context, AlarmService::class.java))
+    }
+
+    Function("ringingId") {
+      AlarmService.ringingId
+    }
+
+    // The phone's own tone chooser; resolves with the chosen tone's address and name, or null if cancelled.
+    AsyncFunction("pickRingtone") { current: String, promise: Promise ->
+      val activity = appContext.currentActivity
+      if (activity == null) {
+        promise.resolve(null)
+      } else {
+        tonePromise = promise
+        val intent = Intent(RingtoneManager.ACTION_RINGTONE_PICKER)
+          .putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_ALARM or RingtoneManager.TYPE_RINGTONE)
+          .putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, false)
+          .putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
+        if (current.isNotEmpty()) intent.putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, Uri.parse(current))
+        activity.startActivityForResult(intent, TONE_REQUEST)
+      }
+    }
+
+    OnActivityResult { _, payload ->
+      if (payload.requestCode == TONE_REQUEST) {
+        val waiting = tonePromise
+        tonePromise = null
+        @Suppress("DEPRECATION")
+        val uri = payload.data?.getParcelableExtra<Uri>(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
+        if (uri == null) {
+          waiting?.resolve(null)
+        } else {
+          val title = try { RingtoneManager.getRingtone(context, uri)?.getTitle(context) ?: "" } catch (e: Exception) { "" }
+          waiting?.resolve(mapOf("uri" to uri.toString(), "title" to title))
+        }
+      }
+    }
+  }
+
+  companion object {
+    private const val TONE_REQUEST = 7411
   }
 }

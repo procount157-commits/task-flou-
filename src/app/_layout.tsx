@@ -8,7 +8,7 @@ import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect } from 'react';
-import { Platform, Pressable, View } from 'react-native';
+import { AppState, Platform, Pressable, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -18,7 +18,7 @@ import { PomodoroProvider } from '@/ctx/Pomodoro';
 import { today } from '@/lib/dates';
 import { db, kv, preload, useEntity, useKV } from '@/lib/db';
 import { hourlyCard } from '@/lib/logic';
-import { LockSchedule, syncLockSchedules } from '@/lib/phonelock';
+import { LockSchedule, ringingAlarmId, syncLockSchedules } from '@/lib/phonelock';
 import { installGlobalErrorLog } from '@/lib/errlog';
 import { CHECKIN_DEFAULTS, CheckinSettings, initNotifications, onNotificationOpen, scheduleAlarms, scheduleCheckins, syncReminders } from '@/lib/notify';
 import type { Alarm } from '@/lib/types';
@@ -104,6 +104,16 @@ function Background() {
   const [alarms] = useKV<Alarm[]>('alarms', NO_ALARMS);
   const [checkin] = useKV<CheckinSettings>('checkin', CHECKIN_DEFAULTS);
   useEffect(() => onNotificationOpen((url) => router.navigate(url as any)), [router]);
+  // however the app is opened, a ringing alarm takes over the screen
+  useEffect(() => {
+    const check = () => {
+      const id = ringingAlarmId();
+      if (id) router.navigate(`/alarm?ring=${id}` as any);
+    };
+    check();
+    const sub = AppState.addEventListener('change', (st) => st === 'active' && check());
+    return () => sub.remove();
+  }, [router]);
   useEffect(() => {
     // well after launch, and only when the bookings would actually differ from what is already scheduled
     const id = setTimeout(async () => {

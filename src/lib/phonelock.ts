@@ -1,6 +1,7 @@
 import { requireOptionalNativeModule } from 'expo';
 
 import { logError } from './errlog';
+import type { Alarm } from './types';
 
 type PhoneLockNative = {
   isAdmin(): boolean;
@@ -15,6 +16,12 @@ type PhoneLockNative = {
   cancelLock(code: number): void;
   setHourly(enabled: boolean, fromHour: number, toHour: number, payload: string): void;
   showHourly(): void;
+  scheduleAlarm(code: number, atMillis: number, id: string, sound: string, label: string): void;
+  clearAlarms(): void;
+  startRinging(id: string, sound: string, label: string): void;
+  stopRinging(): void;
+  ringingId(): string;
+  pickRingtone(current: string): Promise<{ uri: string; title: string } | null>;
 };
 
 // Android only (modules/phone-lock); null on the web, on iOS and in Expo Go.
@@ -70,3 +77,32 @@ export const hourlyCardAvailable = !!native && typeof native.setHourly === 'func
 export const setHourlyCard = (enabled: boolean, fromHour: number, toHour: number, card: HourlyCard) =>
   safe((m) => (m.setHourly(enabled, fromHour, toHour, JSON.stringify(card)), true), false);
 export const showHourlyCard = () => safe((m) => (m.showHourly(), true), false);
+
+/* ───────── ringing alarm ───────── */
+
+// The alarm rings from an Android service on the alarm stream: it keeps going with the screen locked.
+export const nativeAlarmAvailable = !!native && typeof native.scheduleAlarm === 'function';
+// what the service is asked to play: the phone tone's address, or the name of a built-in siren
+export const alarmSoundSpec = (a: Pick<Alarm, 'sound' | 'tone'>) => a.tone?.uri ?? `alarm_${a.sound}`;
+
+// Books every enabled alarm for the coming week (re-run whenever the app opens).
+export function syncNativeAlarms(alarms: Alarm[]) {
+  safe((m) => {
+    m.clearAlarms();
+    alarms.filter((a) => a.enabled).slice(0, 20).forEach((a, slot) => {
+      const [hh, mm] = a.time.split(':').map(Number);
+      for (let d = 0; d < 7; d++) {
+        const at = new Date();
+        at.setDate(at.getDate() + d);
+        at.setHours(hh, mm, 0, 0);
+        if (at.getTime() <= Date.now() || (a.days.length && !a.days.includes(at.getDay()))) continue;
+        m.scheduleAlarm(slot * 10 + d, at.getTime(), a.id, alarmSoundSpec(a), a.label ?? a.time);
+      }
+    });
+  }, undefined);
+}
+
+export const startRinging = (a: Alarm) => safe((m) => m.startRinging(a.id, alarmSoundSpec(a), a.label ?? a.time), undefined);
+export const stopRinging = () => safe((m) => m.stopRinging(), undefined);
+export const ringingAlarmId = () => safe((m) => m.ringingId(), '');
+export const pickRingtone = async (current = '') => (native ? native.pickRingtone(current).catch((e) => (logError('ringtone', e), null)) : null);

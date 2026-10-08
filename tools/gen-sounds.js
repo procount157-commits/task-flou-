@@ -40,3 +40,19 @@ wav('alarm_whistle', Array.from({ length: AL }, (_, i) => { ph += (2 * Math.PI *
 ph = 0;
 // air-raid wail: a slow rise and fall between 450 and 1500 Hz
 wav('alarm_wail', Array.from({ length: AL }, (_, i) => { ph += (2 * Math.PI * (975 + 525 * Math.sin(T(i) * 2 * Math.PI / 3.2 - 1.57))) / SR; return sq(ph); }));
+
+// More alarms.
+ph = 0;
+// police yelp: a fast sweep up and down
+wav('alarm_police', Array.from({ length: AL }, (_, i) => { ph += (2 * Math.PI * (700 + 600 * Math.abs(((T(i) * 3.2) % 2) - 1))) / SR; return sq(ph); }));
+ph = 0;
+// klaxon: the old "a-oo-ga" two-step horn
+wav('alarm_klaxon', Array.from({ length: AL }, (_, i) => { const t = T(i) % 1.4; ph += (2 * Math.PI * (t < 0.25 ? 330 + t * 600 : t < 0.9 ? 300 : 0)) / SR; return t < 0.9 ? sq(ph) * (0.7 + 0.3 * Math.sin(T(i) * 2 * Math.PI * 28)) : 0; }));
+// digital clock: four sharp beeps, a pause, again
+wav('alarm_beeper', Array.from({ length: AL }, (_, i) => { const t = T(i) % 1; return t < 0.6 && (t % 0.15) < 0.08 ? Math.sin(2 * Math.PI * 2050 * T(i)) : 0; }));
+// buzzer: a harsh low rasp in long pulses
+wav('alarm_buzzer', Array.from({ length: AL }, (_, i) => (T(i) % 1.1 < 0.8 ? (Math.sin(2 * Math.PI * 160 * T(i)) > 0 ? 1 : -1) * 0.7 + Math.sin(2 * Math.PI * 320 * T(i)) * 0.3 : 0)));
+// school bell: a hammer striking 22 times a second
+wav('alarm_bell', Array.from({ length: AL }, (_, i) => { const s = T(i) % (1 / 22); return (T(i) % 3 < 2.4 ? 1 : 0) * Math.exp(-s * 70) * (Math.sin(2 * Math.PI * 1480 * T(i)) + 0.6 * Math.sin(2 * Math.PI * 2960 * T(i)) + 0.4 * Math.sin(2 * Math.PI * 4170 * T(i))); }));
+// nuclear-plant style alert: three rising tones, repeated
+wav('alarm_alert', Array.from({ length: AL }, (_, i) => { const t = T(i) % 1.5; const f = t < 0.35 ? 880 : t < 0.7 ? 1175 : t < 1.05 ? 1568 : 0; return f ? Math.sin(2 * Math.PI * f * T(i)) * 0.6 + (Math.sin(2 * Math.PI * f * 2 * T(i)) > 0 ? 0.4 : -0.4) : 0; }));

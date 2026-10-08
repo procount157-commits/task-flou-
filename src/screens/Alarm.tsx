@@ -3,12 +3,13 @@ import { AudioPlayer, createAudioPlayer, setAudioModeAsync } from 'expo-audio';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Accelerometer } from 'expo-sensors';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { BackHandler, Modal, Platform, Pressable, Vibration, View } from 'react-native';
+import { AppState, BackHandler, Modal, Platform, Pressable, Vibration, View } from 'react-native';
 
 import { useLang, useTheme } from '@/ctx/Lang';
 import { today } from '@/lib/dates';
 import { kv, useKV } from '@/lib/db';
 import { scheduleAlarms, silenceAlarm } from '@/lib/notify';
+import { nativeAlarmAvailable, pickRingtone, ringingAlarmId, startRinging, stopRinging } from '@/lib/phonelock';
 import type { Alarm } from '@/lib/types';
 import { FormModal } from '@/ui/Form';
 import { Badge, Btn, Card, Empty, Progress, Row, Screen, Toggle, Txt, confirm, opts } from '@/ui/kit';
@@ -19,6 +20,12 @@ const SIRENS: Record<Alarm['sound'], number> = {
   ambulance: require('../../assets/sounds/alarm_ambulance.wav'),
   whistle: require('../../assets/sounds/alarm_whistle.wav'),
   wail: require('../../assets/sounds/alarm_wail.wav'),
+  police: require('../../assets/sounds/alarm_police.wav'),
+  klaxon: require('../../assets/sounds/alarm_klaxon.wav'),
+  beeper: require('../../assets/sounds/alarm_beeper.wav'),
+  buzzer: require('../../assets/sounds/alarm_buzzer.wav'),
+  bell: require('../../assets/sounds/alarm_bell.wav'),
+  alert: require('../../assets/sounds/alarm_alert.wav'),
 };
 // about ten metres of walking
 const STEPS = 16;
@@ -48,6 +55,13 @@ function Ringing({ alarm, onStop }: { alarm: Alarm; onStop: () => void }) {
   const useSteps = alarm.challenge === 'steps' && sensor;
 
   useEffect(() => {
+    const back = BackHandler.addEventListener('hardwareBackPress', () => true);
+    // On the phone the Android service does the ringing, so it survives the screen locking;
+    // it is started here only if it is not already ringing (the test button, or a late open).
+    if (nativeAlarmAvailable) {
+      if (!ringingAlarmId()) startRinging(alarm);
+      return () => back.remove();
+    }
     setAudioModeAsync({ playsInSilentMode: true }).catch(() => {});
     try {
       const p = createAudioPlayer(SIRENS[alarm.sound]);
@@ -57,7 +71,6 @@ function Ringing({ alarm, onStop }: { alarm: Alarm; onStop: () => void }) {
       player.current = p;
     } catch {}
     if (Platform.OS !== 'web') Vibration.vibrate([0, 700, 300], true);
-    const back = BackHandler.addEventListener('hardwareBackPress', () => true);
     return () => {
       back.remove();
       Vibration.cancel();
@@ -66,7 +79,8 @@ function Ringing({ alarm, onStop }: { alarm: Alarm; onStop: () => void }) {
         player.current?.remove();
       } catch {}
     };
-  }, [alarm.sound]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [alarm.id]);
 
   // A step is a spike in total acceleration after it has settled back near 1 g.
   useEffect(() => {
@@ -145,7 +159,15 @@ export default function AlarmScreen() {
   const [form, setForm] = useState<Partial<Alarm> | null>(null);
   const [testing, setTesting] = useState<Alarm | null>(null);
   const preview = useRef<AudioPlayer | null>(null);
-  const ringing = useMemo(() => testing ?? alarms.find((a) => a.id === params.ring) ?? null, [testing, alarms, params.ring]);
+  // an alarm the service is already ringing wins, so opening the app any other way still lands on it
+  const [nativeRing, setNativeRing] = useState('');
+  useEffect(() => {
+    const read = () => setNativeRing(ringingAlarmId());
+    read();
+    const sub = AppState.addEventListener('change', (st) => st === 'active' && read());
+    return () => sub.remove();
+  }, [params.ring]);
+  const ringing = useMemo(() => testing ?? alarms.find((a) => a.id === (params.ring || nativeRing)) ?? null, [testing, alarms, params.ring, nativeRing]);
 
   const save = async (next: Alarm[]) => {
     await setAlarms(next);
@@ -153,6 +175,8 @@ export default function AlarmScreen() {
   };
   const stop = async () => {
     const id = ringing?.id;
+    stopRinging();
+    setNativeRing('');
     setTesting(null);
     router.setParams({ ring: '' });
     if (id) await silenceAlarm(id);
@@ -180,17 +204,19 @@ export default function AlarmScreen() {
   return (
     <Screen>
       <Btn title={`+ ${t.alarm.add}`} onPress={() => setForm({})} />
-      <Txt v="small">{t.alarm.note}</Txt>
+      <Txt v="small">{nativeAlarmAvailable ? t.alarm.lockNote : t.alarm.note}</Txt>
       {!alarms.length ? <Empty icon="⏰" text={t.alarm.empty} /> : [...alarms].sort((a, b) => a.time.localeCompare(b.time)).map((a) => (
         <Card key={a.id}>
           <Toggle label={`${a.time}${a.label ? ` · ${a.label}` : ''}`} value={a.enabled} onChange={(enabled) => save(alarms.map((x) => (x.id === a.id ? { ...x, enabled } : x)))} />
           <Row wrap gap={4}>
-            <Badge text={t.alarm.sounds[a.sound]} />
+            <Badge text={a.tone ? `🎵 ${a.tone.title || t.alarm.deviceTone}` : t.alarm.sounds[a.sound]} />
             <Badge text={t.alarm.ch[a.challenge]} color={c.primary} />
             <Badge text={a.days.length && a.days.length < 7 ? [...a.days].sort().map((d) => t.daysShort[d]).join(' ') : t.alarm.everyDay} />
           </Row>
           <Row wrap gap={4}>
-            <Btn small kind="ghost" title={`🔊 ${t.alarm.preview}`} onPress={() => listen(a.sound)} />
+            {!a.tone ? <Btn small kind="ghost" title={`🔊 ${t.alarm.preview}`} onPress={() => listen(a.sound)} /> : null}
+            {nativeAlarmAvailable ? <Btn small kind="ghost" title={t.alarm.deviceTone} onPress={async () => { const tone = await pickRingtone(a.tone?.uri); if (tone) save(alarms.map((x) => (x.id === a.id ? { ...x, tone } : x))); }} /> : null}
+            {a.tone ? <Btn small kind="ghost" title={t.alarm.builtIn} onPress={() => save(alarms.map((x) => (x.id === a.id ? { ...x, tone: undefined } : x)))} /> : null}
             <Btn small kind="ghost" title={`▶ ${t.alarm.test}`} onPress={() => setTesting(a)} />
             <Btn small kind="ghost" title={t.c.edit} onPress={() => setForm(a)} />
             <Btn small kind="ghost" title={t.c.delete} onPress={() => confirm(t.c.confirmDelete, () => save(alarms.filter((x) => x.id !== a.id)), t.c.delete, t.c.cancel)} />

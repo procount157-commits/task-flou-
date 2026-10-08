@@ -286,7 +286,9 @@ export interface ActivityLog extends Base {
   audio_urls?: string[];
 }
 
-export type Alarm = { id: string; time: string; days: number[]; sound: 'ambulance' | 'whistle' | 'wail'; challenge: 'steps' | 'math'; enabled: boolean; label?: string };
+export type AlarmSound = 'ambulance' | 'whistle' | 'wail' | 'police' | 'klaxon' | 'beeper' | 'buzzer' | 'bell' | 'alert';
+// `tone`, when set, is a ringtone picked from the phone and replaces the built-in `sound`
+export type Alarm = { id: string; time: string; days: number[]; sound: AlarmSound; tone?: { uri: string; title: string }; challenge: 'steps' | 'math'; enabled: boolean; label?: string };
 
 export interface EntityMap {
   ActivityLog: ActivityLog;

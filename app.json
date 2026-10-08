@@ -58,7 +58,13 @@
           "sounds": [
             "./assets/sounds/alarm_ambulance.wav",
             "./assets/sounds/alarm_whistle.wav",
-            "./assets/sounds/alarm_wail.wav"
+            "./assets/sounds/alarm_wail.wav",
+            "./assets/sounds/alarm_police.wav",
+            "./assets/sounds/alarm_klaxon.wav",
+            "./assets/sounds/alarm_beeper.wav",
+            "./assets/sounds/alarm_buzzer.wav",
+            "./assets/sounds/alarm_bell.wav",
+            "./assets/sounds/alarm_alert.wav"
           ]
         }
       ],
@@ -77,7 +83,8 @@
             "./node_modules/@expo-google-fonts/cairo/700Bold/Cairo_700Bold.ttf"
           ]
         }
-      ]
+      ],
+      "./plugins/with-alarm-over-lockscreen"
     ],
     "experiments": {
       "typedRoutes": false,

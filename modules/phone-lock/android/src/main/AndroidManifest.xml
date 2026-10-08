@@ -5,6 +5,9 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
     <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT"/>
+    <uses-permission android:name="android.permission.VIBRATE"/>
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
 
     <application>
         <!-- Device admin with the single "force-lock" policy: it lets the app turn the screen off, nothing else. -->
@@ -26,6 +29,17 @@
         </receiver>
 
         <receiver android:name=".LockAlarmReceiver" android:exported="false"/>
+
+        <receiver android:name=".AlarmReceiver" android:exported="false"/>
+
+        <service
+            android:name=".AlarmService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Rings an alarm the user set until they dismiss it in the app"/>
+        </service>
 
         <service
             android:name=".LockService"

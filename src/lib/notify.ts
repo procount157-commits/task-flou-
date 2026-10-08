@@ -3,7 +3,7 @@ import { Platform } from 'react-native';
 
 import { parse, today } from './dates';
 import { logError } from './errlog';
-import { HourlyCard, hourlyCardAvailable, setHourlyCard } from './phonelock';
+import { HourlyCard, hourlyCardAvailable, nativeAlarmAvailable, setHourlyCard, syncNativeAlarms } from './phonelock';
 import type { Alarm, DailyTask, Habit } from './types';
 
 const native = Platform.OS !== 'web';
@@ -139,10 +139,18 @@ export async function scheduleAlarms(alarms: Alarm[], title: string): Promise<bo
   if (!native) return false;
   const all = await Notifications.getAllScheduledNotificationsAsync().catch(() => []);
   await cancel(...all.map((n) => n.identifier).filter((id) => id.startsWith('alarm-')));
-  if (!alarms.some((a) => a.enabled)) return true;
+  if (!alarms.some((a) => a.enabled)) {
+    if (nativeAlarmAvailable) syncNativeAlarms(alarms);
+    return true;
+  }
   if (!(await initNotifications())) return false;
+  // the real thing: a service that rings until dismissed; the notification burst below is the fallback
+  if (nativeAlarmAvailable) {
+    syncNativeAlarms(alarms);
+    return true;
+  }
   if (Platform.OS === 'android')
-    for (const sound of ['ambulance', 'whistle', 'wail'])
+    for (const sound of ['ambulance', 'whistle', 'wail', 'police', 'klaxon', 'beeper', 'buzzer', 'bell', 'alert'])
       await Notifications.setNotificationChannelAsync(`alarm-${sound}`, {
         name: `Alarm (${sound})`, importance: Notifications.AndroidImportance.MAX, sound: `alarm_${sound}.wav`, bypassDnd: true,
         vibrationPattern: [0, 800, 400, 800, 400, 800], lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,

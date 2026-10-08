@@ -7,6 +7,8 @@ import android.content.Intent
 /** Fires at the top of each hour, and after a restart to put the hourly alarm back. */
 class HourlyReceiver : BroadcastReceiver() {
   override fun onReceive(context: Context, intent: Intent) {
+    // a restart wipes every alarm the app had booked
+    if (intent.action == Intent.ACTION_BOOT_COMPLETED) Alarms.restore(context)
     if (!Hourly.isEnabled(context)) return
     if (intent.action != Intent.ACTION_BOOT_COMPLETED) Hourly.show(context, false)
     Hourly.scheduleNext(context)

@@ -259,7 +259,8 @@ const ar = {
     coach: 'أنت محاور سقراطي حكيم ودافئ يتحدث العربية. المستخدم يسجّل كل ساعة ما يفعله. مهمتك أن تطرح عليه أسئلة فلسفية قصيرة وعميقة عن مخاوفه ودوافعه وأهدافه، وهل ما سيفعله سيحقق أهدافه. القواعد: نص عادي بلا Markdown. في كل رد سؤال واحد فقط لا يزيد عن جملتين، مبني على ما قاله للتو. في ردك الأول اسأل عن الخوف أو الدافع الحقيقي وراء ما يفعله. في ردك الثاني اسأل ماذا سيفعل في الساعة القادمة وهل يخدم هدفاً محدداً من أهدافه وسمِّ الهدف بالاسم. في ردك الثالث والأخير لا تسأل: أعطِ خلاصة من ثلاث جمل قصيرة (هل يسير نحو أهدافه، الخوف الذي ظهر، خطوة واحدة محددة للساعة القادمة). لا تعظ ولا تجامل.',
   },
   alarm: {
-    title: 'المنبّه', add: 'منبّه جديد', sound: 'صوت المنبّه', sounds: { ambulance: '🚑 إسعاف', whistle: '📣 صفير', wail: '🚨 صافرة إنذار' },
+    title: 'المنبّه', add: 'منبّه جديد', sound: 'صوت المنبّه', sounds: { ambulance: '🚑 إسعاف', whistle: '📣 صفير', wail: '🚨 صافرة إنذار', police: '🚓 شرطة', klaxon: '📯 بوق', beeper: '⏰ منبّه رقمي', buzzer: '🔊 طنّان خشن', bell: '🔔 جرس مدرسة', alert: '☢️ إنذار طوارئ' },
+    deviceTone: '🎵 نغمة من الهاتف', builtIn: 'العودة للأصوات الجاهزة', lockNote: 'المنبّه يرنّ بلا توقف حتى والشاشة مقفلة، ويظهر فوق شاشة القفل، ولا يسكت إلا بإنهاء التحدي.',
     challenge: 'طريقة الإيقاف', ch: { steps: '🚶 امشِ 10 أمتار', math: '🧮 مسائل حسابية' }, empty: 'لا منبّهات بعد', everyDay: 'كل يوم',
     ringing: 'استيقظ!', walk: 'امشِ لإيقاف المنبّه', stepsLeft: 'خطوة متبقية', mathLeft: 'مسائل متبقية', wrong: 'إجابة خاطئة — مسألة إضافية', test: 'جرّب الآن',
     stopped: 'أحسنت! توقف المنبّه', labels: ['الاستيقاظ', 'صلاة الفجر', 'العمل', 'الدواء', 'النوم'], label: 'الاسم', preview: 'استمع',
@@ -574,7 +575,8 @@ const en: Translations = {
     coach: "You are a wise, warm Socratic interlocutor. The user records every hour what they are doing. Your job is to ask short, deep philosophical questions about their fears, motives and goals, and whether what they are about to do will achieve their goals. Rules: plain text, no Markdown. Each reply is exactly one question of at most two sentences, built on what they just said. In your first reply ask about the fear or real motive behind what they are doing. In your second reply ask what they will do in the next hour and whether it serves a specific goal of theirs, naming that goal. In your third and last reply do not ask: give a three-sentence summary (are they moving toward their goals, the fear that surfaced, one concrete step for the next hour). Do not preach or flatter.",
   },
   alarm: {
-    title: 'Alarm', add: 'New alarm', sound: 'Alarm sound', sounds: { ambulance: '🚑 Ambulance', whistle: '📣 Whistle', wail: '🚨 Siren wail' },
+    title: 'Alarm', add: 'New alarm', sound: 'Alarm sound', sounds: { ambulance: '🚑 Ambulance', whistle: '📣 Whistle', wail: '🚨 Siren wail', police: '🚓 Police', klaxon: '📯 Klaxon', beeper: '⏰ Digital beeper', buzzer: '🔊 Harsh buzzer', bell: '🔔 School bell', alert: '☢️ Emergency alert' },
+    deviceTone: '🎵 A tone from the phone', builtIn: 'Back to the built-in sounds', lockNote: 'The alarm rings without stopping even with the screen locked, shows over the lock screen, and only goes quiet when the challenge is done.',
     challenge: 'How to stop it', ch: { steps: '🚶 Walk 10 metres', math: '🧮 Maths problems' }, empty: 'No alarms yet', everyDay: 'Every day',
     ringing: 'Wake up!', walk: 'Walk to stop the alarm', stepsLeft: 'steps left', mathLeft: 'problems left', wrong: 'Wrong — one more problem', test: 'Try it now',
     stopped: 'Well done! Alarm stopped', labels: ['Wake up', 'Fajr prayer', 'Work', 'Medicine', 'Sleep'], label: 'Name', preview: 'Listen',
