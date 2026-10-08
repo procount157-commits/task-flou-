@@ -123,22 +123,35 @@ export const suggestGifts = async (recipient: string, occasion: string, min: num
   return (JSON.parse(m[0]) as unknown[]).map(String).slice(0, 5);
 };
 
+// A multipart/form-data body from text fields and one file, as bytes.
+function multipart(fields: [string, string][], file: { field: string; name: string; type: string; data: Uint8Array }) {
+  const boundary = `----hayati${Date.now().toString(16)}${Math.random().toString(16).slice(2)}`;
+  const enc = new TextEncoder();
+  const head = fields.map(([k, v]) => `--${boundary}\r\nContent-Disposition: form-data; name="${k}"\r\n\r\n${v}\r\n`).join('') +
+    `--${boundary}\r\nContent-Disposition: form-data; name="${file.field}"; filename="${file.name}"\r\nContent-Type: ${file.type}\r\n\r\n`;
+  const a = enc.encode(head);
+  const b = enc.encode(`\r\n--${boundary}--\r\n`);
+  const body = new Uint8Array(a.length + file.data.length + b.length);
+  body.set(a, 0);
+  body.set(file.data, a.length);
+  body.set(b, a.length + file.data.length);
+  return { body, type: `multipart/form-data; boundary=${boundary}` };
+}
+
 export async function TranscribeAudio(uri: string, lang: string): Promise<string> {
   const ai = await getAI();
   // only the main service (Groq) transcribes; the fallback has no speech model
   const all = routes(ai, 'main');
   if (!all.length) throw new NoKeyError();
-  const file = Platform.OS === 'web' ? await (await fetch(uri)).blob() : null;
+  // the request body is built by hand: the phone's fetch rejects React Native's {uri} form parts
+  const raw = (uri.split('?')[0].split('.').pop() ?? '').toLowerCase();
+  const ext = ['m4a', 'mp4', 'aac', 'webm', 'mp3', 'wav', 'ogg', '3gp'].includes(raw) ? raw : Platform.OS === 'web' ? 'webm' : 'm4a';
+  const audio = Platform.OS === 'web' ? new Uint8Array(await (await fetch(uri)).arrayBuffer()) : await new File(uri).bytes();
   let first: unknown;
   for (const r of all) {
-    // a FormData body is consumed by its request, so each attempt builds its own
-    const form = new FormData();
-    if (file) form.append('file', file, 'audio.webm');
-    else form.append('file', { uri, name: `audio.${uri.split('.').pop() || 'm4a'}`, type: 'audio/m4a' } as any);
-    form.append('model', ai.sttModel);
-    form.append('language', lang);
+    const { body, type } = multipart([['model', ai.sttModel], ['language', lang]], { field: 'file', name: `audio.${ext}`, type: `audio/${ext === 'webm' ? 'webm' : 'm4a'}`, data: audio });
     try {
-      const res = await fetch(`${r.url.replace(/\/$/, '')}/audio/transcriptions`, { method: 'POST', headers: { Authorization: `Bearer ${r.key}` }, body: form });
+      const res = await fetch(`${r.url.replace(/\/$/, '')}/audio/transcriptions`, { method: 'POST', headers: { Authorization: `Bearer ${r.key}`, 'Content-Type': type }, body });
       if (!res.ok) throw new Error(`${res.status} ${(await res.text()).slice(0, 200)}`);
       return String((await res.json()).text ?? '').trim();
     } catch (e) {
