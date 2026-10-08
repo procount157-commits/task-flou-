@@ -144,6 +144,10 @@ async function readFileBytes(uri: string): Promise<Uint8Array> {
   return out.subarray(0, o);
 }
 
+// Whisper fills silence with subtitle credits it learned from video; those are not what the user said.
+const SILENCE = [/ترجمة نانسي قنقر/, /اشتركوا? في القناة/, /شكرا(ً)? (لكم )?على المشاهدة/, /^(\.|…|\s)*$/, /thanks? for watching/i, /subtitles? by/i, /please subscribe/i];
+const dropSilenceText = (text: string) => (SILENCE.some((r) => r.test(text)) ? '' : text);
+
 // A multipart/form-data body from text fields and one file, as bytes.
 function multipart(fields: [string, string][], file: { field: string; name: string; type: string; data: Uint8Array }) {
   const boundary = `----hayati${Date.now().toString(16)}${Math.random().toString(16).slice(2)}`;
@@ -176,7 +180,7 @@ export async function TranscribeAudio(uri: string, lang: string): Promise<string
     try {
       const res = await fetch(`${r.url.replace(/\/$/, '')}/audio/transcriptions`, { method: 'POST', headers: { Authorization: `Bearer ${r.key}`, 'Content-Type': type }, body });
       if (!res.ok) throw new Error(`${res.status} ${(await res.text()).slice(0, 200)}`);
-      return String((await res.json()).text ?? '').trim();
+      return dropSilenceText(String((await res.json()).text ?? '').trim());
     } catch (e) {
       first ??= e;
       logError('transcribe', e);
