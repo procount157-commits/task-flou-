@@ -40,7 +40,11 @@ jobs:
           now = datetime.datetime.utcnow().isoformat() + 'Z'
           day = now[:10]
           con = sqlite3.connect('RKStorage')
+          # the same shape the app creates, or it deletes the file as foreign
+          con.execute('CREATE TABLE android_metadata (locale TEXT)')
+          con.execute("INSERT INTO android_metadata VALUES ('en_US')")
           con.execute('CREATE TABLE catalystLocalStorage (key TEXT PRIMARY KEY, value TEXT NOT NULL)')
+          con.execute('PRAGMA user_version = 1')
           rows = {
             'kv:user': {'id': 'u_test', 'name': 'Test', 'email': '', 'role': 'admin'},
             'db:UserProfile': [{'id': 'p1', 'created_by_id': 'u_test', 'created_date': now, 'updated_date': now, 'target_age': 80, 'birth_date': '1990-01-01', 'onboarding_complete': True, 'last_intention_date': day}],

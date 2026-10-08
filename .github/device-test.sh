@@ -9,6 +9,8 @@ adb shell pm grant $PKG android.permission.POST_NOTIFICATIONS || true
 adb shell monkey -p $PKG 1; sleep 8; adb shell am force-stop $PKG
 adb push RKStorage /data/local/tmp/RKStorage
 adb shell "run-as $PKG sh -c 'mkdir -p databases && rm -f databases/RKStorage* && cp /data/local/tmp/RKStorage databases/RKStorage'"
+adb shell "run-as $PKG ls -la databases" > out/seed.txt 2>&1
+adb shell "run-as $PKG cat databases/RKStorage" > out/RKStorage-seeded
 adb logcat -c
 adb logcat -v time > out/logcat.txt 2>&1 &
 adb shell monkey -p $PKG 1; sleep 15
