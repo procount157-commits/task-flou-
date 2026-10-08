@@ -16,7 +16,8 @@ import { addPoints, POINTS } from '@/lib/logic';
 import type { DailyTask, Priority, TaskList } from '@/lib/types';
 
 const NO_LISTS: TaskList[] = [];
-import { Btn, Chips, Input, Progress, Row, Sheet, Suggest, Txt, confirm, notice, opts } from '@/ui/kit';
+import { logError } from '@/lib/errlog';
+import { Btn, Chips, Input, Progress, Row, Sheet, Suggest, Toggle, Txt, confirm, notice, opts } from '@/ui/kit';
 import { DateField, DatePickerSheet, TimeField } from '@/ui/pickers';
 import { DaysPicker, useCelebrate } from '@/ui/shared';
 import { Text, useFontFamily } from '@/ui/text';
@@ -103,6 +104,7 @@ export function QuickAdd({ defaultDate, extraSuggestions = [], listId }: { defau
   const [prio, setPrio] = useState<Priority | undefined>(undefined);
   const [lists] = useKV<TaskList[]>('lists', NO_LISTS);
   const [list, setList] = useState<string | undefined>(listId);
+  const [autoSplit, setAutoSplit] = useKV<boolean>('autosplit', true);
   const [pickDate, setPickDate] = useState(false);
   const [aiItems, setAiItems] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
@@ -126,6 +128,11 @@ export function QuickAdd({ defaultDate, extraSuggestions = [], listId }: { defau
     setTitle('');
     setAiItems((xs) => xs.filter((x) => x !== clean));
     autoSyncTask(made.id);
+    // the breakdown arrives a moment later as subtasks under the new task; a missing key just skips it
+    if (autoSplit)
+      splitTask(clean, lang)
+        .then((steps) => db.bulkCreate('DailyTask', steps.map((s) => ({ title: s, date, parent_id: made.id, priority: prio, completed: false }))))
+        .catch((e) => logError('auto-split', e));
   };
 
   const askAI = async () => {
@@ -165,6 +172,7 @@ export function QuickAdd({ defaultDate, extraSuggestions = [], listId }: { defau
           <Ionicons name="arrow-up" size={20} color={c.onPrimary} />
         </Pressable>
       </Row>
+      <Toggle label={t.sug.autoSplit} value={autoSplit} onChange={setAutoSplit} />
       <DatePickerSheet visible={pickDate} value={date} onChange={(v) => setDate(v ?? defaultDate)} onClose={() => setPickDate(false)} allowClear={false} />
     </View>
   );
@@ -279,3 +287,16 @@ export function TaskDetail({ taskId, onClose }: { taskId: string | null; onClose
     </Sheet>
   );
 }
+
+// A subtask shown indented under its parent in the list, ticked in place.
+export const SubRow = memo(function SubRow({ task, onToggle }: { task: DailyTask; onToggle: (t: DailyTask) => void }) {
+  const c = useTheme();
+  const { dir } = useLang();
+  return (
+    <Pressable onPress={() => onToggle(task)} accessibilityRole="checkbox" accessibilityState={{ checked: !!task.completed }} accessibilityLabel={task.title}
+      style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8, paddingHorizontal: 14, paddingStart: 48, backgroundColor: c.card, borderBottomWidth: 1, borderColor: c.border }}>
+      <Ionicons name={task.completed ? 'checkmark-circle' : 'ellipse-outline'} size={18} color={task.completed ? c.muted : c.primary} />
+      <Text numberOfLines={2} style={{ flex: 1, color: task.completed ? c.muted : c.text, fontSize: 13, textDecorationLine: task.completed ? 'line-through' : 'none', textAlign: dir === 'rtl' ? 'right' : 'left', writingDirection: dir }}>{task.title}</Text>
+    </Pressable>
+  );
+});

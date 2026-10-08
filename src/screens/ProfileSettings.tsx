@@ -22,7 +22,7 @@ export default function ProfileSettings() {
   const [ai, setAi] = useState<AISettings | null>(null);
   const [error, setError] = useState('');
   const [tg, setTg] = useState<TelegramSettings>(TG_DEFAULTS);
-  const [autoCal, setAutoCal] = useKV<boolean>('gcal:auto', false);
+  const [autoCal, setAutoCal] = useKV<boolean>('gcal:auto', true);
   const [calId, setCalId] = useKV<string>('gcal:id', '');
   const [calendars, setCalendars] = useState<CalInfo[] | null>(null);
   const loadCalendars = async () => {

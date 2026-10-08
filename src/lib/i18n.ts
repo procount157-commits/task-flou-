@@ -117,7 +117,7 @@ const ar = {
     tips: ['لا تستخدم هاتفك', 'خذ أنفاساً عميقة', 'قم وامشِ قليلاً', 'ارح عينيك', 'اشرب ماء'],
     done: 'اكتملت الجلسة!', statsToday: 'اليوم', statsMonth: 'هذا الشهر', statsTotal: 'الإجمالي', focusEnded: 'انتهى وقت التركيز — خذ استراحة',
     breakEnded: 'انتهت الاستراحة — عُد للتركيز', sessionDone: 'اكتملت جلسة البومودو 🎉', noTasks: 'لا مهام غير مكتملة اليوم',
-    sessions: 'جلسات تركيز', voiceGuide: 'إرشاد صوتي', paused: 'متوقف مؤقتاً',
+    sessions: 'جلسات تركيز', voiceGuide: 'إرشاد صوتي', paused: 'متوقف مؤقتاً', startNow: '▶ ابدأ التركيز الآن',
   },
   fin: {
     tabs: ['المعاملات', 'الاتجاهات', 'الأهداف', 'الرواتب', 'الهدايا', 'العملاء', 'أنواع المصاريف', 'التقارير'],
@@ -206,6 +206,17 @@ const ar = {
     empty: 'لا دعوات بعد', role: 'الدور',
   },
   notif: { highTask: 'مهمة عالية الأولوية', habit: 'تذكير بالعادة' },
+  diag: {
+    title: 'فحص التطبيق', intro: 'هذه الشاشة تفحص ما يحتاجه التطبيق من الهاتف. كل سطر أحمر يشرح ما ينقص وكيف تصلحه.',
+    notif: 'إذن الإشعارات', granted: 'مسموح', denied: 'غير مسموح — لن تصل مراجعة الساعة ولا المنبّه', allow: 'اسمح بالإشعارات', settings: 'افتح إعدادات التطبيق في الهاتف',
+    booked: 'الإشعارات المحجوزة', hourly: 'مراجعة الساعة', alarms: 'المنبّه', reminders: 'تذكيرات', noneBooked: 'لا شيء محجوز — فعّل مراجعة الساعة من تبويب جلسة الساعة',
+    battery: 'مهم: في إعدادات الهاتف ← التطبيقات ← حياتي، اجعل البطارية "غير مقيّدة" واسمح بالتشغيل التلقائي، وإلا يوقف الهاتف الإشعارات عند إغلاق التطبيق (خصوصاً Xiaomi و Huawei و Oppo و Samsung).',
+    testNow: 'أرسل إشعاراً الآن', test15: 'إشعار بعد 15 ثانية (أغلق التطبيق وانتظر)', testSiren: 'صفارة المنبّه بعد 15 ثانية', sent: 'تم — راقب شريط الإشعارات', failed: 'فشل — انظر سجل الأخطاء بالأسفل',
+    lock: 'قفل الهاتف', lockMissing: 'وحدة القفل غير موجودة في هذه النسخة', lockNoAdmin: 'الوحدة موجودة لكن صلاحية القفل لم تُمنح', lockReady: 'جاهز',
+    calendar: 'تقويم الهاتف', calNone: 'لا يوجد تقويم قابل للكتابة أو لم يُمنح الإذن', calOk: 'تقاويم متاحة', ai: 'الذكاء الاصطناعي', aiNoKey: 'لا يوجد مفتاح — ثبّت النسخة الشخصية أو أضف مفتاحاً من الإعدادات',
+    aiTest: 'اختبر الاتصال', aiOk: 'يعمل', errors: 'سجل الأخطاء', noErrors: 'لا أخطاء مسجلة', clear: 'امسح السجل', share: '📤 أرسل التقرير', version: 'النسخة', refresh: 'أعد الفحص',
+    steps: 'للتأكد أن مراجعة الساعة تعمل: 1) اسمح بالإشعارات. 2) اضغط "إشعار بعد 15 ثانية" ثم أغلق التطبيق. 3) إن وصل الإشعار فكل شيء سليم، وإن لم يصل فالهاتف يوقف التطبيق في الخلفية — طبّق خطوة البطارية.',
+  },
   lock: {
     title: 'قفل الهاتف', grant: 'امنح صلاحية قفل الشاشة', granted: 'صلاحية القفل مفعّلة ✓', remove: 'إلغاء صلاحية القفل (مطلوب قبل حذف التطبيق)',
     duration: 'مدة القفل بالدقائق', start: '🔒 اقفل الهاتف الآن', lockOnce: 'إطفاء الشاشة مرة واحدة',
@@ -217,7 +228,7 @@ const ar = {
   },
   cal: {
     title: 'تقويم Google', auto: 'أضف كل مهمة جديدة إلى التقويم تلقائياً', choose: 'التقويم المستخدم', none: 'لم أجد تقويماً قابلاً للكتابة — أضف حساب Google إلى الهاتف واسمح بصلاحية التقويم',
-    added: 'أُضيفت إلى التقويم ✓', load: 'اعرض تقاويم الهاتف', note: 'تُكتب المهمة مباشرة في تقويم حساب Google على هاتفك وتظهر في Google Calendar بعد المزامنة، دون فتح أي رابط.',
+    added: 'أُضيفت إلى التقويم ✓', load: 'اعرض تقاويم الهاتف', views: { month: 'شهر', week: 'أسبوع', day: 'يوم' }, allDay: 'طوال اليوم', fromGoogle: 'من تقويم الهاتف', note: 'تُكتب المهمة مباشرة في تقويم حساب Google على هاتفك وتظهر في Google Calendar بعد المزامنة، دون فتح أي رابط.',
   },
   checkin: {
     title: 'ماذا فعلت؟', question: 'ماذا كنت تفعل في الساعة الماضية؟', enable: 'اسألني كل ساعة بإشعار ثابت', from: 'من', to: 'إلى',
@@ -287,7 +298,7 @@ const ar = {
     ideas: ['فكرة مشروع', 'فكرة محتوى', 'تحسين في العمل', 'شيء أريد تعلمه'],
     content: ['نصيحة سريعة', 'قصة نجاح', 'شرح مبسط', 'سؤال للمتابعين', 'خلف الكواليس'],
     kolb: ['نعم', 'لا', 'إلى حد ما', 'لا أعرف بعد', 'قلق', 'ثقة', 'ضيق الوقت', 'قلة التحضير'],
-    suggestAI: '✨ اقترح لي مهام', suggested: 'اقتراحات', addAll: '➕ أضف الكل',
+    suggestAI: '✨ اقترح لي مهام', suggested: 'اقتراحات', addAll: '➕ أضف الكل', autoSplit: '✂️ قسّم كل مهمة جديدة إلى مهام فرعية تلقائياً',
   },
   tasks: {
     lists: { today: 'اليوم', tomorrow: 'غداً', week: 'الأيام السبعة القادمة', all: 'الكل', done: 'المكتملة' },
@@ -419,7 +430,7 @@ const en: Translations = {
     tips: ['Stay off your phone', 'Take deep breaths', 'Get up and walk', 'Rest your eyes', 'Drink water'],
     done: 'Session complete!', statsToday: 'Today', statsMonth: 'This month', statsTotal: 'Total', focusEnded: 'Focus time is over — take a break',
     breakEnded: 'Break is over — back to focus', sessionDone: 'Pomodoro session complete 🎉', noTasks: 'No unfinished tasks today',
-    sessions: 'focus sessions', voiceGuide: 'Voice guidance', paused: 'Paused',
+    sessions: 'focus sessions', voiceGuide: 'Voice guidance', paused: 'Paused', startNow: '▶ Start focusing now',
   },
   fin: {
     tabs: ['Transactions', 'Trends', 'Goals', 'Salaries', 'Gifts', 'Clients', 'Expense types', 'Reports'],
@@ -508,6 +519,17 @@ const en: Translations = {
     empty: 'No invitations yet', role: 'Role',
   },
   notif: { highTask: 'High-priority task', habit: 'Habit reminder' },
+  diag: {
+    title: 'App check', intro: 'This screen checks what the app needs from the phone. Every red line says what is missing and how to fix it.',
+    notif: 'Notification permission', granted: 'Allowed', denied: 'Not allowed — the hourly review and the alarm cannot reach you', allow: 'Allow notifications', settings: "Open the app's phone settings",
+    booked: 'Booked notifications', hourly: 'Hourly review', alarms: 'Alarm', reminders: 'Reminders', noneBooked: 'Nothing is booked — turn the hourly review on in the Hourly session tab',
+    battery: 'Important: in phone Settings → Apps → Hayati, set Battery to "Unrestricted" and allow auto-start, or the phone stops notifications once the app is closed (especially Xiaomi, Huawei, Oppo and Samsung).',
+    testNow: 'Send a notification now', test15: 'Notification in 15 seconds (close the app and wait)', testSiren: 'Alarm siren in 15 seconds', sent: 'Done — watch the notification bar', failed: 'Failed — see the error log below',
+    lock: 'Phone lock', lockMissing: 'The lock module is not in this build', lockNoAdmin: 'The module is there but the lock permission was not granted', lockReady: 'Ready',
+    calendar: 'Phone calendar', calNone: 'No writable calendar, or permission not granted', calOk: 'calendars available', ai: 'Artificial intelligence', aiNoKey: 'No key — install the personal build or add a key in Settings',
+    aiTest: 'Test the connection', aiOk: 'Working', errors: 'Error log', noErrors: 'No errors recorded', clear: 'Clear the log', share: '📤 Send the report', version: 'Build', refresh: 'Check again',
+    steps: 'To confirm the hourly review works: 1) allow notifications. 2) press "Notification in 15 seconds" and close the app. 3) if it arrives, all is well; if not, the phone is stopping the app in the background — apply the battery step.',
+  },
   lock: {
     title: 'Phone lock', grant: 'Grant the screen-lock permission', granted: 'Lock permission is on ✓', remove: 'Remove the lock permission (needed before uninstalling)',
     duration: 'Lock length in minutes', start: '🔒 Lock the phone now', lockOnce: 'Turn the screen off once',
@@ -519,7 +541,7 @@ const en: Translations = {
   },
   cal: {
     title: 'Google Calendar', auto: 'Add every new task to the calendar automatically', choose: 'Calendar to use', none: 'No writable calendar found — add a Google account to the phone and allow calendar access',
-    added: 'Added to the calendar ✓', load: 'Show the phone calendars', note: "Tasks are written straight into your Google account's calendar on the phone and appear in Google Calendar after sync, with no link to open.",
+    added: 'Added to the calendar ✓', load: 'Show the phone calendars', views: { month: 'Month', week: 'Week', day: 'Day' }, allDay: 'All day', fromGoogle: 'From the phone calendar', note: "Tasks are written straight into your Google account's calendar on the phone and appear in Google Calendar after sync, with no link to open.",
   },
   checkin: {
     title: 'What did I do?', question: 'What were you doing in the last hour?', enable: 'Ask me every hour with a pinned notification', from: 'From', to: 'To',
@@ -589,7 +611,7 @@ const en: Translations = {
     ideas: ['Project idea', 'Content idea', 'Work improvement', 'Something to learn'],
     content: ['Quick tip', 'Success story', 'Simple explainer', 'Question for followers', 'Behind the scenes'],
     kolb: ['Yes', 'No', 'Somewhat', 'Not sure yet', 'Anxiety', 'Confidence', 'Lack of time', 'Poor preparation'],
-    suggestAI: '✨ Suggest tasks for me', suggested: 'Suggestions', addAll: '➕ Add all',
+    suggestAI: '✨ Suggest tasks for me', suggested: 'Suggestions', addAll: '➕ Add all', autoSplit: '✂️ Split every new task into subtasks automatically',
   },
   tasks: {
     lists: { today: 'Today', tomorrow: 'Tomorrow', week: 'Next 7 days', all: 'All', done: 'Completed' },

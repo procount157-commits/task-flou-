@@ -35,6 +35,7 @@ jobs:
         env:
           EXPO_PUBLIC_GROQ_KEY: ${{ inputs.with_keys && secrets.GROQ_KEY || '' }}
           EXPO_PUBLIC_OPENROUTER_KEY: ${{ inputs.with_keys && secrets.OPENROUTER_KEY || '' }}
+          EXPO_PUBLIC_BUILD: ${{ github.run_number }}
         run: ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a,armeabi-v7a --no-daemon
       - run: cp android/app/build/outputs/apk/release/app-release.apk hayati.apk
       - uses: actions/upload-artifact@v4

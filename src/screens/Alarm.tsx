@@ -149,8 +149,7 @@ export default function AlarmScreen() {
 
   const save = async (next: Alarm[]) => {
     await setAlarms(next);
-    await scheduleAlarms(next, t.alarm.ringing);
-    await kv.set('sched:alarms', JSON.stringify([today(), next]));
+    if (await scheduleAlarms(next, t.alarm.ringing)) await kv.set('sched:alarms', JSON.stringify([today(), next]));
   };
   const stop = async () => {
     const id = ringing?.id;

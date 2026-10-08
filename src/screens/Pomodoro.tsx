@@ -139,6 +139,7 @@ export default function Pomodoro() {
 
       {!s ? (
         <>
+          <Btn title={`${t.pomo.startNow} — ${p.settings.focusMin} ${t.c.minutes}`} onPress={() => p.startSession({ taskTitle: t.pomo.freeSession })} style={{ paddingVertical: 18 }} />
           <Row>
             <View style={{ flex: 1 }}><Input label={`🎯 ${t.pomo.focusMin}`} value={focus} onChangeText={setFocus} onBlur={commitMinutes} keyboardType="number-pad" /></View>
             <View style={{ flex: 1 }}><Input label={`⏸ ${t.pomo.breakMin}`} value={brk} onChangeText={setBrk} onBlur={commitMinutes} keyboardType="number-pad" /></View>

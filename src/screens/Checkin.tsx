@@ -7,7 +7,7 @@ import { useLang, useTheme } from '@/ctx/Lang';
 import { nowTime, today } from '@/lib/dates';
 import { db, kv, useEntity, useKV } from '@/lib/db';
 import { GenerateSpeech, InvokeLLM } from '@/lib/integrations';
-import { CHECKIN_DEFAULTS, CheckinSettings, scheduleCheckins } from '@/lib/notify';
+import { CHECKIN_DEFAULTS, CheckinSettings, notifyReport, scheduleCheckins } from '@/lib/notify';
 import { NoTelegramError, sendTelegram } from '@/lib/telegram';
 import type { ActivityLog } from '@/lib/types';
 import { Btn, Card, Empty, IconBtn, Input, Row, Screen, Section, Suggest, Toggle, Txt, notice } from '@/ui/kit';
@@ -44,6 +44,11 @@ export default function Checkin() {
   const [analyzing, setAnalyzing] = useState(false);
   const [open, setOpen] = useState<string | null>(null);
   const [typed, setTyped] = useState('');
+  // null until the phone has answered; false means the hourly question cannot be delivered
+  const [allowed, setAllowed] = useState<boolean | null>(null);
+  useEffect(() => {
+    notifyReport().then((r) => r.supported && setAllowed(r.granted));
+  }, [settings.enabled]);
   const logId = useRef<string | null>(null);
   const audio = useRef<string[]>([]);
   const mine = logs.items.filter((l) => l.date === day).sort((a, b) => a.time.localeCompare(b.time));
@@ -110,8 +115,7 @@ export default function Checkin() {
 
   const apply = async (next: CheckinSettings) => {
     await setSettings(next);
-    await scheduleCheckins(next, t.checkin.now, t.checkin.bank);
-    await kv.set('sched:checkin', JSON.stringify([next, t.checkin.now]));
+    if (await scheduleCheckins(next, t.checkin.now, t.checkin.bank)) await kv.set('sched:checkin', JSON.stringify([next, t.checkin.now]));
   };
   const summary = () => mine.map((l) => `${l.time} — ${(l.dialog ?? []).filter((d) => d.role === 'me').map((d) => d.text).join(' / ') || l.text || '🎤'}`).join('\n');
 
@@ -155,6 +159,9 @@ export default function Checkin() {
             <Txt v={x.role === 'me' ? 'body' : 'muted'}>{x.text}</Txt>
           </View>
         ))}
+        {allowed === false ? (
+          <Btn kind="danger" title={`❌ ${t.diag.denied} — ${t.diag.title}`} onPress={() => router.push('/check')} />
+        ) : null}
         {busy ? <Txt v="muted" center>🤔 {t.checkin.thinking}</Txt> : <Txt v="h" center>{question}</Txt>}
         {finished ? (
           <Txt v="muted" center color={c.success}>✓ {t.checkin.done}</Txt>

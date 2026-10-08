@@ -2,6 +2,7 @@ import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
 import { parse, today } from './dates';
+import { logError } from './errlog';
 import type { Alarm, DailyTask, Habit } from './types';
 
 const native = Platform.OS !== 'web';
@@ -19,8 +20,13 @@ export function initNotifications(): Promise<boolean> {
       if (Platform.OS === 'android')
         await Notifications.setNotificationChannelAsync('default', { name: 'Reminders', importance: Notifications.AndroidImportance.HIGH });
       const cur = await Notifications.getPermissionsAsync();
-      return cur.granted || (await Notifications.requestPermissionsAsync()).granted;
-    } catch {
+      const granted = cur.granted || (await Notifications.requestPermissionsAsync()).granted;
+      // a refusal is not remembered, so the next attempt asks again instead of failing for good
+      if (!granted) ready = undefined;
+      return granted;
+    } catch (e) {
+      logError('notifications', e);
+      ready = undefined;
       return false;
     }
   })());
@@ -37,7 +43,7 @@ export async function scheduleAt(id: string, title: string, body: string, when: 
     identifier: id,
     content: { title, body, sound: true },
     trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: when, channelId: 'default' },
-  }).catch(() => {});
+  }).catch((e) => logError('schedule', e));
 }
 
 export async function scheduleDaily(id: string, title: string, body: string, time: string) {
@@ -48,7 +54,7 @@ export async function scheduleDaily(id: string, title: string, body: string, tim
     identifier: id,
     content: { title, body, sound: true },
     trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour, minute, channelId: 'default' },
-  }).catch(() => {});
+  }).catch((e) => logError('schedule', e));
 }
 
 // Rebuilds every habit and high-priority-task reminder from the current data.
@@ -73,7 +79,7 @@ export async function syncReminders(habits: Habit[], tasks: DailyTask[], labels:
         identifier: `habit-${h.id}-${d}`,
         content: { title: labels.habit, body: h.title, sound: true },
         trigger: { type: Notifications.SchedulableTriggerInputTypes.WEEKLY, weekday: d + 1, hour, minute, channelId: 'default' },
-      }).catch(() => {});
+      }).catch((e) => logError('schedule', e));
   }
   const upcoming = tasks.filter((t) => t.priority === 'high' && !t.completed && t.time && t.date >= day && !t.parent_id).slice(0, 30);
   for (const t of upcoming) {
@@ -90,11 +96,12 @@ export type CheckinSettings = { enabled: boolean; from: string; to: string };
 export const CHECKIN_DEFAULTS: CheckinSettings = { enabled: true, from: '07:00', to: '23:00' };
 
 // One pinned notification per hour inside the chosen window; tapping it opens the check-in screen.
-export async function scheduleCheckins(s: CheckinSettings, question: string, prompts: string[] = []) {
-  if (!native) return;
+export async function scheduleCheckins(s: CheckinSettings, question: string, prompts: string[] = []): Promise<boolean> {
+  if (!native) return false;
   const all = await Notifications.getAllScheduledNotificationsAsync().catch(() => []);
   await cancel(...all.map((n) => n.identifier).filter((id) => id.startsWith('checkin-')));
-  if (!s.enabled || !(await initNotifications())) return;
+  if (!s.enabled) return true;
+  if (!(await initNotifications())) return false;
   if (Platform.OS === 'android')
     await Notifications.setNotificationChannelAsync('checkin', { name: 'Hourly check-in', importance: Notifications.AndroidImportance.MAX, lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC });
   const start = Number(s.from.slice(0, 2));
@@ -105,7 +112,8 @@ export async function scheduleCheckins(s: CheckinSettings, question: string, pro
       // each hour carries a different question to think about; tapping opens the session with the microphone already on
       content: { title: '🎙 ' + question, body: prompts.length ? prompts[h % prompts.length] : `${String(h).padStart(2, '0')}:00`, sound: true, sticky: true, autoDismiss: false, priority: Notifications.AndroidNotificationPriority.MAX, data: { url: '/checkin?auto=1' } },
       trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour: h, minute: 0, channelId: 'checkin' },
-    }).catch(() => {});
+    }).catch((e) => logError('schedule', e));
+  return true;
 }
 
 /* ───────── alarms ───────── */
@@ -117,11 +125,12 @@ const ymdOf = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padSta
 
 // Each alarm becomes a burst of siren notifications a minute apart, booked for the coming days.
 // The sound plays on the alarm stream, so a silenced ringer does not mute it.
-export async function scheduleAlarms(alarms: Alarm[], title: string) {
-  if (!native) return;
+export async function scheduleAlarms(alarms: Alarm[], title: string): Promise<boolean> {
+  if (!native) return false;
   const all = await Notifications.getAllScheduledNotificationsAsync().catch(() => []);
   await cancel(...all.map((n) => n.identifier).filter((id) => id.startsWith('alarm-')));
-  if (!alarms.some((a) => a.enabled) || !(await initNotifications())) return;
+  if (!alarms.some((a) => a.enabled)) return true;
+  if (!(await initNotifications())) return false;
   if (Platform.OS === 'android')
     for (const sound of ['ambulance', 'whistle', 'wail'])
       await Notifications.setNotificationChannelAsync(`alarm-${sound}`, {
@@ -145,10 +154,11 @@ export async function scheduleAlarms(alarms: Alarm[], title: string) {
           identifier: id,
           content: { title: `⏰ ${title}`, body: `${a.time}${a.label ? ' · ' + a.label : ''}`, sound: `alarm_${a.sound}.wav`, sticky: true, autoDismiss: false, priority: Notifications.AndroidNotificationPriority.MAX, data: { url: `/alarm?ring=${a.id}` } },
           trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: when, channelId: `alarm-${a.sound}` },
-        }).catch(() => {});
+        }).catch((e) => logError('schedule', e));
       }
     }
   }
+  return true;
 }
 
 // Called once the challenge is solved: silences what is on screen and drops the rest of today's burst.
@@ -179,4 +189,48 @@ export function onNotificationOpen(open: (url: string) => void) {
     tapped.remove();
     received.remove();
   };
+}
+
+/* ───────── self-check ───────── */
+export type NotifyReport = { supported: boolean; granted: boolean; canAskAgain: boolean; scheduled: number; checkins: number; alarms: number; reminders: number; next: string[] };
+
+// What the phone itself says about notifications: permission, and what is actually booked.
+export async function notifyReport(): Promise<NotifyReport> {
+  const empty = { supported: native, granted: false, canAskAgain: true, scheduled: 0, checkins: 0, alarms: 0, reminders: 0, next: [] };
+  if (!native) return empty;
+  try {
+    const perm = await Notifications.getPermissionsAsync();
+    const all = await Notifications.getAllScheduledNotificationsAsync();
+    const ids = all.map((n) => n.identifier);
+    return {
+      supported: true, granted: perm.granted, canAskAgain: perm.canAskAgain, scheduled: all.length,
+      checkins: ids.filter((i) => i.startsWith('checkin-')).length, alarms: ids.filter((i) => i.startsWith('alarm-')).length,
+      reminders: ids.filter((i) => i.startsWith('habit-') || i.startsWith('task-') || i.startsWith('pomo-')).length,
+      next: ids.slice(0, 6),
+    };
+  } catch (e) {
+    logError('report', e);
+    return empty;
+  }
+}
+
+// Fires in `seconds`; with `siren` it uses an alarm channel so the alarm sound itself can be checked.
+export async function testNotification(title: string, body: string, seconds: number, siren?: 'ambulance' | 'whistle' | 'wail') {
+  if (!(await initNotifications())) return false;
+  try {
+    if (siren && Platform.OS === 'android')
+      await Notifications.setNotificationChannelAsync(`alarm-${siren}`, {
+        name: `Alarm (${siren})`, importance: Notifications.AndroidImportance.MAX, sound: `alarm_${siren}.wav`, bypassDnd: true, vibrationPattern: [0, 800, 400, 800],
+        audioAttributes: { usage: Notifications.AndroidAudioUsage.ALARM, contentType: Notifications.AndroidAudioContentType.SONIFICATION },
+      });
+    await Notifications.scheduleNotificationAsync({
+      identifier: `test-${Date.now()}`,
+      content: { title, body, sound: siren ? `alarm_${siren}.wav` : true, priority: Notifications.AndroidNotificationPriority.MAX, data: siren ? {} : { url: '/checkin?auto=1' } },
+      trigger: seconds > 0 ? { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds, channelId: siren ? `alarm-${siren}` : 'default' } : null,
+    });
+    return true;
+  } catch (e) {
+    logError('test', e);
+    return false;
+  }
 }

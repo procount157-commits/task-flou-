@@ -17,6 +17,7 @@ import { LangProvider, ThemeProvider, useLang, useTheme, useThemeCtl } from '@/c
 import { PomodoroProvider } from '@/ctx/Pomodoro';
 import { today } from '@/lib/dates';
 import { kv, preload, useEntity, useKV } from '@/lib/db';
+import { installGlobalErrorLog } from '@/lib/errlog';
 import { CHECKIN_DEFAULTS, CheckinSettings, initNotifications, onNotificationOpen, scheduleAlarms, scheduleCheckins, syncReminders } from '@/lib/notify';
 import type { Alarm } from '@/lib/types';
 import { IntentionModal, Landing, Login, Onboarding } from '@/screens/Entry';
@@ -24,6 +25,7 @@ import { Loading } from '@/ui/kit';
 import { CelebrationProvider } from '@/ui/shared';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
+installGlobalErrorLog();
 const NO_ALARMS: Alarm[] = [];
 
 // Keeps habit and high-priority-task reminders in step with the data.
@@ -46,7 +48,7 @@ const TABS: { name: string; icon: keyof typeof Ionicons.glyphMap }[] = [
   { name: 'pomodoro', icon: 'timer-outline' },
   { name: 'more', icon: 'apps-outline' },
 ];
-const HIDDEN = ['dashboard', 'today', 'matrix', 'habits', 'alarm', 'lock', 'journal', 'progress', 'analytics', 'motivation', 'brainstorm', 'kolb', 'finance', 'invite', 'pricing', 'content', 'learning', 'goals/[level]', 'profile-settings', 'join', 'explore'];
+const HIDDEN = ['dashboard', 'today', 'matrix', 'habits', 'alarm', 'lock', 'check', 'journal', 'progress', 'analytics', 'motivation', 'brainstorm', 'kolb', 'finance', 'invite', 'pricing', 'content', 'learning', 'goals/[level]', 'profile-settings', 'join', 'explore'];
 
 function AppTabs() {
   const c = useTheme();
@@ -55,7 +57,7 @@ function AppTabs() {
   const rtl = dir === 'rtl';
   const titles: Record<string, string> = {
     index: t.nav.tasks, calendar: t.nav.calendar, 'ai-coach': t.nav.aiCoach, pomodoro: t.nav.focus, habits: t.nav.habits, more: t.nav.more,
-    dashboard: t.nav.dashboard, matrix: t.tasks.matrix, checkin: t.checkin.tab, alarm: t.alarm.title, lock: t.lock.title, journal: t.nav.journal, progress: t.nav.progress,
+    dashboard: t.nav.dashboard, matrix: t.tasks.matrix, checkin: t.checkin.tab, alarm: t.alarm.title, lock: t.lock.title, check: t.diag.title, journal: t.nav.journal, progress: t.nav.progress,
     analytics: t.nav.analytics, motivation: t.nav.motivation, brainstorm: t.nav.brainstorm, kolb: t.nav.kolb, finance: t.nav.finance, invite: t.nav.invite,
     pricing: t.nav.pricing, content: t.nav.content, learning: t.nav.learning, 'goals/[level]': t.nav.goals, 'profile-settings': t.nav.settings,
   };
@@ -83,8 +85,6 @@ function AppTabs() {
           tabBarLabelStyle: { fontSize: 10, fontFamily: rtl ? 'Cairo_600SemiBold' : undefined },
           headerTitleStyle: { fontFamily: rtl ? 'Cairo_700Bold' : undefined },
           sceneStyle: { backgroundColor: c.bg },
-          // screens that are not on show stop re-rendering when data changes
-          freezeOnBlur: true,
         };
       }}>
       {TABS.map((tab) => (
@@ -107,14 +107,9 @@ function Background() {
     const id = setTimeout(async () => {
       const alarmSig = JSON.stringify([today(), alarms]);
       const checkinSig = JSON.stringify([checkin, t.checkin.now]);
-      if ((await kv.get('sched:alarms', '')) !== alarmSig) {
-        await scheduleAlarms(alarms, t.alarm.ringing);
-        await kv.set('sched:alarms', alarmSig);
-      }
-      if ((await kv.get('sched:checkin', '')) !== checkinSig) {
-        await scheduleCheckins(checkin, t.checkin.now, t.checkin.bank);
-        await kv.set('sched:checkin', checkinSig);
-      }
+      // the signature is only stored once the booking really happened, so a refused permission is retried
+      if ((await kv.get('sched:alarms', '')) !== alarmSig && (await scheduleAlarms(alarms, t.alarm.ringing))) await kv.set('sched:alarms', alarmSig);
+      if ((await kv.get('sched:checkin', '')) !== checkinSig && (await scheduleCheckins(checkin, t.checkin.now, t.checkin.bank))) await kv.set('sched:checkin', checkinSig);
     }, 6000);
     return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps

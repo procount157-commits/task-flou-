@@ -3,6 +3,7 @@ import { Platform } from 'react-native';
 
 import { addDays, isTime, parse } from './dates';
 import { db, kv } from './db';
+import { logError } from './errlog';
 import type { DailyTask } from './types';
 
 export type CalInfo = { id: string; title: string; account: string };
@@ -22,7 +23,8 @@ export async function listWritableCalendars(): Promise<CalInfo[]> {
 
 export const getCalendarId = () => kv.get<string>('gcal:id', '');
 export const setCalendarId = (id: string) => kv.set('gcal:id', id);
-export const getAutoCalendar = () => kv.get<boolean>('gcal:auto', false);
+// on by default: tasks go to the calendar unless the user turns it off
+export const getAutoCalendar = () => kv.get<boolean>('gcal:auto', true);
 
 async function targetCalendar(): Promise<string | undefined> {
   const saved = await getCalendarId();
@@ -77,5 +79,30 @@ export async function removeTaskFromCalendar(task: DailyTask) {
 export async function autoSyncTask(taskId: string) {
   if (Platform.OS === 'web' || !(await getAutoCalendar())) return;
   const task = (await db.list('DailyTask')).find((x) => x.id === taskId);
-  if (task && !task.parent_id) await saveTaskToCalendar(task).catch(() => {});
+  if (task && !task.parent_id) await saveTaskToCalendar(task).catch((e) => logError('calendar', e));
+}
+
+export type DeviceEvent = { id: string; title: string; date: string; time?: string; end?: string; allDay: boolean };
+
+const two = (n: number) => String(n).padStart(2, '0');
+const dayOf = (d: Date) => `${d.getFullYear()}-${two(d.getMonth() + 1)}-${two(d.getDate())}`;
+
+// Events already in the phone's calendars between two days, for showing next to the app's own tasks.
+export async function readDeviceEvents(from: string, to: string): Promise<DeviceEvent[]> {
+  if (Platform.OS === 'web') return [];
+  try {
+    const perm = await Calendar.getCalendarPermissionsAsync();
+    if (!perm.granted) return [];
+    const calendars = await Calendar.getCalendarsAsync(Calendar.EntityTypes.EVENT);
+    const end = parse(addDays(to, 1));
+    const events = await Calendar.getEventsAsync(calendars.map((c) => c.id), parse(from), end);
+    return events.map((e) => {
+      const start = new Date(e.startDate);
+      const finish = new Date(e.endDate);
+      return { id: e.id, title: e.title, date: dayOf(start), allDay: !!e.allDay, time: e.allDay ? undefined : `${two(start.getHours())}:${two(start.getMinutes())}`, end: e.allDay ? undefined : `${two(finish.getHours())}:${two(finish.getMinutes())}` };
+    });
+  } catch (e) {
+    logError('calendar-read', e);
+    return [];
+  }
 }

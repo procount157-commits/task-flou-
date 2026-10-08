@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Modal, Pressable, ScrollView, SectionList, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { QuickAdd, TaskDetail, TaskRow, useTaskActions } from './taskparts';
+import { QuickAdd, SubRow, TaskDetail, TaskRow, useTaskActions } from './taskparts';
 import { PALETTE, useLang, useTheme } from '@/ctx/Lang';
 import { addDays, fmtDate, isDate, today } from '@/lib/dates';
 import { db, useEntity, useKV } from '@/lib/db';
@@ -53,13 +53,9 @@ export default function Tasks() {
     materializeRepeats(day);
   }, [day]);
 
-  const subCounts = useMemo(() => {
-    const m = new Map<string, [number, number]>();
-    for (const x of tasks.items)
-      if (x.parent_id) {
-        const cur = m.get(x.parent_id) ?? [0, 0];
-        m.set(x.parent_id, [cur[0] + (x.completed ? 1 : 0), cur[1] + 1]);
-      }
+  const subsOf = useMemo(() => {
+    const m = new Map<string, DailyTask[]>();
+    for (const x of tasks.items) if (x.parent_id) m.set(x.parent_id, [...(m.get(x.parent_id) ?? []), x]);
     return m;
   }, [tasks.items]);
 
@@ -176,8 +172,13 @@ export default function Tasks() {
           stickySectionHeadersEnabled={false}
           initialNumToRender={14}
           renderItem={({ item: x }) => {
-            const sub = subCounts.get(x.id);
-            return <TaskRow task={x} subDone={sub?.[0] ?? 0} subTotal={sub?.[1] ?? 0} showDate={list === 'done' || !!custom} onToggle={toggle} onOpen={open} />;
+            const subs = subsOf.get(x.id) ?? [];
+            return (
+              <View>
+                <TaskRow task={x} subDone={subs.filter((s) => s.completed).length} subTotal={subs.length} showDate={list === 'done' || !!custom} onToggle={toggle} onOpen={open} />
+                {!x.completed ? subs.map((s) => <SubRow key={s.id} task={s} onToggle={toggle} />) : null}
+              </View>
+            );
           }}
           renderSectionHeader={({ section }) =>
             section.key === 'done' ? (

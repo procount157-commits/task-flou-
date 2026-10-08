@@ -1,5 +1,7 @@
 import { requireOptionalNativeModule } from 'expo';
 
+import { logError } from './errlog';
+
 type PhoneLockNative = {
   isAdmin(): boolean;
   requestAdmin(explanation: string): void;
@@ -20,7 +22,8 @@ export const MAX_LOCK_MINUTES = 180;
 const safe = <T,>(run: (m: PhoneLockNative) => T, fallback: T): T => {
   try {
     return native ? run(native) : fallback;
-  } catch {
+  } catch (e) {
+    logError('phone-lock', e);
     return fallback;
   }
 };
