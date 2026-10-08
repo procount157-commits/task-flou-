@@ -1,0 +1,70 @@
+name: Device test
+
+# Builds an x86_64 APK, runs it on an Android emulator with a seeded profile, opens every screen
+# by deep link and keeps a screenshot, the visible text and the JS log of each one.
+on:
+  workflow_dispatch:
+    inputs:
+      routes:
+        description: Space-separated routes to open
+        default: index brainstorm content analytics kolb journal ai-coach checkin calendar pomodoro habits finance learning dashboard matrix progress motivation alarm lock check more
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - run: npm ci
+      - run: npx expo prebuild --platform android --no-install
+      # debuggable so run-as can seed the storage; everything else is the release build
+      - run: sed -i 's/^\(\s*\)release {/\1release {\n\1    debuggable true/' android/app/build.gradle
+      - name: Build APK
+        working-directory: android
+        env:
+          EXPO_PUBLIC_GROQ_KEY: ${{ secrets.GROQ_KEY }}
+          EXPO_PUBLIC_OPENROUTER_KEY: ${{ secrets.OPENROUTER_KEY }}
+          EXPO_PUBLIC_BUILD: test-${{ github.run_number }}
+        run: ./gradlew assembleRelease -PreactNativeArchitectures=x86_64 --no-daemon
+      - name: Seed storage
+        run: |
+          python3 - <<'EOF'
+          import json, sqlite3, datetime
+          now = datetime.datetime.utcnow().isoformat() + 'Z'
+          day = now[:10]
+          con = sqlite3.connect('RKStorage')
+          con.execute('CREATE TABLE catalystLocalStorage (key TEXT PRIMARY KEY, value TEXT NOT NULL)')
+          rows = {
+            'kv:user': {'id': 'u_test', 'name': 'Test', 'email': '', 'role': 'admin'},
+            'db:UserProfile': [{'id': 'p1', 'created_by_id': 'u_test', 'created_date': now, 'updated_date': now, 'target_age': 80, 'birth_date': '1990-01-01', 'onboarding_complete': True, 'last_intention_date': day}],
+          }
+          for k, v in rows.items():
+              con.execute('INSERT INTO catalystLocalStorage VALUES (?, ?)', (k, json.dumps(v)))
+          con.commit()
+          EOF
+      - run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=kvm
+      - name: Run on emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        env:
+          ROUTES: ${{ inputs.routes }}
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          disable-animations: true
+          script: bash .github/device-test.sh
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: device-test
+          path: out
+          retention-days: 3
