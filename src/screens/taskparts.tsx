@@ -49,7 +49,7 @@ export function useTaskActions() {
         await db.update('DailyTask', task.id, { completed: done });
         // subtasks carry no points of their own
         if (!task.parent_id) await addPoints(done ? POINTS[task.priority ?? 'medium'] : -POINTS[task.priority ?? 'medium']);
-        if (done && !task.parent_id) celebrate(undefined, 2200);
+        if (done && !task.parent_id) celebrate(undefined, 1300, true);
       },
       remove: async (task: DailyTask) => {
         await removeTaskFromCalendar(task);

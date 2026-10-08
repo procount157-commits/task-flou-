@@ -36,7 +36,7 @@ export function DaysPicker({ value, onChange, emptyLabel }: { value: number[]; o
 }
 
 /* ───────── CelebrationPopup ───────── */
-type Celebrate = (message?: string, ms?: number) => void;
+type Celebrate = (message?: string, ms?: number, lite?: boolean) => void;
 const CelebrationCtx = createContext<Celebrate>(() => {});
 export const useCelebrate = () => useContext(CelebrationCtx);
 
@@ -70,16 +70,17 @@ function Confetti() {
 export function CelebrationProvider({ children }: { children: React.ReactNode }) {
   const c = useTheme();
   const { t, dir } = useLang();
-  const [shown, setShown] = useState<{ id: number; message: string } | null>(null);
+  const [shown, setShown] = useState<{ id: number; message: string; lite?: boolean } | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const chime = useRef<ReturnType<typeof createAudioPlayer> | null>(null);
   const cheers = useRef(t.cheers);
   cheers.current = t.cheers;
-  const celebrate = useCallback<Celebrate>((message, ms = 3000) => {
-    setShown({ id: Date.now(), message: message ?? pick(cheers.current) });
+  // lite: a tap and a small toast at the bottom, for something done many times a day (ticking a task)
+  const celebrate = useCallback<Celebrate>((message, ms = 3000, lite = false) => {
+    setShown({ id: Date.now(), message: message ?? pick(cheers.current), lite });
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => setShown(null), ms);
-    if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+    if (Platform.OS !== 'web') (lite ? Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium) : Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)).catch(() => {});
     // one player is kept and rewound: creating a new one on every completion stalls the UI on a phone
     try {
       chime.current ??= createAudioPlayer(require('../../assets/sounds/success.wav'));
@@ -90,7 +91,13 @@ export function CelebrationProvider({ children }: { children: React.ReactNode })
   return (
     <CelebrationCtx.Provider value={celebrate}>
       {children}
-      {shown ? (
+      {shown?.lite ? (
+        <View key={shown.id} pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, bottom: 96, alignItems: 'center' }}>
+          <View style={{ backgroundColor: c.success, borderRadius: 999, paddingHorizontal: 16, paddingVertical: 8, direction: dir, elevation: 6 }}>
+            <Text style={{ color: '#fff', fontSize: 14 }}>✓ {shown.message}</Text>
+          </View>
+        </View>
+      ) : shown ? (
         <View key={shown.id} pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' }}>
           <Confetti />
           <View style={{ backgroundColor: c.card, borderRadius: 16, padding: 22, marginHorizontal: 30, borderWidth: 1, borderColor: c.border, direction: dir, alignItems: 'center', gap: 6, elevation: 8 }}>
