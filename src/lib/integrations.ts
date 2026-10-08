@@ -142,3 +142,9 @@ export const col = (row: Record<string, any>, ...names: string[]) => {
   for (const n of names) if (row[n] !== undefined && row[n] !== '') return String(row[n]);
   return '';
 };
+
+export const suggestTasks = (goals: string[], existing: string[], lang: string) =>
+  llmList(
+    `Suggest 5 small, concrete tasks a person can do today.${goals.length ? ` Their goals: ${goals.slice(0, 8).join('; ')}.` : ''}${existing.length ? ` Do not repeat these: ${existing.slice(0, 12).join('; ')}.` : ''} Each task at most 6 words.`,
+    lang,
+  );

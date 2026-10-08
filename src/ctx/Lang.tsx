@@ -25,11 +25,11 @@ export function LangProvider({ children }: { children: React.ReactNode }) {
 }
 
 const light = {
-  bg: '#f4f5f7', card: '#ffffff', text: '#16181d', muted: '#6b7280', border: '#e2e4e9', primary: '#4f46e5', onPrimary: '#ffffff',
-  danger: '#dc2626', success: '#16a34a', warn: '#d97706', soft: '#eef0ff', track: '#e5e7eb',
+  bg: '#f6f7f9', card: '#ffffff', text: '#191c21', muted: '#8a909c', border: '#eceef2', primary: '#4772fa', onPrimary: '#ffffff',
+  danger: '#e03131', success: '#2f9e44', warn: '#f08c00', soft: '#edf2ff', track: '#e9ecef',
 };
 const dark: typeof light = {
-  bg: '#0f1115', card: '#1a1d24', text: '#f1f2f4', muted: '#9aa1ad', border: '#2b2f39', primary: '#818cf8', onPrimary: '#0f1115',
+  bg: '#0f1115', card: '#1a1d24', text: '#f1f2f4', muted: '#9aa1ad', border: '#2b2f39', primary: '#6b8cff', onPrimary: '#ffffff',
   danger: '#f87171', success: '#4ade80', warn: '#fbbf24', soft: '#23263a', track: '#2b2f39',
 };
 export type Colors = typeof light;

@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { View } from 'react-native';
 
-import { useAI } from './Today';
+import { useAI } from './taskparts';
 import { PALETTE, useLang, useTheme } from '@/ctx/Lang';
 import { isDate, lastMonths, monthKey, shiftMonth, today } from '@/lib/dates';
 import { db, useEntity } from '@/lib/db';
@@ -241,7 +241,7 @@ export default function Finance() {
         <>
           <Row>
             <Btn small kind="ghost" title="‹" onPress={() => setMonth(shiftMonth(month, -1))} />
-            <View style={{ flex: 1 }}><Input value={month} onChangeText={setMonth} placeholder={t.fin.monthPh} keyboardType="numbers-and-punctuation" /></View>
+            <View style={{ flex: 1 }}><Txt v="sub" center>{month}</Txt></View>
             <Btn small kind="ghost" title="›" onPress={() => setMonth(shiftMonth(month, 1))} />
           </Row>
           <Row wrap>
@@ -270,10 +270,10 @@ export default function Finance() {
       <Tabs options={t.fin.tabs.map((label, i) => ({ value: String(i), label }))} value={tab} onChange={setTab} />
       {tabs[tab]()}
 
-      <FormModal visible={!!txForm} title={txForm?.id ? t.c.edit : t.fin.addTx} initial={{ type: 'expense', category: 'other', date: today(), recurring: false, ...txForm }} onClose={() => setTxForm(null)}
+      <FormModal visible={!!txForm} history={txs.items} title={txForm?.id ? t.c.edit : t.fin.addTx} initial={{ type: 'expense', category: 'other', date: today(), recurring: false, ...txForm }} onClose={() => setTxForm(null)}
         fields={[
-          { key: 'title', label: t.c.title, required: true },
-          { key: 'amount', label: `${t.c.amount} (${cur})`, type: 'number', required: true },
+          { key: 'title', label: t.c.title, required: true, suggestions: [...t.sug.expense, ...t.sug.income] },
+          { key: 'amount', label: `${t.c.amount} (${cur})`, type: 'number', required: true, suggestions: t.sug.amounts },
           { key: 'type', label: t.c.type, type: 'select', options: opts(t.txType), required: true },
           { key: 'category', label: t.c.category, type: 'select', options: opts(t.txCat) },
           { key: 'date', label: t.c.date, type: 'date', required: true },
@@ -292,9 +292,9 @@ export default function Finance() {
 
       <FormModal visible={!!goalForm} title={goalForm?.id ? t.c.edit : t.fin.addGoal} initial={{ category: 'savings', current_amount: 0, ...goalForm }} onClose={() => setGoalForm(null)}
         fields={[
-          { key: 'title', label: t.c.title, required: true },
-          { key: 'target_amount', label: `${t.fin.target} (${cur})`, type: 'number', required: true },
-          { key: 'current_amount', label: `${t.fin.current} (${cur})`, type: 'number' },
+          { key: 'title', label: t.c.title, required: true, suggestions: Object.values(t.finCat) },
+          { key: 'target_amount', label: `${t.fin.target} (${cur})`, type: 'number', required: true, suggestions: t.sug.bigAmounts },
+          { key: 'current_amount', label: `${t.fin.current} (${cur})`, type: 'number', suggestions: ['0', ...t.sug.amounts] },
           { key: 'deadline', label: t.fin.deadline, type: 'date' },
           { key: 'category', label: t.c.category, type: 'select', options: opts(t.finCat) },
         ]}
@@ -304,35 +304,35 @@ export default function Finance() {
           else await goals.create(data);
         }} />
 
-      <FormModal visible={!!salaryForm} title={salaryForm?.id ? t.c.edit : t.fin.addSalary} initial={{ type: 'monthly', date: today(), ...salaryForm }} onClose={() => setSalaryForm(null)}
+      <FormModal visible={!!salaryForm} history={salaries.items} title={salaryForm?.id ? t.c.edit : t.fin.addSalary} initial={{ type: 'monthly', date: today(), ...salaryForm }} onClose={() => setSalaryForm(null)}
         fields={[
-          { key: 'title', label: t.c.title, required: true },
-          { key: 'amount', label: `${t.c.amount} (${cur})`, type: 'number', required: true },
+          { key: 'title', label: t.c.title, required: true, suggestions: t.sug.income },
+          { key: 'amount', label: `${t.c.amount} (${cur})`, type: 'number', required: true, suggestions: t.sug.bigAmounts },
           { key: 'date', label: t.c.date, type: 'date', required: true },
-          { key: 'source', label: t.fin.source },
+          { key: 'source', label: t.fin.source, suggestions: t.sug.sources },
           { key: 'type', label: t.c.type, type: 'select', options: opts(t.salaryType) },
           { key: 'note', label: t.c.notes, type: 'multiline' },
         ]}
         onSave={async (v) => { if (salaryForm?.id) await salaries.update(salaryForm.id, v); else await salaries.create(v as Salary); }} />
 
-      <FormModal visible={!!clientForm} title={clientForm?.id ? t.c.edit : t.fin.addClient} initial={{ status: 'active', total_paid: 0, ...clientForm }} onClose={() => setClientForm(null)}
+      <FormModal visible={!!clientForm} history={clients.items} title={clientForm?.id ? t.c.edit : t.fin.addClient} initial={{ status: 'active', total_paid: 0, ...clientForm }} onClose={() => setClientForm(null)}
         fields={[
           { key: 'name', label: t.c.name, required: true },
           { key: 'company', label: t.fin.company },
           { key: 'email', label: t.c.email },
           { key: 'phone', label: t.c.phone },
           { key: 'status', label: t.c.status, type: 'select', options: opts(t.clientStatus) },
-          { key: 'total_paid', label: `${t.fin.totalPaid} (${cur})`, type: 'number' },
+          { key: 'total_paid', label: `${t.fin.totalPaid} (${cur})`, type: 'number', suggestions: t.sug.bigAmounts },
           { key: 'notes', label: t.c.notes, type: 'multiline' },
         ]}
         onSave={async (v) => { if (clientForm?.id) await clients.update(clientForm.id, v); else await clients.create(v as Client); }} />
 
-      <FormModal visible={giftForm} title={`🎁 ${t.fin.suggestGifts}`} onClose={() => setGiftForm(false)}
+      <FormModal visible={giftForm} history={gifts.items} initial={{ budget_min: 50, budget_max: 200 }} title={`🎁 ${t.fin.suggestGifts}`} onClose={() => setGiftForm(false)}
         fields={[
-          { key: 'recipient_name', label: t.fin.recipient, required: true },
-          { key: 'occasion', label: t.fin.occasion, required: true },
-          { key: 'budget_min', label: `${t.fin.budgetMin} (${cur})`, type: 'number', required: true },
-          { key: 'budget_max', label: `${t.fin.budgetMax} (${cur})`, type: 'number', required: true },
+          { key: 'recipient_name', label: t.fin.recipient, required: true, suggestions: t.sug.recipients },
+          { key: 'occasion', label: t.fin.occasion, required: true, suggestions: t.sug.occasions },
+          { key: 'budget_min', label: `${t.fin.budgetMin} (${cur})`, type: 'number', required: true, suggestions: t.sug.amounts },
+          { key: 'budget_max', label: `${t.fin.budgetMax} (${cur})`, type: 'number', required: true, suggestions: t.sug.amounts.slice(2) },
           { key: 'notes', label: t.c.notes, type: 'multiline' },
         ]}
         onSave={async (v) => {

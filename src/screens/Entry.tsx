@@ -8,6 +8,7 @@ import { useLang, useTheme } from '@/ctx/Lang';
 import { APK_URL } from '@/lib/config';
 import { isDate, isTime, today } from '@/lib/dates';
 import { Btn, Card, Chips, Input, Progress, Row, Sheet, Txt } from '@/ui/kit';
+import { DateField, TimeField } from '@/ui/pickers';
 import { DaysPicker } from '@/ui/shared';
 
 function Shell({ children }: { children: React.ReactNode }) {
@@ -29,13 +30,13 @@ function Shell({ children }: { children: React.ReactNode }) {
 
 export function Landing() {
   const { t } = useLang();
-  const { navigateToLogin } = useAuth();
+  const { start } = useAuth();
   return (
     <Shell>
       <Txt v="h" style={{ fontSize: 28, marginTop: 20 }}>{t.landing.headline}</Txt>
       <Txt v="muted">{t.landing.sub}</Txt>
       <Card>{t.landing.features.map((f) => <Txt key={f}>{f}</Txt>)}</Card>
-      <Btn title={t.landing.cta} onPress={navigateToLogin} />
+      <Btn title={t.landing.cta} onPress={start} />
       {Platform.OS === 'web' ? <Btn kind="ghost" title={t.landing.apk} onPress={() => Linking.openURL(APK_URL)} /> : null}
     </Shell>
   );
@@ -71,12 +72,12 @@ export function Onboarding() {
   const [error, setError] = useState('');
   const [f, setF] = useState({
     full_name: user?.name ?? '', birth_date: '', target_age: '80', wake_time: '06:00', sleep_time: '23:00',
-    work_hours_start: '09:00', work_hours_end: '17:00', work_days: [0, 1, 2, 3, 4] as number[], study_hours_daily: '', study_subjects: '', free_time_hours: '',
+    work_hours_start: '09:00', work_hours_end: '17:00', work_days: [0, 1, 2, 3, 4] as number[], study_hours_daily: '2', study_subjects: '', free_time_hours: '3',
   });
   const set = (k: keyof typeof f) => (v: any) => setF((p) => ({ ...p, [k]: v }));
   const num = (s: string) => s.trim() !== '' && !isNaN(Number(s)) && Number(s) >= 0;
   const valid = [
-    f.full_name.trim() && isDate(f.birth_date) && f.birth_date < today() && num(f.target_age) && Number(f.target_age) > 0,
+    isDate(f.birth_date) && f.birth_date < today() && num(f.target_age) && Number(f.target_age) > 0,
     isTime(f.wake_time) && isTime(f.sleep_time),
     isTime(f.work_hours_start) && isTime(f.work_hours_end),
     f.work_days.length > 0,
@@ -102,19 +103,19 @@ export function Onboarding() {
       <Progress value={((step + 1) / 5) * 100} />
       {step === 0 ? (
         <>
-          <Input label={t.onb.fullName} value={f.full_name} onChangeText={set('full_name')} />
-          <Input label={t.onb.birthDate} value={f.birth_date} onChangeText={set('birth_date')} placeholder="1995-04-23" keyboardType="numbers-and-punctuation" />
-          <Input label={t.onb.targetAge} value={f.target_age} onChangeText={set('target_age')} keyboardType="number-pad" />
+          <DateField label={t.onb.birthDate} value={f.birth_date} onChange={(v) => set('birth_date')(v ?? '')} allowClear={false} past />
+          <Input label={t.onb.targetAge} value={f.target_age} onChangeText={set('target_age')} keyboardType="number-pad" suggestions={t.sug.ages} />
+          <Input label={`${t.onb.fullName} (${t.c.none})`} value={f.full_name} onChangeText={set('full_name')} />
         </>
       ) : step === 1 ? (
         <>
-          <Input label={t.onb.wake} value={f.wake_time} onChangeText={set('wake_time')} keyboardType="numbers-and-punctuation" />
-          <Input label={t.onb.sleep} value={f.sleep_time} onChangeText={set('sleep_time')} keyboardType="numbers-and-punctuation" />
+          <TimeField label={t.onb.wake} value={f.wake_time} onChange={(v) => set('wake_time')(v ?? '')} allowClear={false} />
+          <TimeField label={t.onb.sleep} value={f.sleep_time} onChange={(v) => set('sleep_time')(v ?? '')} allowClear={false} />
         </>
       ) : step === 2 ? (
         <>
-          <Input label={t.onb.workStart} value={f.work_hours_start} onChangeText={set('work_hours_start')} keyboardType="numbers-and-punctuation" />
-          <Input label={t.onb.workEnd} value={f.work_hours_end} onChangeText={set('work_hours_end')} keyboardType="numbers-and-punctuation" />
+          <TimeField label={t.onb.workStart} value={f.work_hours_start} onChange={(v) => set('work_hours_start')(v ?? '')} allowClear={false} />
+          <TimeField label={t.onb.workEnd} value={f.work_hours_end} onChange={(v) => set('work_hours_end')(v ?? '')} allowClear={false} />
         </>
       ) : step === 3 ? (
         <>
@@ -123,9 +124,9 @@ export function Onboarding() {
         </>
       ) : (
         <>
-          <Input label={t.onb.studyHours} value={f.study_hours_daily} onChangeText={set('study_hours_daily')} keyboardType="decimal-pad" />
-          <Input label={t.onb.studySubjects} value={f.study_subjects} onChangeText={set('study_subjects')} />
-          <Input label={t.onb.freeHours} value={f.free_time_hours} onChangeText={set('free_time_hours')} keyboardType="decimal-pad" />
+          <Input label={t.onb.studyHours} value={f.study_hours_daily} onChangeText={set('study_hours_daily')} keyboardType="decimal-pad" suggestions={t.sug.hours} />
+          <Input label={t.onb.studySubjects} value={f.study_subjects} onChangeText={set('study_subjects')} multiline style={{ minHeight: 44 }} suggestions={t.sug.subjects} />
+          <Input label={t.onb.freeHours} value={f.free_time_hours} onChangeText={set('free_time_hours')} keyboardType="decimal-pad" suggestions={t.sug.hours} />
         </>
       )}
       {error ? <Txt v="small" color={c.danger}>{error}</Txt> : null}

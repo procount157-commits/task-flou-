@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { View } from 'react-native';
 
 import { GoalForm } from './forms';
-import { useAI } from './Today';
+import { useAI } from './taskparts';
 import { useLang, useTheme } from '@/ctx/Lang';
 import { isDate, today } from '@/lib/dates';
 import { db, useEntity } from '@/lib/db';

@@ -64,7 +64,12 @@ export interface DailyTask extends Base {
   learning_id?: string;
   calendar_event_id?: string;
   reminder_sent?: boolean;
+  notes?: string;
+  // a user-made list (see TaskList); tasks without one live in the inbox
+  list_id?: string;
 }
+
+export type TaskList = { id: string; name: string; color: string };
 
 export interface Habit extends Base, RewardFields {
   title: string;
@@ -270,7 +275,18 @@ export interface Reward extends Base {
   claimed_date?: string;
 }
 
+// One answer to the hourly "what were you doing?" check-in.
+export interface ActivityLog extends Base {
+  date: string;
+  time: string;
+  text?: string;
+  audio_url?: string;
+}
+
+export type Alarm = { id: string; time: string; days: number[]; sound: 'ambulance' | 'whistle' | 'wail'; challenge: 'steps' | 'math'; enabled: boolean; label?: string };
+
 export interface EntityMap {
+  ActivityLog: ActivityLog;
   UserProfile: UserProfile;
   Goal: Goal;
   DailyTask: DailyTask;

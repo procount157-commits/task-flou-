@@ -3,9 +3,10 @@ import React, { useEffect, useState } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { Btn, Chips, IconBtn, Input, Opt, Row, Sheet, Toggle, Txt } from './kit';
+import { DateField, TimeField } from './pickers';
 import { DaysPicker, RewardPicker, VoiceToText } from './shared';
 import { useLang, useTheme } from '@/ctx/Lang';
-import { isDate, isTime, today } from '@/lib/dates';
+import { isDate, isTime } from '@/lib/dates';
 import { COLOR_CHOICES } from '@/lib/gcal';
 import { GenerateImage, pickAttachment, pickImage } from '@/lib/integrations';
 
@@ -21,13 +22,21 @@ export type Field = {
   // multiline only: adds a mic button that appends the transcription
   voice?: boolean;
   icons?: string[];
+  // tap-to-fill values offered under a text or number field
+  suggestions?: string[];
+  // date only: a date in the past (birth date), so year jumps replace the today/tomorrow shortcuts
+  past?: boolean;
 };
 
 type Values = Record<string, any>;
-type Props = { visible: boolean; title: string; fields: Field[]; initial?: Values; onSave: (v: Values) => void | Promise<void>; onClose: () => void; children?: React.ReactNode };
+type Props = {
+  visible: boolean; title: string; fields: Field[]; initial?: Values; onSave: (v: Values) => void | Promise<void>; onClose: () => void; children?: React.ReactNode;
+  // existing records of the same kind: their values become suggestions for the matching fields
+  history?: Values[];
+};
 
 // One generic create/edit sheet: every entity screen describes its form as a list of fields.
-export function FormModal({ visible, title, fields, initial, onSave, onClose, children }: Props) {
+export function FormModal({ visible, title, fields, initial, onSave, onClose, children, history }: Props) {
   const c = useTheme();
   const { t } = useLang();
   const [v, setV] = useState<Values>({});
@@ -94,7 +103,7 @@ export function FormModal({ visible, title, fields, initial, onSave, onClose, ch
         return (
           <View key={f.key} style={{ gap: 4 }}>
             <Txt v="muted">{label}</Txt>
-            <DaysPicker value={v[f.key] ?? []} onChange={(x) => set(f.key, x)} />
+            <DaysPicker value={v[f.key] ?? []} onChange={(x) => set(f.key, x)} emptyLabel={f.placeholder} />
           </View>
         );
       case 'reward':
@@ -143,8 +152,14 @@ export function FormModal({ visible, title, fields, initial, onSave, onClose, ch
             <Btn small kind="ghost" title={`📎 ${t.c.upload}`} onPress={async () => { const u = await pickAttachment(); if (u) set(f.key, [...(v[f.key] ?? []), u]); }} />
           </View>
         );
+      case 'date':
+        return <DateField key={f.key} label={label} value={v[f.key]} onChange={(x) => set(f.key, x)} error={errors[f.key]} allowClear={!f.required} past={f.past} />;
+      case 'time':
+        return <TimeField key={f.key} label={label} value={v[f.key]} onChange={(x) => set(f.key, x)} error={errors[f.key]} allowClear={!f.required} />;
       default: {
-        const isDateField = f.type === 'date';
+        // what was entered before comes first, then the ready-made list
+        const past = (history ?? []).map((r) => r[f.key]).filter((x) => x != null && x !== '' && !Array.isArray(x)).map(String).reverse();
+        const suggestions = f.type === 'tags' ? f.suggestions : [...new Set([...past, ...(f.suggestions ?? [])])].slice(0, 10);
         return (
           <View key={f.key} style={{ gap: 4 }}>
             <Input
@@ -153,14 +168,12 @@ export function FormModal({ visible, title, fields, initial, onSave, onClose, ch
               onChangeText={(x) => set(f.key, x)}
               error={errors[f.key]}
               multiline={f.type === 'multiline'}
-              keyboardType={f.type === 'number' ? 'decimal-pad' : f.type === 'date' || f.type === 'time' ? 'numbers-and-punctuation' : 'default'}
-              placeholder={f.placeholder ?? (isDateField ? 'YYYY-MM-DD' : f.type === 'time' ? 'HH:MM' : undefined)}
+              keyboardType={f.type === 'number' ? 'decimal-pad' : 'default'}
+              placeholder={f.placeholder}
               autoCapitalize="none"
+              suggestions={suggestions}
             />
-            <Row>
-              {isDateField ? <Btn small kind="ghost" title={t.c.today} onPress={() => set(f.key, today())} /> : null}
-              {f.voice ? <VoiceToText onText={(text) => text && set(f.key, [v[f.key], text].filter(Boolean).join(' '))} /> : null}
-            </Row>
+            {f.voice ? <Row><VoiceToText onText={(text) => text && set(f.key, [v[f.key], text].filter(Boolean).join(' '))} /></Row> : null}
           </View>
         );
       }

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Platform, View } from 'react-native';
 
-import { useAI } from './Today';
+import { useAI } from './taskparts';
 import { useLang, useTheme } from '@/ctx/Lang';
 import { SOUND_KEYS, usePomodoro } from '@/ctx/Pomodoro';
 import { fmtClock, monthKey, today } from '@/lib/dates';

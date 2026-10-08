@@ -1,104 +1,25 @@
-import { DarkTheme, DefaultTheme, ThemeProvider as NavThemeProvider, usePathname, useRouter } from 'expo-router';
-import { Drawer } from 'expo-router/drawer';
+import { Ionicons } from '@expo/vector-icons';
+import { DarkTheme, DefaultTheme, ThemeProvider as NavThemeProvider, useRouter } from 'expo-router';
+import { Tabs } from 'expo-router/js-tabs';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import React, { useEffect, useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import React, { useEffect } from 'react';
+import { Pressable, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AuthProvider, ProfileProvider, useAuth, useProfile } from '@/ctx/Auth';
 import { LangProvider, ThemeProvider, useLang, useTheme, useThemeCtl } from '@/ctx/Lang';
 import { PomodoroProvider } from '@/ctx/Pomodoro';
-import { useEntity } from '@/lib/db';
-import { LEVELS } from '@/lib/logic';
-import { initNotifications, syncReminders } from '@/lib/notify';
+import { useEntity, useKV } from '@/lib/db';
+import { CHECKIN_DEFAULTS, CheckinSettings, initNotifications, onNotificationOpen, scheduleAlarms, scheduleCheckins, syncReminders } from '@/lib/notify';
+import type { Alarm } from '@/lib/types';
 import { IntentionModal, Landing, Login, Onboarding } from '@/screens/Entry';
-import { Loading, Txt } from '@/ui/kit';
+import { Loading } from '@/ui/kit';
 import { CelebrationProvider } from '@/ui/shared';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
-
-type Item = { label: string; path: string; icon: string };
-
-function Menu({ close }: { close: () => void }) {
-  const c = useTheme();
-  const { t, dir, toggleLang } = useLang();
-  const { isDark, toggleTheme } = useThemeCtl();
-  const { user, logout } = useAuth();
-  const router = useRouter();
-  const path = usePathname();
-  const insets = useSafeAreaInsets();
-  const [open, setOpen] = useState<Record<string, boolean>>({});
-
-  const main: Item[] = [
-    { label: t.nav.home, path: '/', icon: '🏠' }, { label: t.nav.today, path: '/today', icon: '✅' }, { label: t.nav.habits, path: '/habits', icon: '🔥' },
-    { label: t.nav.journal, path: '/journal', icon: '📔' }, { label: t.nav.progress, path: '/progress', icon: '📈' }, { label: t.nav.analytics, path: '/analytics', icon: '📊' },
-    { label: t.nav.motivation, path: '/motivation', icon: '✉️' }, { label: t.nav.brainstorm, path: '/brainstorm', icon: '💡' }, { label: t.nav.kolb, path: '/kolb', icon: '🔄' },
-    { label: t.nav.aiCoach, path: '/ai-coach', icon: '🤖' }, { label: t.nav.pomodoro, path: '/pomodoro', icon: '⏱' }, { label: t.nav.finance, path: '/finance', icon: '💰' },
-    { label: t.nav.invite, path: '/invite', icon: '👥' }, { label: t.nav.pricing, path: '/pricing', icon: '💳' },
-  ];
-  const groups: { key: string; label: string; icon: string; items: Item[] }[] = [
-    { key: 'content', label: t.nav.content, icon: '📱', items: [
-      { label: t.nav.contentAll, path: '/content', icon: '' }, { label: t.nav.planner, path: '/content?tab=planner', icon: '' },
-      { label: t.nav.scripts, path: '/content?tab=scripts', icon: '' }, { label: t.nav.ideas, path: '/content?tab=ideas', icon: '' }, { label: t.nav.links, path: '/content?tab=links', icon: '' },
-    ] },
-    { key: 'learning', label: t.nav.learning, icon: '🎓', items: [
-      { label: t.nav.fields, path: '/learning', icon: '' }, { label: t.nav.inProgress, path: '/learning?filter=in_progress', icon: '' },
-      { label: t.nav.completed, path: '/learning?filter=completed', icon: '' }, { label: t.nav.wishlist, path: '/learning?filter=wishlist', icon: '' },
-    ] },
-  ];
-
-  const go = (p: string) => {
-    close();
-    router.navigate(p as any);
-  };
-  const row = (it: Item, indent = false) => {
-    const on = path === it.path.split('?')[0] && !it.path.includes('?');
-    return (
-      <Pressable key={it.path} onPress={() => go(it.path)} accessibilityRole="link"
-        style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, paddingHorizontal: 14, paddingStart: indent ? 42 : 14, backgroundColor: on ? c.soft : 'transparent', borderRadius: 8 }}>
-        {it.icon ? <Text style={{ fontSize: 16 }}>{it.icon}</Text> : null}
-        <Txt style={{ flex: 1, fontWeight: on ? '700' : '400' }}>{it.label}</Txt>
-      </Pressable>
-    );
-  };
-  const heading = (label: string) => <Txt v="small" style={{ paddingHorizontal: 14, paddingTop: 14, paddingBottom: 4 }}>{label}</Txt>;
-
-  return (
-    <ScrollView style={{ flex: 1, backgroundColor: c.card, direction: dir }} contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: insets.bottom + 16, paddingHorizontal: 6 }}>
-      <View style={{ padding: 14, gap: 2 }}>
-        <Txt v="h">{t.appName}</Txt>
-        <Txt v="small">{user?.name} · {user?.role === 'admin' ? t.auth.roleAdmin : t.auth.roleUser}</Txt>
-      </View>
-      {main.map((it) => row(it))}
-      {groups.map((g) => (
-        <View key={g.key}>
-          <Pressable onPress={() => setOpen((o) => ({ ...o, [g.key]: !o[g.key] }))} accessibilityRole="button" accessibilityState={{ expanded: !!open[g.key] }}
-            style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, paddingHorizontal: 14 }}>
-            <Text style={{ fontSize: 16 }}>{g.icon}</Text>
-            <Txt style={{ flex: 1 }}>{g.label}</Txt>
-            <Txt v="muted">{open[g.key] ? '▾' : '▸'}</Txt>
-          </Pressable>
-          {open[g.key] ? g.items.map((it) => row(it, true)) : null}
-        </View>
-      ))}
-      {heading(t.nav.goalLevels)}
-      {LEVELS.map((l) => row({ label: t.level[l], path: `/goals/${l}`, icon: '🎯' }))}
-      {heading(t.nav.settings)}
-      {row({ label: t.nav.settings, path: '/profile-settings', icon: '⚙️' })}
-      <Pressable onPress={toggleLang} accessibilityRole="button" style={{ flexDirection: 'row', gap: 10, paddingVertical: 10, paddingHorizontal: 14 }}>
-        <Text style={{ fontSize: 16 }}>🌐</Text><Txt>{t.c.language}</Txt>
-      </Pressable>
-      <Pressable onPress={toggleTheme} accessibilityRole="button" style={{ flexDirection: 'row', gap: 10, paddingVertical: 10, paddingHorizontal: 14 }}>
-        <Text style={{ fontSize: 16 }}>{isDark ? '☀️' : '🌙'}</Text><Txt>{t.c.darkMode}</Txt>
-      </Pressable>
-      <Pressable onPress={logout} accessibilityRole="button" style={{ flexDirection: 'row', gap: 10, paddingVertical: 10, paddingHorizontal: 14 }}>
-        <Text style={{ fontSize: 16 }}>🚪</Text><Txt color={c.danger}>{t.c.logout}</Txt>
-      </Pressable>
-    </ScrollView>
-  );
-}
+const NO_ALARMS: Alarm[] = [];
 
 // Keeps habit and high-priority-task reminders in step with the data.
 function ReminderSync() {
@@ -112,38 +33,78 @@ function ReminderSync() {
   return null;
 }
 
-function AppDrawer() {
+const TABS: { name: string; icon: keyof typeof Ionicons.glyphMap }[] = [
+  { name: 'index', icon: 'checkbox-outline' },
+  { name: 'calendar', icon: 'calendar-outline' },
+  { name: 'ai-coach', icon: 'sparkles-outline' },
+  { name: 'pomodoro', icon: 'timer-outline' },
+  { name: 'habits', icon: 'flame-outline' },
+  { name: 'more', icon: 'apps-outline' },
+];
+const HIDDEN = ['dashboard', 'today', 'matrix', 'checkin', 'alarm', 'journal', 'progress', 'analytics', 'motivation', 'brainstorm', 'kolb', 'finance', 'invite', 'pricing', 'content', 'learning', 'goals/[level]', 'profile-settings', 'join', 'explore'];
+
+function AppTabs() {
   const c = useTheme();
   const { t, dir } = useLang();
+  const router = useRouter();
   const rtl = dir === 'rtl';
   const titles: Record<string, string> = {
-    index: t.nav.home, today: t.nav.today, habits: t.nav.habits, journal: t.nav.journal, progress: t.nav.progress, analytics: t.nav.analytics,
-    motivation: t.nav.motivation, brainstorm: t.nav.brainstorm, kolb: t.nav.kolb, 'ai-coach': t.nav.aiCoach, pomodoro: t.nav.pomodoro, finance: t.nav.finance,
-    invite: t.nav.invite, pricing: t.nav.pricing, content: t.nav.content, learning: t.nav.learning, 'goals/[level]': t.nav.goals, 'profile-settings': t.nav.settings,
+    index: t.nav.tasks, calendar: t.nav.calendar, 'ai-coach': t.nav.aiCoach, pomodoro: t.nav.focus, habits: t.nav.habits, more: t.nav.more,
+    dashboard: t.nav.dashboard, matrix: t.tasks.matrix, checkin: t.checkin.title, alarm: t.alarm.title, journal: t.nav.journal, progress: t.nav.progress,
+    analytics: t.nav.analytics, motivation: t.nav.motivation, brainstorm: t.nav.brainstorm, kolb: t.nav.kolb, finance: t.nav.finance, invite: t.nav.invite,
+    pricing: t.nav.pricing, content: t.nav.content, learning: t.nav.learning, 'goals/[level]': t.nav.goals, 'profile-settings': t.nav.settings,
   };
+  const back = () => (
+    <Pressable onPress={() => (router.canGoBack() ? router.back() : router.navigate('/more'))} hitSlop={10} accessibilityRole="button" accessibilityLabel={t.c.back} style={{ paddingHorizontal: 16 }}>
+      <Ionicons name={rtl ? 'chevron-forward' : 'chevron-back'} size={24} color={c.text} />
+    </Pressable>
+  );
   return (
-    <Drawer
-      drawerContent={(p) => <Menu close={() => p.navigation.closeDrawer()} />}
-      screenOptions={({ navigation, route }) => {
-        const toggle = () => (
-          <Pressable onPress={() => navigation.toggleDrawer()} hitSlop={10} accessibilityRole="button" accessibilityLabel="menu" style={{ paddingHorizontal: 16 }}>
-            <Text style={{ fontSize: 22, color: c.text }}>☰</Text>
-          </Pressable>
-        );
+    <Tabs
+      screenOptions={({ route }) => {
+        const inner = HIDDEN.includes(route.name);
         return {
           title: titles[route.name] ?? t.appName,
-          drawerPosition: rtl ? 'right' : 'left',
-          drawerType: 'front',
           headerTitleAlign: 'center',
           headerStyle: { backgroundColor: c.card },
           headerTintColor: c.text,
-          headerLeft: rtl ? () => null : toggle,
-          headerRight: rtl ? toggle : undefined,
+          headerShadowVisible: false,
+          // the header is physical, so the back arrow moves to the reading-start side by hand
+          headerLeft: inner && !rtl ? back : () => null,
+          headerRight: inner && rtl ? back : undefined,
+          tabBarActiveTintColor: c.primary,
+          tabBarInactiveTintColor: c.muted,
+          tabBarStyle: { backgroundColor: c.card, borderTopColor: c.border, direction: dir },
+          tabBarLabelStyle: { fontSize: 10 },
           sceneStyle: { backgroundColor: c.bg },
+          // screens that are not on show stop re-rendering when data changes
+          freezeOnBlur: true,
         };
-      }}
-    />
+      }}>
+      {TABS.map((tab) => (
+        <Tabs.Screen key={tab.name} name={tab.name} options={{ headerShown: tab.name !== 'index', tabBarIcon: ({ color, size }) => <Ionicons name={tab.icon} size={size} color={color} /> }} />
+      ))}
+      {HIDDEN.map((name) => <Tabs.Screen key={name} name={name} options={{ href: null }} />)}
+    </Tabs>
   );
+}
+
+// Re-books check-ins and alarms when the app opens, and follows a tapped notification to its screen.
+function Background() {
+  const { t } = useLang();
+  const router = useRouter();
+  const [alarms] = useKV<Alarm[]>('alarms', NO_ALARMS);
+  const [checkin] = useKV<CheckinSettings>('checkin', CHECKIN_DEFAULTS);
+  useEffect(() => onNotificationOpen((url) => router.navigate(url as any)), [router]);
+  useEffect(() => {
+    const id = setTimeout(() => {
+      scheduleAlarms(alarms, t.alarm.ringing);
+      scheduleCheckins(checkin, t.checkin.question);
+    }, 3000);
+    return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [alarms.length, checkin.enabled]);
+  return null;
 }
 
 function Gate() {
@@ -168,7 +129,8 @@ function Gate() {
     body = (
       // the navigator stays in physical layout (it positions the drawer itself); each screen sets its own reading direction
       <View style={{ flex: 1 }}>
-        <AppDrawer />
+        <AppTabs />
+        <Background />
         <IntentionModal />
         <ReminderSync />
       </View>

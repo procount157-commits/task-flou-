@@ -1,1 +1,1 @@
-export { default } from '@/screens/Dashboard';
+export { default } from '@/screens/Tasks';

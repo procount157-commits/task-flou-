@@ -6,6 +6,7 @@ import { isDate, today } from '@/lib/dates';
 import { useEntity } from '@/lib/db';
 import type { KolbSession } from '@/lib/types';
 import { Badge, Btn, Card, Empty, IconBtn, Input, Loading, Row, Screen, Sheet, Tabs, Toggle, Txt, confirm } from '@/ui/kit';
+import { DateField } from '@/ui/pickers';
 import { AudioClip, VoiceToText } from '@/ui/shared';
 
 const PREFIXES = ['exp_', 'ref_', 'abs_', 'act_'];
@@ -70,12 +71,15 @@ export default function Kolb() {
         {draft ? (
           <>
             <Input label={`${t.c.title} *`} value={draft.title ?? ''} onChangeText={(title) => setDraft({ ...draft, title })} />
-            <Input label={`${t.c.date} *`} value={draft.date ?? ''} onChangeText={(date) => setDraft({ ...draft, date })} placeholder="YYYY-MM-DD" keyboardType="numbers-and-punctuation" />
+            <DateField label={`${t.c.date} *`} value={draft.date} onChange={(date) => setDraft({ ...draft, date })} allowClear={false} />
             {error ? <Txt v="small" color={c.danger}>{error}</Txt> : null}
             <Toggle label={t.kolb.isFollowup} value={!!draft.is_followup} onChange={(is_followup) => setDraft({ ...draft, is_followup })} />
             <Tabs options={t.kolb.stages.map((s, i) => ({ value: String(i), label: `${i + 1}. ${s}` }))} value={stage} onChange={setStage} />
             {fieldsOf(Number(stage)).map((k) => (
-              <Input key={k} multiline label={q[k]} value={draft[k] ?? ''} onChangeText={(v) => setDraft({ ...draft, [k]: v })} style={{ minHeight: 56 }} />
+              <View key={k} style={{ gap: 4 }}>
+                <Input multiline label={q[k]} value={draft[k] ?? ''} onChangeText={(v) => setDraft({ ...draft, [k]: v })} style={{ minHeight: 48 }} suggestions={t.sug.kolb} />
+                <Row><VoiceToText onText={(text) => text && setDraft((d) => (d ? { ...d, [k]: [d[k], text].filter(Boolean).join(' ') } : d))} /></Row>
+              </View>
             ))}
             <Txt v="muted">🎙 {t.kolb.recordings}</Txt>
             {(draft.audio_urls ?? []).map((u: string, i: number) => <AudioClip key={u} uri={u} onRemove={() => setDraft({ ...draft, audio_urls: draft.audio_urls!.filter((_: string, k: number) => k !== i) })} />)}

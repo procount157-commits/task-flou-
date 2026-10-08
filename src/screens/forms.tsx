@@ -20,19 +20,19 @@ export function TaskForm({ visible, onClose, initial }: FormProps<DailyTask>) {
   const learning = useEntity('LearningItem').items;
   const pickFrom = (xs: { id: string; title: string }[]) => xs.map((x) => ({ value: x.id, label: x.title }));
   const fields: Field[] = [
-    { key: 'title', label: t.c.title, required: true },
+    { key: 'title', label: t.c.title, required: true, suggestions: t.sug.tasks },
     { key: 'date', label: t.c.date, type: 'date', required: true },
     { key: 'time', label: t.c.time, type: 'time' },
     { key: 'end_time', label: t.c.endTime, type: 'time' },
     { key: 'priority', label: t.c.priority, type: 'select', options: opts(t.prio) },
-    { key: 'repeat_days', label: t.today.repeat, type: 'days' },
+    { key: 'repeat_days', label: t.today.repeat, type: 'days', placeholder: t.c.none },
     ...(goals.length ? [{ key: 'goal_id', label: `🎯 ${t.c.linkGoal}`, type: 'select' as const, optional: true, options: pickFrom(goals) }] : []),
     ...(habits.length ? [{ key: 'habit_id', label: `🔥 ${t.c.linkHabit}`, type: 'select' as const, optional: true, options: pickFrom(habits) }] : []),
     ...(content.length ? [{ key: 'content_id', label: `📱 ${t.c.linkContent}`, type: 'select' as const, optional: true, options: pickFrom(content) }] : []),
     ...(learning.length ? [{ key: 'learning_id', label: `🎓 ${t.c.linkLearning}`, type: 'select' as const, optional: true, options: pickFrom(learning) }] : []),
   ];
   return (
-    <FormModal visible={visible} onClose={onClose} title={initial?.id ? t.c.edit : t.today.addTask} fields={fields}
+    <FormModal visible={visible} onClose={onClose} title={initial?.id ? t.c.edit : t.today.addTask} fields={fields} history={tasks.items}
       initial={{ date: today(), priority: 'medium', repeat_days: [], ...initial }}
       onSave={async (v) => {
         if (initial?.id) await tasks.update(initial.id, v);
@@ -46,13 +46,13 @@ export function HabitForm({ visible, onClose, initial }: FormProps<Habit>) {
   const habits = useEntity('Habit');
   const goals = useEntity('Goal').items;
   const fields: Field[] = [
-    { key: 'title', label: t.c.title, required: true },
+    { key: 'title', label: t.c.title, required: true, suggestions: t.sug.habits },
     { key: 'frequency', label: t.habits.frequency, type: 'select', options: opts(t.freq) },
     { key: 'repeat_days', label: t.today.repeat, type: 'days' },
     { key: 'time', label: t.c.time, type: 'time' },
-    { key: 'target_days', label: t.habits.targetDays, type: 'number' },
-    { key: 'daily_count', label: t.habits.dailyCount, type: 'number' },
-    { key: 'weekly_target', label: t.habits.weeklyTarget, type: 'number' },
+    { key: 'target_days', label: t.habits.targetDays, type: 'number', suggestions: t.sug.days },
+    { key: 'daily_count', label: t.habits.dailyCount, type: 'number', suggestions: t.sug.counts },
+    { key: 'weekly_target', label: t.habits.weeklyTarget, type: 'number', suggestions: t.sug.counts },
     { key: 'start_date', label: t.c.startDate, type: 'date' },
     { key: 'end_date', label: t.c.endDate, type: 'date' },
     ...(goals.length ? [{ key: 'goal_id', label: `🎯 ${t.c.linkGoal}`, type: 'select' as const, optional: true, options: goals.map((g) => ({ value: g.id, label: g.title })) }] : []),
@@ -80,13 +80,13 @@ export function GoalForm({ visible, onClose, initial, level }: FormProps<Goal> &
   const up = lvl && parentLevel(lvl);
   const parents = goals.items.filter((g) => (lvl ? g.level === up : true) && g.id !== initial?.id);
   const fields: Field[] = [
-    { key: 'title', label: t.c.title, required: true },
-    { key: 'description', label: t.c.description, type: 'multiline' },
+    { key: 'title', label: t.c.title, required: true, suggestions: t.sug.goals },
+    { key: 'description', label: t.c.description, type: 'multiline', voice: true },
     ...(lvl ? [] : [{ key: 'level', label: t.goals.level, type: 'select' as const, options: opts(t.level), required: true }]),
     ...(parents.length ? [{ key: 'parent_id', label: t.goals.parent, type: 'select' as const, optional: true, options: parents.map((g) => ({ value: g.id, label: lvl ? g.title : `${g.title} · ${t.level[g.level]}` })) }] : []),
     { key: 'status', label: t.c.status, type: 'select', options: opts(t.goalStatus) },
     { key: 'priority', label: t.c.priority, type: 'select', options: opts(t.prio) },
-    { key: 'progress', label: `${t.c.progress} (0-100)`, type: 'number' },
+    { key: 'progress', label: `${t.c.progress} (0-100)`, type: 'number', suggestions: t.sug.percents },
     { key: 'auto_progress', label: t.goals.autoProgress, type: 'bool' },
     { key: 'due_date', label: t.goals.dueDate, type: 'date' },
     { key: 'color', label: t.c.color, type: 'color' },

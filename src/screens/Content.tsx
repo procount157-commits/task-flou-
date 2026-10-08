@@ -136,10 +136,10 @@ export default function Content() {
     <DragArea>
       <Screen scroll={scroll}>
         {body}
-        <FormModal visible={!!form} title={form?.id ? t.c.edit : t.cont.add} initial={{ type: 'idea', platform: 'other', status: 'idea', ...form }} onClose={() => setForm(null)}
+        <FormModal visible={!!form} history={content.items} title={form?.id ? t.c.edit : t.cont.add} initial={{ type: 'idea', platform: 'other', status: 'idea', ...form }} onClose={() => setForm(null)}
           fields={[
-            { key: 'title', label: t.c.title, required: true },
-            { key: 'description', label: t.c.description, type: 'multiline' },
+            { key: 'title', label: t.c.title, required: true, suggestions: t.sug.content },
+            { key: 'description', label: t.c.description, type: 'multiline', voice: true },
             { key: 'type', label: t.c.type, type: 'select', options: opts(t.contentType) },
             { key: 'platform', label: t.cont.platform, type: 'select', options: opts(t.platform) },
             { key: 'status', label: t.c.status, type: 'select', options: opts(t.contentStatus) },

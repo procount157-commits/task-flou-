@@ -16,6 +16,8 @@ type AuthCtx = {
   pendingInvite: Invite | null;
   navigateToLogin: () => void;
   login: (name: string, email: string) => Promise<boolean>;
+  // one-tap start: a local account with no name or email to type
+  start: () => Promise<void>;
   logout: () => Promise<void>;
 };
 const Ctx = createContext<AuthCtx>(null as any);
@@ -74,6 +76,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [pendingInvite],
   );
 
+  const start = useCallback(async () => {
+    const u: User = { id: 'u_' + Date.now().toString(36), name: '', email: '', role: pendingInvite ? 'user' : 'admin', invited_by: pendingInvite?.by || undefined };
+    setCurrentUser(u.id);
+    await kv.set('user', u);
+    setUser(u);
+  }, [pendingInvite]);
+
   const logout = useCallback(async () => {
     await kv.set('user', null);
     setUser(null);
@@ -81,8 +90,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ user, isLoadingAuth, authError, showLogin, pendingInvite, navigateToLogin: () => setShowLogin(true), login, logout }),
-    [user, isLoadingAuth, authError, showLogin, pendingInvite, login, logout],
+    () => ({ user, isLoadingAuth, authError, showLogin, pendingInvite, navigateToLogin: () => setShowLogin(true), login, start, logout }),
+    [user, isLoadingAuth, authError, showLogin, pendingInvite, login, start, logout],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

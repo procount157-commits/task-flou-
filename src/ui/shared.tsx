@@ -11,10 +11,11 @@ import { NoKeyError, TranscribeAudio, UploadFile } from '@/lib/integrations';
 import { pick } from '@/lib/logic';
 
 /* ───────── DaysPicker ───────── */
-export function DaysPicker({ value, onChange }: { value: number[]; onChange: (v: number[]) => void }) {
+// `emptyLabel` says what no selection means: every day for a habit or alarm, no repeat for a task.
+export function DaysPicker({ value, onChange, emptyLabel }: { value: number[]; onChange: (v: number[]) => void; emptyLabel?: string }) {
   const c = useTheme();
   const { t } = useLang();
-  const summary = !value.length || value.length === 7 ? t.daysPicker.daily : value.length > 3 ? `${value.length} ${t.daysPicker.nDays}` : [...value].sort().map((d) => t.days[d]).join('، ');
+  const summary = !value.length ? emptyLabel ?? t.daysPicker.daily : value.length === 7 ? t.daysPicker.daily : value.length > 3 ? `${value.length} ${t.daysPicker.nDays}` : [...value].sort().map((d) => t.days[d]).join('، ');
   return (
     <View style={{ gap: 6 }}>
       <Row gap={5}>
@@ -41,7 +42,7 @@ export const useCelebrate = () => useContext(CelebrationCtx);
 function Confetti() {
   const { width, height } = useWindowDimensions();
   const bits = useMemo(
-    () => Array.from({ length: 36 }, (_, i) => ({ x: Math.random() * width, delay: Math.random() * 500, size: 6 + Math.random() * 8, color: PALETTE[i % PALETTE.length], drift: (Math.random() - 0.5) * 120, spin: 2 + Math.random() * 4 })),
+    () => Array.from({ length: 22 }, (_, i) => ({ x: Math.random() * width, delay: Math.random() * 500, size: 6 + Math.random() * 8, color: PALETTE[i % PALETTE.length], drift: (Math.random() - 0.5) * 120, spin: 2 + Math.random() * 4 })),
     [width],
   );
   const fall = useRef(new Animated.Value(0)).current;
@@ -70,6 +71,7 @@ export function CelebrationProvider({ children }: { children: React.ReactNode })
   const { t, dir } = useLang();
   const [shown, setShown] = useState<{ id: number; message: string } | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const chime = useRef<ReturnType<typeof createAudioPlayer> | null>(null);
   const cheers = useRef(t.cheers);
   cheers.current = t.cheers;
   const celebrate = useCallback<Celebrate>((message, ms = 3000) => {
@@ -77,10 +79,11 @@ export function CelebrationProvider({ children }: { children: React.ReactNode })
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => setShown(null), ms);
     if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+    // one player is kept and rewound: creating a new one on every completion stalls the UI on a phone
     try {
-      const p = createAudioPlayer(require('../../assets/sounds/success.wav'));
-      p.play();
-      setTimeout(() => p.remove(), 2500);
+      chime.current ??= createAudioPlayer(require('../../assets/sounds/success.wav'));
+      chime.current.seekTo(0);
+      chime.current.play();
     } catch {}
   }, []);
   return (
@@ -109,7 +112,7 @@ export function RewardPicker({ value, onChange }: { value: RewardValue; onChange
   return (
     <Card>
       <Txt v="muted">🎁 {t.c.reward}</Txt>
-      <Input placeholder={t.c.title} value={value.reward_title ?? ''} onChangeText={(reward_title) => onChange({ ...value, reward_title })} />
+      <Input placeholder={t.c.title} value={value.reward_title ?? ''} onChangeText={(reward_title) => onChange({ ...value, reward_title })} suggestions={t.sug.rewards} />
       <Row wrap gap={4}>
         {REWARD_ICONS.map((ic) => (
           <Pressable key={ic} onPress={() => onChange({ ...value, reward_icon: ic })} accessibilityRole="button" accessibilityLabel={ic}

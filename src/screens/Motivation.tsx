@@ -7,7 +7,10 @@ import { useEntity } from '@/lib/db';
 import { GenerateSpeech, SendEmail } from '@/lib/integrations';
 import { cancel, scheduleDaily } from '@/lib/notify';
 import { goalStats, habitStats, taskStats } from '@/lib/stats';
+import { View } from 'react-native';
+
 import { Btn, Card, Input, Loading, Row, Screen, Toggle, Txt, notice } from '@/ui/kit';
+import { TimeField } from '@/ui/pickers';
 
 export default function Motivation() {
   const c = useTheme();
@@ -82,9 +85,7 @@ export default function Motivation() {
         <Toggle label={`🔔 ${t.motiv.dailyReminder}`} value={!!saved?.send_daily_reminder} onChange={(on) => setReminder(on)} />
         <Toggle label={t.motiv.dailyEmail} value={!!saved?.send_daily_email} onChange={(send_daily_email) => patch({ send_daily_email })} />
         <Row>
-          <Input value={time} onChangeText={setTime} placeholder="HH:MM" keyboardType="numbers-and-punctuation" style={{ minWidth: 110 }} />
-          <Txt v="muted" style={{ flex: 1 }}>{t.motiv.reminderTime}</Txt>
-          <Btn small kind="ghost" title={t.c.save} onPress={() => setReminder(!!saved?.send_daily_reminder, time)} />
+          <View style={{ flex: 1 }}><TimeField label={t.motiv.reminderTime} value={time} allowClear={false} onChange={(v) => { if (v) { setTime(v); setReminder(!!saved?.send_daily_reminder, v); } }} /></View>
         </Row>
       </Card>
 

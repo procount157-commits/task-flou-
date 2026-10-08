@@ -26,7 +26,11 @@
       "permissions": [
         "RECORD_AUDIO",
         "POST_NOTIFICATIONS",
-        "VIBRATE"
+        "VIBRATE",
+        "SCHEDULE_EXACT_ALARM",
+        "USE_EXACT_ALARM",
+        "WAKE_LOCK",
+        "HIGH_SAMPLING_RATE_SENSORS"
       ]
     },
     "web": {
@@ -46,7 +50,16 @@
       ],
       "expo-audio",
       "expo-sharing",
-      "expo-notifications"
+      [
+        "expo-notifications",
+        {
+          "sounds": [
+            "./assets/sounds/alarm_ambulance.wav",
+            "./assets/sounds/alarm_whistle.wav",
+            "./assets/sounds/alarm_wail.wav"
+          ]
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": false,

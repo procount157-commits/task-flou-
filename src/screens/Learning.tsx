@@ -185,7 +185,7 @@ export default function Learning() {
         {body}
         <FormModal visible={!!fieldForm} title={fieldForm?.id ? t.c.edit : t.learn.addField} initial={{ is_active: true, icon: '💻', ...fieldForm }} onClose={() => setFieldForm(null)}
           fields={[
-            { key: 'title', label: t.c.title, required: true },
+            { key: 'title', label: t.c.title, required: true, suggestions: t.sug.fields },
             { key: 'description', label: t.c.description, type: 'multiline' },
             { key: 'icon', label: t.c.icon, type: 'icon', icons: FIELD_ICONS },
             { key: 'color', label: t.c.color, type: 'color' },
@@ -193,18 +193,18 @@ export default function Learning() {
             { key: 'is_active', label: t.habits.active, type: 'bool' },
           ]}
           onSave={async (v) => { if (fieldForm?.id) await fields.update(fieldForm.id, v); else await fields.create(v as LearningField); }} />
-        <FormModal visible={!!itemForm} title={itemForm?.id ? t.c.edit : t.learn.addItem} initial={{ type: 'course', status: 'wishlist', attachments: [], ...itemForm }} onClose={() => setItemForm(null)}
+        <FormModal visible={!!itemForm} history={items.items} title={itemForm?.id ? t.c.edit : t.learn.addItem} initial={{ type: 'course', status: 'wishlist', attachments: [], ...itemForm }} onClose={() => setItemForm(null)}
           fields={[
             { key: 'title', label: t.c.title, required: true },
             { key: 'type', label: t.c.type, type: 'select', options: opts(t.learnType) },
             { key: 'status', label: t.c.status, type: 'select', options: opts(t.learnStatus) },
             ...(fields.items.length ? [{ key: 'field_id', label: t.learn.field, type: 'select' as const, optional: true, options: pickFrom(fields.items) }] : []),
-            { key: 'platform', label: t.learn.platform },
+            { key: 'platform', label: t.learn.platform, suggestions: t.sug.platforms },
             { key: 'source_url', label: t.learn.url, placeholder: 'https://' },
             { key: 'cover_url', label: t.learn.cover, type: 'image' },
-            { key: 'total_lessons', label: t.learn.totalLessons, type: 'number' },
-            { key: 'completed_lessons', label: t.learn.doneLessons, type: 'number' },
-            { key: 'progress_percent', label: t.learn.progressPct, type: 'number' },
+            { key: 'total_lessons', label: t.learn.totalLessons, type: 'number', suggestions: t.sug.lessons },
+            { key: 'completed_lessons', label: t.learn.doneLessons, type: 'number', suggestions: ['0', ...t.sug.lessons] },
+            { key: 'progress_percent', label: t.learn.progressPct, type: 'number', suggestions: t.sug.percents },
             { key: 'notes', label: t.c.notes, type: 'multiline' },
             { key: 'tags', label: t.c.tags, type: 'tags' },
             { key: 'attachments', label: t.c.attachments, type: 'files' },

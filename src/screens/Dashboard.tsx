@@ -69,12 +69,12 @@ export default function Dashboard() {
         <Stat icon="🎯" label={t.dash.avgGoals} value={`${avgGoals}%`} />
       </Row>
 
-      <Section title={t.dash.recentTasks} right={<Btn small kind="ghost" title={t.c.more} onPress={() => router.push('/today')} />}>
+      <Section title={t.dash.recentTasks} right={<Btn small kind="ghost" title={t.c.more} onPress={() => router.push('/')} />}>
         <Card>
           <Progress value={pct(doneTasks, dayTasks.length)} />
           {dayTasks.length ? dayTasks.slice(0, 4).map((x) => (
             <Row key={x.id}>
-              <Check on={!!x.completed} onPress={() => router.push('/today')} />
+              <Check on={!!x.completed} onPress={() => router.push('/')} />
               <Txt style={{ flex: 1, textDecorationLine: x.completed ? 'line-through' : 'none' }} numberOfLines={1}>{x.title}</Txt>
               {x.time ? <Txt v="small">{x.time}</Txt> : null}
             </Row>
@@ -90,7 +90,7 @@ export default function Dashboard() {
       </Section>
 
       <Section title={t.dash.calendar}>
-        <CalendarView taskDates={taskDates} habitDates={habitDates} onSelect={(d) => router.push(`/today?date=${d}` as any)} />
+        <CalendarView taskDates={taskDates} habitDates={habitDates} onSelect={(d) => router.push(`/?date=${d}` as any)} />
       </Section>
 
       <Row>

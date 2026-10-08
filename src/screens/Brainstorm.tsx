@@ -32,7 +32,7 @@ export default function Brainstorm() {
   return (
     <Screen>
       <Card>
-        <Input placeholder={t.brain.quickPh} value={quick} onChangeText={setQuick} multiline onSubmitEditing={() => capture(quick)} />
+        <Input placeholder={t.brain.quickPh} value={quick} onChangeText={setQuick} multiline onSubmitEditing={() => capture(quick)} suggestions={t.sug.ideas} />
         <Row>
           <Btn title={t.c.save} disabled={!quick.trim()} onPress={() => capture(quick)} style={{ flex: 1 }} />
           <VoiceToText onText={(text, uri) => capture(text, uri)} />

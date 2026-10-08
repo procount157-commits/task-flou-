@@ -6,6 +6,7 @@ import { lastDays, today } from '@/lib/dates';
 import { useEntity } from '@/lib/db';
 import type { JournalEntry, Mood } from '@/lib/types';
 import { Btn, Card, Chips, Empty, IconBtn, Input, Loading, Progress, Row, Screen, Section, Txt, confirm } from '@/ui/kit';
+import { DateField } from '@/ui/pickers';
 import { AudioClip, VoiceToText, useCelebrate } from '@/ui/shared';
 
 const MOODS: { value: Mood; icon: string }[] = [
@@ -57,15 +58,15 @@ export default function Journal() {
     </View>,
     <View key="free" style={{ gap: 8 }}>
       <Txt v="sub">{t.journal.free}</Txt>
-      <Input multiline placeholder={t.journal.freePh} value={d.content ?? ''} onChangeText={set('content')} style={{ minHeight: 150 }} />
+      <Input multiline placeholder={t.journal.freePh} value={d.content ?? ''} onChangeText={set('content')} style={{ minHeight: 120 }} suggestions={t.sug.journal} />
       <VoiceToText onText={(text, uri) => setD((p) => ({ ...p, content: [p.content, text].filter(Boolean).join(' '), audio_urls: [...(p.audio_urls ?? []), uri] }))} />
       {(d.audio_urls ?? []).map((u, i) => <AudioClip key={u} uri={u} onRemove={() => set('audio_urls')(d.audio_urls!.filter((_, k) => k !== i))} />)}
     </View>,
     <View key="guided" style={{ gap: 8 }}>
-      <Input multiline label={t.journal.wins} value={d.wins ?? ''} onChangeText={set('wins')} />
-      <Input multiline label={t.journal.gratitude} value={d.gratitude ?? ''} onChangeText={set('gratitude')} />
-      <Input multiline label={t.journal.improve} value={d.improvements ?? ''} onChangeText={set('improvements')} />
-      <Input multiline label={t.journal.tomorrow} value={d.tomorrow_focus ?? ''} onChangeText={set('tomorrow_focus')} />
+      <Input multiline label={t.journal.wins} value={d.wins ?? ''} onChangeText={set('wins')} suggestions={t.sug.wins} />
+      <Input multiline label={t.journal.gratitude} value={d.gratitude ?? ''} onChangeText={set('gratitude')} suggestions={t.sug.gratitude} />
+      <Input multiline label={t.journal.improve} value={d.improvements ?? ''} onChangeText={set('improvements')} suggestions={t.sug.improve} />
+      <Input multiline label={t.journal.tomorrow} value={d.tomorrow_focus ?? ''} onChangeText={set('tomorrow_focus')} suggestions={t.sug.tomorrow} />
     </View>,
   ];
 
@@ -90,7 +91,7 @@ export default function Journal() {
       </Card>
 
       <Section title={t.journal.previous}>
-        <Input placeholder={t.journal.searchDate} value={search} onChangeText={setSearch} keyboardType="numbers-and-punctuation" />
+        <DateField value={search || undefined} onChange={(v) => setSearch(v ?? '')} />
         {entries.loading ? <Loading /> : !past.length ? <Empty icon="📔" text={t.journal.empty} /> : past.map((e) => (
           <Card key={e.id} onPress={() => setOpen(open === e.id ? null : e.id)}>
             <Row>

@@ -2,10 +2,11 @@ import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
 import { parse, today } from './dates';
-import type { DailyTask, Habit } from './types';
+import type { Alarm, DailyTask, Habit } from './types';
 
 const native = Platform.OS !== 'web';
 let ready: Promise<boolean> | undefined;
+let lastSignature = '';
 
 // Asks for permission once and sets up the Android channel; resolves false when notifications are unavailable.
 export function initNotifications(): Promise<boolean> {
@@ -52,10 +53,18 @@ export async function scheduleDaily(id: string, title: string, body: string, tim
 
 // Rebuilds every habit and high-priority-task reminder from the current data.
 export async function syncReminders(habits: Habit[], tasks: DailyTask[], labels: { habit: string; task: string }) {
+  const day = today();
+  // rebuilding every reminder is slow on a phone, so it only happens when something that affects them changed
+  const signature = JSON.stringify([
+    day,
+    habits.map((h) => [h.id, h.title, h.time, h.repeat_days, h.is_active, h.end_date]),
+    tasks.filter((t) => t.priority === 'high' && !t.completed && t.time && t.date >= day && !t.parent_id).map((t) => [t.id, t.title, t.date, t.time]),
+  ]);
+  if (signature === lastSignature) return;
+  lastSignature = signature;
   if (!(await initNotifications())) return;
   const all = await Notifications.getAllScheduledNotificationsAsync();
   await cancel(...all.map((n) => n.identifier).filter((id) => id.startsWith('habit-') || id.startsWith('task-')));
-  const day = today();
   for (const h of habits) {
     if (h.is_active === false || !h.time || (h.end_date && h.end_date < day)) continue;
     const [hour, minute] = h.time.split(':').map(Number);
@@ -73,4 +82,99 @@ export async function syncReminders(habits: Habit[], tasks: DailyTask[], labels:
     when.setHours(hh, mm, 0, 0);
     await scheduleAt(`task-${t.id}`, labels.task, t.title, when);
   }
+}
+
+/* ───────── hourly check-in ───────── */
+export type CheckinSettings = { enabled: boolean; from: string; to: string };
+export const CHECKIN_DEFAULTS: CheckinSettings = { enabled: false, from: '08:00', to: '22:00' };
+
+// One pinned notification per hour inside the chosen window; tapping it opens the check-in screen.
+export async function scheduleCheckins(s: CheckinSettings, question: string) {
+  if (!native) return;
+  const all = await Notifications.getAllScheduledNotificationsAsync().catch(() => []);
+  await cancel(...all.map((n) => n.identifier).filter((id) => id.startsWith('checkin-')));
+  if (!s.enabled || !(await initNotifications())) return;
+  if (Platform.OS === 'android')
+    await Notifications.setNotificationChannelAsync('checkin', { name: 'Hourly check-in', importance: Notifications.AndroidImportance.MAX, lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC });
+  const start = Number(s.from.slice(0, 2));
+  const end = Number(s.to.slice(0, 2));
+  for (let h = start; h <= end; h++)
+    await Notifications.scheduleNotificationAsync({
+      identifier: `checkin-${h}`,
+      content: { title: '🎙 ' + question, body: `${String(h - 1).padStart(2, '0')}:00 – ${String(h).padStart(2, '0')}:00`, sound: true, sticky: true, autoDismiss: false, priority: Notifications.AndroidNotificationPriority.MAX, data: { url: '/checkin' } },
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour: h, minute: 0, channelId: 'checkin' },
+    }).catch(() => {});
+}
+
+/* ───────── alarms ───────── */
+
+const NAGS = [0, 1, 2, 3, 4, 6, 8, 10];
+const DAYS_AHEAD = 6;
+const alarmKey = (id: string, date: string, k: number) => `alarm-${id}-${date}-${k}`;
+const ymdOf = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+// Each alarm becomes a burst of siren notifications a minute apart, booked for the coming days.
+// The sound plays on the alarm stream, so a silenced ringer does not mute it.
+export async function scheduleAlarms(alarms: Alarm[], title: string) {
+  if (!native) return;
+  const all = await Notifications.getAllScheduledNotificationsAsync().catch(() => []);
+  await cancel(...all.map((n) => n.identifier).filter((id) => id.startsWith('alarm-')));
+  if (!alarms.some((a) => a.enabled) || !(await initNotifications())) return;
+  if (Platform.OS === 'android')
+    for (const sound of ['ambulance', 'whistle', 'wail'])
+      await Notifications.setNotificationChannelAsync(`alarm-${sound}`, {
+        name: `Alarm (${sound})`, importance: Notifications.AndroidImportance.MAX, sound: `alarm_${sound}.wav`, bypassDnd: true,
+        vibrationPattern: [0, 800, 400, 800, 400, 800], lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+        audioAttributes: { usage: Notifications.AndroidAudioUsage.ALARM, contentType: Notifications.AndroidAudioContentType.SONIFICATION },
+      });
+  const now = Date.now();
+  for (const a of alarms.filter((x) => x.enabled)) {
+    const [hh, mm] = a.time.split(':').map(Number);
+    for (let d = 0; d <= DAYS_AHEAD; d++) {
+      const base = new Date();
+      base.setDate(base.getDate() + d);
+      base.setHours(hh, mm, 0, 0);
+      if (a.days.length && !a.days.includes(base.getDay())) continue;
+      for (const k of NAGS) {
+        const when = new Date(base.getTime() + k * 60000);
+        const id = alarmKey(a.id, ymdOf(base), k);
+        if (when.getTime() <= now) continue;
+        await Notifications.scheduleNotificationAsync({
+          identifier: id,
+          content: { title: `⏰ ${title}`, body: `${a.time}${a.label ? ' · ' + a.label : ''}`, sound: `alarm_${a.sound}.wav`, sticky: true, autoDismiss: false, priority: Notifications.AndroidNotificationPriority.MAX, data: { url: `/alarm?ring=${a.id}` } },
+          trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: when, channelId: `alarm-${a.sound}` },
+        }).catch(() => {});
+      }
+    }
+  }
+}
+
+// Called once the challenge is solved: silences what is on screen and drops the rest of today's burst.
+export async function silenceAlarm(id: string) {
+  if (!native) return;
+  const today = ymdOf(new Date());
+  await cancel(...NAGS.map((k) => alarmKey(id, today, k)));
+  await Notifications.dismissAllNotificationsAsync().catch(() => {});
+}
+
+// Opens the screen named in a tapped notification, including the one that launched the app.
+export function onNotificationOpen(open: (url: string) => void) {
+  if (!native) return () => {};
+  const handle = (r: Notifications.NotificationResponse | null) => {
+    const url = r?.notification.request.content.data?.url;
+    if (typeof url === 'string') open(url);
+  };
+  try {
+    handle(Notifications.getLastNotificationResponse());
+  } catch {}
+  const tapped = Notifications.addNotificationResponseReceivedListener(handle);
+  // an alarm that fires while the app is open goes straight to the ringing screen
+  const received = Notifications.addNotificationReceivedListener((n) => {
+    const url = n.request.content.data?.url;
+    if (typeof url === 'string' && url.startsWith('/alarm')) open(url);
+  });
+  return () => {
+    tapped.remove();
+    received.remove();
+  };
 }

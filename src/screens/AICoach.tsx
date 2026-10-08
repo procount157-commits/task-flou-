@@ -23,11 +23,13 @@ export default function AICoach() {
   const logs = useEntity('HabitLog').items;
   const txs = useEntity('Transaction').items;
   const journal = useEntity('JournalEntry').items;
+  const activity = useEntity('ActivityLog').items;
   const [messages, setMessages] = useKV<Msg[]>('coach:messages', []);
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
   const scroller = useRef<ScrollView>(null);
   const day = today();
+  const [report] = useKV<string>(`dayreport:${day}`, '');
 
   // Everything the model is told about the user: plain numbers and a few named examples per area.
   const context = () => {
@@ -52,6 +54,8 @@ export default function AICoach() {
       ...habits.map((h) => `  - "${h.title}": streak ${h.streak ?? 0}, 60-day consistency ${commitment(h, logs, 60)}%, 7-day ${commitment(h, logs, 7)}%`),
       `FINANCE (SAR): income ${money(income)}, expenses ${money(expense)}, net ${money(income - expense)}, transactions ${txs.length}, this month expenses ${money(txs.filter((x) => x.type === 'expense' && monthKey(x.date) === monthKey(day)).reduce((s, x) => s + x.amount, 0))}.`,
       ...Object.entries(byCat).sort((a, b) => b[1] - a[1]).map(([k, v]) => `  - ${k}: ${money(v)}`),
+      `TODAY'S HOURLY ACTIVITY LOG: ${activity.filter((a) => a.date === day).map((a) => `${a.time} ${a.text ?? '(voice note)'}`).join(' | ') || 'none'}`,
+      report ? `TODAY'S ANALYSIS: ${report}` : '',
       `JOURNAL: ${journal.length} entries, average mood ${moods.length ? (moods.reduce((a, b) => a + b, 0) / moods.length).toFixed(1) : 'n/a'} / 5.`,
     ].join('\n');
   };

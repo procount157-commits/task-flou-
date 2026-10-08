@@ -43,3 +43,14 @@ export const shiftMonth = (m: string, n: number) => {
   const d = new Date(Number(m.slice(0, 4)), Number(m.slice(5, 7)) - 1 + n, 1);
   return isNaN(d.getTime()) ? monthKey(today()) : `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
 };
+// "Today" / "Tomorrow" / "Yesterday" where they apply, otherwise a short localized date.
+export const fmtDate = (s: string | undefined, lang: string, words: { today: string; tomorrow: string; yesterday: string }, long = false) => {
+  if (!isDate(s)) return '';
+  const t = today();
+  if (s === t) return words.today;
+  if (s === addDays(t, 1)) return words.tomorrow;
+  if (s === addDays(t, -1)) return words.yesterday;
+  const d = parse(s!);
+  const sameYear = d.getFullYear() === new Date().getFullYear();
+  return d.toLocaleDateString(lang === 'ar' ? 'ar-EG-u-nu-latn' : 'en-GB', { weekday: long ? 'long' : 'short', day: 'numeric', month: 'short', year: sameYear ? undefined : 'numeric' });
+};

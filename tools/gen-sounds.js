@@ -27,3 +27,16 @@ wav('forest', loop(lowpass(white(N), 0.04).map((v, i) => { const t = T(i) % 2; c
 wav('fire', loop(lowpass(white(N), 0.03).map((v) => v + (rnd() > 0.992 ? rnd() * 0.25 : 0))));
 const chime = []; [523.25, 659.25, 783.99, 1046.5].forEach((f, k) => { for (let i = 0; i < SR * 0.9; i++) { const idx = Math.floor(k * SR * 0.11) + i; chime[idx] = (chime[idx] || 0) + Math.sin(2 * Math.PI * f * T(i)) * Math.exp(-T(i) * 5); } });
 wav('success', Array.from(chime, (v) => v || 0));
+
+// Alarm sirens: loud, harsh and long enough to be hard to sleep through.
+const AL = SR * 24;
+const sq = (ph) => (Math.sin(ph) > 0 ? 1 : -1) * 0.6 + Math.sin(ph) * 0.4;
+let ph = 0;
+// two-tone ambulance: 0.55 s high, 0.55 s low
+wav('alarm_ambulance', Array.from({ length: AL }, (_, i) => { ph += (2 * Math.PI * (Math.floor(T(i) / 0.55) % 2 ? 660 : 880)) / SR; return sq(ph); }));
+ph = 0;
+// referee whistle: a shrill tone with fast trill, in bursts
+wav('alarm_whistle', Array.from({ length: AL }, (_, i) => { ph += (2 * Math.PI * (2900 + 180 * Math.sin(T(i) * 2 * Math.PI * 38))) / SR; return (T(i) % 0.9 < 0.65 ? 1 : 0) * Math.sin(ph); }));
+ph = 0;
+// air-raid wail: a slow rise and fall between 450 and 1500 Hz
+wav('alarm_wail', Array.from({ length: AL }, (_, i) => { ph += (2 * Math.PI * (975 + 525 * Math.sin(T(i) * 2 * Math.PI / 3.2 - 1.57))) / SR; return sq(ph); }));

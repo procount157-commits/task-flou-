@@ -76,9 +76,28 @@ export function IconBtn({ icon, onPress, label, disabled }: { icon: string; onPr
   );
 }
 
-export function Input({ label, error, style, ...p }: TextInputProps & { label?: string; error?: string }) {
+// Tap-to-fill chips shown under a field, so most fields never need the keyboard.
+export function Suggest({ items, onPick }: { items: string[]; onPick: (v: string) => void }) {
+  const c = useTheme();
+  if (!items.length) return null;
+  return (
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: 6 }} style={{ flexGrow: 0 }}>
+      {items.map((it) => (
+        <Pressable key={it} onPress={() => onPick(it)} accessibilityRole="button" style={{ paddingHorizontal: 11, paddingVertical: 6, borderRadius: 999, backgroundColor: c.soft }}>
+          <Text style={{ color: c.primary, fontSize: 13 }}>{it}</Text>
+        </Pressable>
+      ))}
+    </ScrollView>
+  );
+}
+
+type InputProps = TextInputProps & { label?: string; error?: string; suggestions?: string[] };
+export function Input({ label, error, style, suggestions, ...p }: InputProps) {
   const c = useTheme();
   const { dir } = useLang();
+  const value = p.value ?? '';
+  // long fields collect several picks; short ones are replaced by the pick
+  const pick = (v: string) => p.onChangeText?.(p.multiline && value.trim() && !value.includes(v) ? `${value.trim()}، ${v}` : v);
   return (
     <View style={{ gap: 4 }}>
       {label ? <Txt v="muted">{label}</Txt> : null}
@@ -91,6 +110,7 @@ export function Input({ label, error, style, ...p }: TextInputProps & { label?: 
           style,
         ]}
       />
+      {suggestions?.length ? <Suggest items={suggestions.filter((x) => x !== value)} onPick={pick} /> : null}
       {error ? <Txt v="small" color={c.danger}>{error}</Txt> : null}
     </View>
   );
