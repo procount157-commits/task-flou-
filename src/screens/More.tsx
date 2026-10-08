@@ -18,6 +18,7 @@ export default function More() {
   const router = useRouter();
   const groups: { title: string; tiles: Tile[] }[] = [
     { title: t.nav.tasks, tiles: [
+      { label: t.plan.title, path: '/plan', icon: 'sparkles-outline' },
       { label: t.nav.dashboard, path: '/dashboard', icon: 'home-outline' }, { label: t.tasks.matrix, path: '/matrix', icon: 'grid-outline' },
       { label: t.nav.habits, path: '/habits', icon: 'flame-outline' }, { label: t.alarm.title, path: '/alarm', icon: 'alarm-outline' },
       { label: t.lock.title, path: '/lock', icon: 'lock-closed-outline' },

@@ -7,7 +7,7 @@ const ar = {
     invalidDate: 'التاريخ يجب أن يكون بصيغة YYYY-MM-DD', invalidTime: 'الوقت يجب أن يكون بصيغة HH:MM', invalidNumber: 'أدخل رقماً صحيحاً',
     today: 'اليوم', yes: 'نعم', no: 'لا', confirmDelete: 'هل تريد الحذف فعلاً؟', none: 'بدون', export: 'تصدير', share: 'مشاركة', send: 'إرسال',
     start: 'ابدأ', open: 'فتح', view: 'عرض', copy: 'نسخ', copySuffix: '(نسخة)', progress: 'التقدم', amount: 'المبلغ', type: 'النوع',
-    category: 'التصنيف', name: 'الاسم', email: 'البريد الإلكتروني', phone: 'الهاتف', total: 'الإجمالي', currency: 'ر.س',
+    category: 'التصنيف', name: 'الاسم', email: 'البريد الإلكتروني', phone: 'الهاتف', total: 'الإجمالي', currency: 'د.إ',
     dropToDelete: '🗑 أفلت هنا للحذف', goal: 'هدف', habit: 'عادة', content: 'محتوى', learning: 'تعلم', brainstorm: 'عصف ذهني',
     linkGoal: 'ربط بهدف', linkHabit: 'ربط بعادة', linkContent: 'ربط بمحتوى', linkLearning: 'ربط بعنصر تعلم', linkBrainstorm: 'ربط بفكرة',
     aiSplit: 'قسّم بالذكاء الاصطناعي', aiNeedKey: 'أضف مفتاح API للذكاء الاصطناعي من الإعدادات أولاً.', aiError: 'تعذر الاتصال بالذكاء الاصطناعي',
@@ -272,6 +272,12 @@ const ar = {
     missing: 'أضف رمز البوت ورقم المحادثة من الإعدادات أولاً', noChat: 'لم أجد رسالة — أرسل /start للبوت ثم أعد المحاولة', hello: 'تم ربط تطبيق حياتي بتيليجرام ✓',
     sendPlan: '✈️ أرسل خطة اليوم إلى تيليجرام', plan: 'خطة اليوم',
   },
+  plan: {
+    title: 'خطة بالذكاء', banner: '🎯 حوّل هدفك إلى خطة ومهام تلقائياً', ask: 'ما الهدف الذي تريد الوصول إليه؟', goalPh: 'مثلاً: الوصول إلى مليون دولار',
+    examples: ['الوصول إلى مليون دولار', 'إطلاق مشروعي الخاص', 'خسارة 10 كيلو', 'إتقان اللغة الإنجليزية', 'شراء بيت', 'زيادة دخلي الشهري للضعف'],
+    horizon: 'خلال', make: 'اصنع الخطة', milestones: 'المحطات', tasks: 'المهام', weekly: 'متكررة',
+    addAll: 'أضف الكل إلى مهامي وتقويمي', again: 'خطة أخرى', added: 'تمت إضافة {n} مهمة مع تذكيراتها',
+  },
   sug: {
     tasks: ['مراجعة البريد', 'رياضة 30 دقيقة', 'قراءة 20 صفحة', 'تخطيط الغد', 'اتصال مهم', 'تنظيف المكتب', 'دفع الفواتير', 'شراء أغراض البيت', 'مراجعة الأهداف', 'تعلم مهارة جديدة'],
     goals: ['تحسين صحتي ولياقتي', 'زيادة دخلي', 'تعلم لغة جديدة', 'بناء مشروع خاص', 'ادخار مبلغ للطوارئ', 'قراءة 12 كتاباً', 'الحصول على شهادة مهنية'],
@@ -323,7 +329,7 @@ const en: Translations = {
     invalidDate: 'Date must be YYYY-MM-DD', invalidTime: 'Time must be HH:MM', invalidNumber: 'Enter a valid number',
     today: 'Today', yes: 'Yes', no: 'No', confirmDelete: 'Delete this for good?', none: 'None', export: 'Export', share: 'Share', send: 'Send',
     start: 'Start', open: 'Open', view: 'View', copy: 'Duplicate', copySuffix: '(copy)', progress: 'Progress', amount: 'Amount', type: 'Type',
-    category: 'Category', name: 'Name', email: 'Email', phone: 'Phone', total: 'Total', currency: 'SAR',
+    category: 'Category', name: 'Name', email: 'Email', phone: 'Phone', total: 'Total', currency: 'AED',
     dropToDelete: '🗑 Drop here to delete', goal: 'Goal', habit: 'Habit', content: 'Content', learning: 'Learning', brainstorm: 'Brainstorm',
     linkGoal: 'Link to goal', linkHabit: 'Link to habit', linkContent: 'Link to content', linkLearning: 'Link to learning item', linkBrainstorm: 'Link to idea',
     aiSplit: 'Split with AI', aiNeedKey: 'Add an AI API key in Settings first.', aiError: 'Could not reach the AI service',
@@ -587,6 +593,12 @@ const en: Translations = {
     hint: 'Create a bot with @BotFather, paste the token here, send /start to the bot from your account, then press "Detect the chat".', sent: 'Sent to Telegram ✓',
     missing: 'Add the bot token and chat ID in Settings first', noChat: 'No message found — send /start to the bot and try again', hello: 'Hayati is now linked to Telegram ✓',
     sendPlan: "✈️ Send today's plan to Telegram", plan: "Today's plan",
+  },
+  plan: {
+    title: 'AI plan', banner: '🎯 Turn a goal into a plan and tasks automatically', ask: 'What goal do you want to reach?', goalPh: 'e.g. reach one million dollars',
+    examples: ['Reach one million dollars', 'Launch my own business', 'Lose 10 kg', 'Master English', 'Buy a house', 'Double my monthly income'],
+    horizon: 'Within', make: 'Make the plan', milestones: 'Milestones', tasks: 'Tasks', weekly: 'repeats',
+    addAll: 'Add all to my tasks and calendar', again: 'Another plan', added: '{n} tasks added with their reminders',
   },
   sug: {
     tasks: ['Check email', '30 min workout', 'Read 20 pages', 'Plan tomorrow', 'Important call', 'Tidy the desk', 'Pay bills', 'Buy groceries', 'Review goals', 'Learn a new skill'],

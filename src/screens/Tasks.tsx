@@ -157,6 +157,13 @@ export default function Tasks() {
       </View>
       <PomodoroBar />
 
+      <Pressable onPress={() => router.push('/plan')} accessibilityRole="button"
+        style={{ direction: dir, margin: 10, marginBottom: 0, backgroundColor: c.primary, borderRadius: 12, paddingVertical: 11, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <Ionicons name="sparkles" size={18} color={c.onPrimary} />
+        <Text style={{ color: c.onPrimary, fontSize: 14, flex: 1, textAlign: dir === 'rtl' ? 'right' : 'left' }}>{t.plan.banner}</Text>
+        <Ionicons name={dir === 'rtl' ? 'chevron-back' : 'chevron-forward'} size={18} color={c.onPrimary} />
+      </Pressable>
+
       {highPending && list === 'today' && !focusDate ? (
         <Pressable onPress={() => setPush(pick(t.pushes))} accessibilityRole="button" style={{ direction: dir, margin: 10, marginBottom: 0, backgroundColor: c.card, borderRadius: 10, padding: 10, borderWidth: 1, borderColor: c.danger, gap: 4 }}>
           <Text style={{ color: c.danger, fontSize: 13, textAlign: dir === 'rtl' ? 'right' : 'left' }}>⚠️ {t.today.highAlert} — 💪 {t.today.motivate}</Text>

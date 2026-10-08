@@ -7,9 +7,17 @@ import { Platform } from 'react-native';
 
 import { AI_DEFAULTS } from './config';
 import { kv } from './db';
+import { logError } from './errlog';
 
 export type AISettings = typeof AI_DEFAULTS;
-export const getAI = async () => ({ ...AI_DEFAULTS, ...(await kv.get<Partial<AISettings>>('ai', {})) });
+// A blank field saved from Settings must not hide the value built into the app, or one press of Save
+// on a key-free build would switch the AI off for good.
+export const getAI = async (): Promise<AISettings> => {
+  const saved = await kv.get<Partial<AISettings>>('ai', {});
+  const out = { ...AI_DEFAULTS };
+  for (const k of Object.keys(out) as (keyof AISettings)[]) if (typeof saved[k] === 'string' && saved[k]!.trim()) out[k] = saved[k]!.trim();
+  return out;
+};
 export const setAI = (s: AISettings) => kv.set('ai', s);
 
 export class NoKeyError extends Error {
@@ -32,20 +40,32 @@ async function chat(baseUrl: string, apiKey: string, model: string, messages: Ms
   return text;
 }
 
+type Route = { url: string; key: string; model: string };
+
+// Every distinct way to reach a model, in order: the saved service, the built-in one, then the fallbacks.
+// A saved key that has expired or been mistyped therefore never shuts the AI off while a built-in key works.
+function routes(ai: AISettings, kind: 'main' | 'fallback'): Route[] {
+  const list: Route[] = kind === 'main'
+    ? [{ url: ai.baseUrl, key: ai.apiKey, model: ai.model }, { url: AI_DEFAULTS.baseUrl, key: AI_DEFAULTS.apiKey, model: AI_DEFAULTS.model }]
+    : [{ url: ai.fallbackUrl, key: ai.fallbackKey, model: ai.fallbackModel }, { url: AI_DEFAULTS.fallbackUrl, key: AI_DEFAULTS.fallbackKey, model: AI_DEFAULTS.fallbackModel }];
+  return list.filter((r, i) => r.key && list.findIndex((o) => o.key === r.key && o.url === r.url) === i);
+}
+
 // Chat completion against OpenAI-compatible endpoints: the main service first, the fallback if it fails.
 export async function InvokeLLM(input: Msg[] | string, temperature = 0.6): Promise<string> {
   const ai = await getAI();
   const messages: Msg[] = typeof input === 'string' ? [{ role: 'user', content: input }] : input;
-  if (!ai.apiKey && !ai.fallbackKey) throw new NoKeyError();
+  const all = [...routes(ai, 'main'), ...routes(ai, 'fallback')];
+  if (!all.length) throw new NoKeyError();
   let first: unknown;
-  if (ai.apiKey) {
+  for (const r of all) {
     try {
-      return await chat(ai.baseUrl, ai.apiKey, ai.model, messages, temperature);
+      return await chat(r.url, r.key, r.model, messages, temperature);
     } catch (e) {
-      first = e;
+      first ??= e;
+      logError('ai', e);
     }
   }
-  if (ai.fallbackKey) return chat(ai.fallbackUrl, ai.fallbackKey, ai.fallbackModel, messages, temperature);
   throw first;
 }
 
@@ -77,15 +97,28 @@ export const suggestGifts = async (recipient: string, occasion: string, min: num
 
 export async function TranscribeAudio(uri: string, lang: string): Promise<string> {
   const ai = await getAI();
-  if (!ai.apiKey) throw new NoKeyError();
-  const form = new FormData();
-  if (Platform.OS === 'web') form.append('file', await (await fetch(uri)).blob(), 'audio.webm');
-  else form.append('file', { uri, name: `audio.${uri.split('.').pop() || 'm4a'}`, type: 'audio/m4a' } as any);
-  form.append('model', ai.sttModel);
-  form.append('language', lang);
-  const res = await fetch(`${ai.baseUrl.replace(/\/$/, '')}/audio/transcriptions`, { method: 'POST', headers: { Authorization: `Bearer ${ai.apiKey}` }, body: form });
-  if (!res.ok) throw new Error(`${res.status} ${(await res.text()).slice(0, 200)}`);
-  return String((await res.json()).text ?? '').trim();
+  // only the main service (Groq) transcribes; the fallback has no speech model
+  const all = routes(ai, 'main');
+  if (!all.length) throw new NoKeyError();
+  const file = Platform.OS === 'web' ? await (await fetch(uri)).blob() : null;
+  let first: unknown;
+  for (const r of all) {
+    // a FormData body is consumed by its request, so each attempt builds its own
+    const form = new FormData();
+    if (file) form.append('file', file, 'audio.webm');
+    else form.append('file', { uri, name: `audio.${uri.split('.').pop() || 'm4a'}`, type: 'audio/m4a' } as any);
+    form.append('model', ai.sttModel);
+    form.append('language', lang);
+    try {
+      const res = await fetch(`${r.url.replace(/\/$/, '')}/audio/transcriptions`, { method: 'POST', headers: { Authorization: `Bearer ${r.key}` }, body: form });
+      if (!res.ok) throw new Error(`${res.status} ${(await res.text()).slice(0, 200)}`);
+      return String((await res.json()).text ?? '').trim();
+    } catch (e) {
+      first ??= e;
+      logError('transcribe', e);
+    }
+  }
+  throw first;
 }
 
 // "Upload" = keep a permanent copy in the app's document folder and return its URI.
