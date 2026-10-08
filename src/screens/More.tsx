@@ -33,6 +33,7 @@ export default function More() {
       { label: t.nav.content, path: '/content', icon: 'phone-portrait-outline' }, { label: t.nav.brainstorm, path: '/brainstorm', icon: 'bulb-outline' },
     ] },
     { title: t.nav.settings, tiles: [
+      { label: t.navbar.title, path: '/navbar', icon: 'options-outline' },
       { label: t.nav.motivation, path: '/motivation', icon: 'mail-outline' }, { label: t.nav.invite, path: '/invite', icon: 'people-outline' },
       { label: t.nav.pricing, path: '/pricing', icon: 'card-outline' }, { label: t.nav.settings, path: '/profile-settings', icon: 'settings-outline' },
     ] },

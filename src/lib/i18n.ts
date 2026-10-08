@@ -283,6 +283,10 @@ const ar = {
     missing: 'أضف رمز البوت ورقم المحادثة من الإعدادات أولاً', noChat: 'لم أجد رسالة — أرسل /start للبوت ثم أعد المحاولة', hello: 'تم ربط تطبيق حياتي بتيليجرام ✓',
     sendPlan: '✈️ أرسل خطة اليوم إلى تيليجرام', plan: 'خطة اليوم',
   },
+  navbar: {
+    title: 'تخصيص الشريط السفلي', hint: 'اختر الشاشات التي تظهر في الشريط السفلي ورتّبها بالأسهم. الشريط يتمرر جانبياً إذا كثرت. اضغط مطولاً على الشريط في أي وقت لتعود هنا.',
+    inBar: 'في الشريط', available: 'أضف إلى الشريط', allIn: 'كل الشاشات موجودة في الشريط', reset: 'استعادة الترتيب الافتراضي',
+  },
   plan: {
     title: 'خطة بالذكاء', banner: '🎯 حوّل هدفك إلى خطة ومهام تلقائياً', ask: 'ما الهدف الذي تريد الوصول إليه؟', goalPh: 'مثلاً: الوصول إلى مليون دولار',
     examples: ['الوصول إلى مليون دولار', 'إطلاق مشروعي الخاص', 'خسارة 10 كيلو', 'إتقان اللغة الإنجليزية', 'شراء بيت', 'زيادة دخلي الشهري للضعف'],
@@ -615,6 +619,10 @@ const en: Translations = {
     hint: 'Create a bot with @BotFather, paste the token here, send /start to the bot from your account, then press "Detect the chat".', sent: 'Sent to Telegram ✓',
     missing: 'Add the bot token and chat ID in Settings first', noChat: 'No message found — send /start to the bot and try again', hello: 'Hayati is now linked to Telegram ✓',
     sendPlan: "✈️ Send today's plan to Telegram", plan: "Today's plan",
+  },
+  navbar: {
+    title: 'Customize the bottom bar', hint: 'Pick the screens shown in the bottom bar and order them with the arrows. The bar scrolls sideways when there are many. Long-press the bar any time to come back here.',
+    inBar: 'In the bar', available: 'Add to the bar', allIn: 'Every screen is already in the bar', reset: 'Restore the default order',
   },
   plan: {
     title: 'AI plan', banner: '🎯 Turn a goal into a plan and tasks automatically', ask: 'What goal do you want to reach?', goalPh: 'e.g. reach one million dollars',
