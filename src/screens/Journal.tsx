@@ -3,6 +3,8 @@ import { ScrollView, View } from 'react-native';
 
 import { useLang } from '@/ctx/Lang';
 import { lastDays, today } from '@/lib/dates';
+import { logError } from '@/lib/errlog';
+import { InvokeLLM } from '@/lib/integrations';
 import { useEntity } from '@/lib/db';
 import type { JournalEntry, Mood } from '@/lib/types';
 import { Btn, Card, Chips, Empty, IconBtn, Input, Loading, Progress, Row, Screen, Section, Txt, confirm } from '@/ui/kit';
@@ -45,6 +47,45 @@ export default function Journal() {
     setStep(0);
   };
 
+  // Speak the day: the recording is transcribed, and the AI files it into the journal's own fields.
+  const [voiceBusy, setVoiceBusy] = useState(false);
+  const fromVoice = async (text: string, uri: string) => {
+    if (!text.trim()) {
+      setD((p) => ({ ...p, audio_urls: [...(p.audio_urls ?? []), uri] }));
+      return;
+    }
+    setVoiceBusy(true);
+    let f: Partial<Draft> = {};
+    try {
+      const out = await InvokeLLM(
+        `${t.journal.voiceSystem}\n\n"${text}"\n\nReply ONLY with JSON: {"mood": "great|good|okay|bad|terrible", "energy": 1-5, "wins": "...", "gratitude": "...", "improvements": "...", "tomorrow_focus": "..."}`,
+        0.3,
+      );
+      const m = out.match(/\{[\s\S]*\}/);
+      const j = m ? JSON.parse(m[0]) : {};
+      const str = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : undefined);
+      f = {
+        mood: MOODS.some((x) => x.value === j.mood) ? j.mood : undefined,
+        energy: Number.isInteger(j.energy) && j.energy >= 1 && j.energy <= 5 ? j.energy : undefined,
+        wins: str(j.wins), gratitude: str(j.gratitude), improvements: str(j.improvements), tomorrow_focus: str(j.tomorrow_focus),
+      };
+    } catch (e) {
+      logError('journal-voice', e);
+    }
+    const merged: Draft = {
+      ...d,
+      ...Object.fromEntries(Object.entries(f).filter(([, v]) => v !== undefined)),
+      content: [d.content, text.trim()].filter(Boolean).join('\n\n'),
+      audio_urls: [...(d.audio_urls ?? []), uri],
+    };
+    setD(merged);
+    const data = { ...merged, reflection_answers: { wins: merged.wins ?? '', gratitude: merged.gratitude ?? '', improvements: merged.improvements ?? '', tomorrow_focus: merged.tomorrow_focus ?? '' } };
+    if (existing) await entries.update(existing.id, data);
+    else await entries.create({ date: day, ...data });
+    setVoiceBusy(false);
+    celebrate(t.journal.saved);
+  };
+
   const past = entries.items.filter((e) => !search.trim() || e.date.includes(search.trim())).sort((a, b) => b.date.localeCompare(a.date));
   const moodIcon = (m?: Mood) => MOODS.find((x) => x.value === m)?.icon ?? '📝';
   const steps = [
@@ -77,6 +118,11 @@ export default function Journal() {
           <Btn key={x} small kind={x === day ? 'primary' : 'ghost'} title={`${entries.items.some((e) => e.date === x) ? '● ' : ''}${x === today() ? t.c.today : x.slice(5)}`} onPress={() => setDay(x)} />
         ))}
       </ScrollView>
+      <Card style={{ gap: 10, alignItems: 'center' }}>
+        <Txt v="sub" center>🎙 {t.journal.speakDay}</Txt>
+        <Txt v="small" center>{t.journal.speakHint}</Txt>
+        {voiceBusy ? <Txt v="muted">🤖 {t.journal.filing}</Txt> : <VoiceToText big onText={fromVoice} />}
+      </Card>
 
       <Card>
         <Txt v="small">{day} · {t.journal.step} {step + 1} / {steps.length}</Txt>

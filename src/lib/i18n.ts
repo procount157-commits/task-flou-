@@ -107,6 +107,8 @@ const ar = {
     addChild: 'إضافة هدف فرعي',
   },
   journal: {
+    speakDay: 'احكِ يومك بصوتك', speakHint: 'تكلّم بحرية عن يومك، والذكاء الاصطناعي يكتب اليومية ويملأ المزاج والإنجازات والامتنان وتركيز الغد', filing: 'يكتب يوميتك من كلامك…',
+    voiceSystem: 'The user spoke about their day. Fill a journal entry from it, in the same language they spoke, short phrases. Leave a field empty when they said nothing about it.',
     mood: 'كيف مزاجك اليوم؟', energy: 'مستوى الطاقة', free: 'الكتابة الحرة', freePh: 'اكتب ما يدور في ذهنك…', wins: '🏆 انتصارات اليوم',
     gratitude: '🙏 ماذا تشكر عليه؟ (3 أشياء)', improve: '💡 ما الذي يمكن تحسينه؟', tomorrow: '🎯 تركيز الغد', saved: 'تم حفظ التدوينة',
     previous: 'التدوينات السابقة', searchDate: 'ابحث بالتاريخ (YYYY-MM-DD)', empty: 'لا تدوينات سابقة', step: 'الخطوة',
@@ -451,6 +453,8 @@ const en: Translations = {
     addChild: 'Add sub-goal',
   },
   journal: {
+    speakDay: 'Tell your day out loud', speakHint: 'Talk freely about your day; the AI writes the entry and fills mood, wins, gratitude and tomorrow’s focus', filing: 'Writing your journal from what you said…',
+    voiceSystem: 'The user spoke about their day. Fill a journal entry from it, in the same language they spoke, short phrases. Leave a field empty when they said nothing about it.',
     mood: 'How is your mood today?', energy: 'Energy level', free: 'Free writing', freePh: 'Write what is on your mind…', wins: "🏆 Today's wins",
     gratitude: '🙏 What are you grateful for? (3 things)', improve: '💡 What could be better?', tomorrow: "🎯 Tomorrow's focus", saved: 'Entry saved',
     previous: 'Previous entries', searchDate: 'Search by date (YYYY-MM-DD)', empty: 'No previous entries', step: 'Step',
