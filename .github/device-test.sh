@@ -48,8 +48,10 @@ go() { adb shell am start -W -a android.intent.action.VIEW -d "hayati:///$1" $PK
 
 # the hourly session, answered entirely from the notification bar
 adb shell pm grant $PKG android.permission.POST_NOTIFICATIONS || true
-go check; adb shell input swipe 500 1500 500 300 300; sleep 1; adb shell input swipe 500 1500 500 300 300; sleep 1
-tap 'بطاقة الساعة'; sleep 3
+# the app books the hourly card a few seconds after launch; then fire it the way the hour's alarm does
+go checkin; sleep 8
+adb shell "run-as $PKG cat shared_prefs/hourly.xml" | head -c 600 > out/hourly-prefs.txt
+adb shell am broadcast -n $PKG/expo.modules.phonelock.HourlyReceiver; sleep 3
 adb shell cmd statusbar expand-notifications; shot notif-1 2
 tap 'عمل مركز'; shot notif-2 2
 tap 'مركز 🎯'; shot notif-3 2
