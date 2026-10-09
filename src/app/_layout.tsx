@@ -17,10 +17,10 @@ import { LangProvider, ThemeProvider, useLang, useTheme, useThemeCtl } from '@/c
 import { PomodoroProvider } from '@/ctx/Pomodoro';
 import { today } from '@/lib/dates';
 import { db, kv, preload, useEntity, useKV } from '@/lib/db';
-import { hourlyCard } from '@/lib/logic';
+import { POINTS, addPoints, hourlyCard, sortTasks } from '@/lib/logic';
 import { refreshNudges } from '@/lib/nudges';
-import { pullCalendarChanges } from '@/lib/devicecal';
-import { LockSchedule, ringingAlarmId, syncLockSchedules, takeHourlyAnswers } from '@/lib/phonelock';
+import { autoSyncTask, pullCalendarChanges } from '@/lib/devicecal';
+import { LockSchedule, ringingAlarmId, setWidget, syncLockSchedules, takeHourlyAnswers, takeWidgetDone } from '@/lib/phonelock';
 import { installGlobalErrorLog, logError } from '@/lib/errlog';
 import { CHECKIN_DEFAULTS, CheckinSettings, initNotifications, onNotificationOpen, scheduleAlarms, scheduleCheckins, syncReminders } from '@/lib/notify';
 import type { Alarm } from '@/lib/types';
@@ -35,11 +35,19 @@ SplashScreen.preventAutoHideAsync().catch(() => {});
 installGlobalErrorLog();
 const NO_ALARMS: Alarm[] = [];
 
-// Keeps habit and high-priority-task reminders in step with the data.
+// Keeps habit and high-priority-task reminders, and the home-screen widget, in step with the data.
 function ReminderSync() {
   const { t } = useLang();
   const habits = useEntity('Habit').items;
   const tasks = useEntity('DailyTask').items;
+  useEffect(() => {
+    const id = setTimeout(() => {
+      const day = today();
+      const items = sortTasks(tasks.filter((x) => x.date === day && !x.parent_id)).slice(0, 5).map((x) => ({ id: x.id, title: x.title, time: x.time, done: !!x.completed }));
+      setWidget({ header: t.widget.header, empty: t.widget.empty, items });
+    }, 1500);
+    return () => clearTimeout(id);
+  }, [tasks, t]);
   useEffect(() => {
     const id = setTimeout(() => syncReminders(habits, tasks, { habit: t.notif.habit, task: t.notif.highTask }), 8000);
     return () => clearTimeout(id);
@@ -117,6 +125,15 @@ function Background() {
   // notification bar are filed in the check-in history
   useEffect(() => {
     const check = () => {
+      // tasks ticked on the home-screen widget while the app was closed
+      for (const id of takeWidgetDone())
+        db.list('DailyTask').then(async (all) => {
+          const x = all.find((k) => k.id === id);
+          if (!x) return;
+          await db.update('DailyTask', id, { completed: !x.completed });
+          await addPoints((x.completed ? -1 : 1) * POINTS[x.priority ?? 'medium']);
+          autoSyncTask(id);
+        }).catch((e) => logError('widget', e));
       for (const h of takeHourlyAnswers()) {
         const dialog = [
           ...h.answers.flatMap((x) => [{ role: 'ai' as const, text: x.q }, { role: 'me' as const, text: x.a }]),

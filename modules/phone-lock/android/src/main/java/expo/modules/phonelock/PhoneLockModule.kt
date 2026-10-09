@@ -143,6 +143,15 @@ class PhoneLockModule : Module() {
       LiveUpdate.clear(context)
     }
 
+    // Today's tasks for the home-screen widget, and the ids ticked there since the app last looked.
+    Function("setWidget") { json: String ->
+      TasksWidget.save(context, json)
+    }
+
+    Function("takeWidgetDone") {
+      TasksWidget.take(context)
+    }
+
     // Sessions answered inside the notification since the app last looked, as a JSON array.
     Function("takeHourly") {
       HourlySession.take(context)

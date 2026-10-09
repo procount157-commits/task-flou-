@@ -22,6 +22,8 @@ type PhoneLockNative = {
   speak?(text: string): void;
   showLive?(title: string, text: string, endAt: number, url: string): void;
   clearLive?(): void;
+  setWidget?(json: string): void;
+  takeWidgetDone?(): string;
   closeHourly?(): void;
   scheduleAlarm(code: number, atMillis: number, id: string, sound: string, label: string): void;
   clearAlarms(): void;
@@ -132,3 +134,8 @@ export const setSpeakAloud = (on: boolean) => safe((m) => m.setSpeak?.(on), unde
 export const speakNative = (text: string) => safe((m) => m.speak?.(text), undefined);
 export const showLive = (title: string, text: string, endAt: number, url = 'hayati://day') => safe((m) => m.showLive?.(title, text, endAt, url), undefined);
 export const clearLive = () => safe((m) => m.clearLive?.(), undefined);
+
+/* ───────── home-screen widget ───────── */
+export type WidgetData = { header: string; empty: string; items: { id: string; title: string; time?: string; done: boolean }[] };
+export const setWidget = (d: WidgetData) => safe((m) => m.setWidget?.(JSON.stringify(d)), undefined);
+export const takeWidgetDone = (): string[] => safe((m) => (typeof m.takeWidgetDone === 'function' ? JSON.parse(m.takeWidgetDone() || '[]') : []), []);

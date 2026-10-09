@@ -32,7 +32,7 @@ export default function Tasks() {
   const { t, lang, dir } = useLang();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const params = useLocalSearchParams<{ date?: string }>();
+  const params = useLocalSearchParams<{ date?: string; add?: string }>();
   const tasks = useEntity('DailyTask');
   const goals = useEntity('Goal').items;
   const [points] = useKV('points', 0);
@@ -64,6 +64,14 @@ export default function Tasks() {
   useEffect(() => {
     materializeRepeats(day);
   }, [day]);
+  // the widget's + button opens straight onto the add sheet
+  useEffect(() => {
+    if (params.add) {
+      setAdding(true);
+      router.setParams({ add: '' });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params.add]);
 
   const subsOf = useMemo(() => {
     const m = new Map<string, DailyTask[]>();
