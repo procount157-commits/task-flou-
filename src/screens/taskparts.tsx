@@ -1,14 +1,15 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { memo, useEffect, useMemo, useState } from 'react';
-import { Pressable, TextInput, View } from 'react-native';
+import * as Haptics from 'expo-haptics';
+import { Platform, Pressable, TextInput, View } from 'react-native';
 
 import { TaskForm } from './forms';
 import { StepRunner, TimeboxPanel } from './Timebox';
 import { useAuth } from '@/ctx/Auth';
 import { Colors, useLang, useTheme } from '@/ctx/Lang';
 import { usePomodoro } from '@/ctx/Pomodoro';
-import { fmtDate, today } from '@/lib/dates';
+import { addDays, fmtDate, today } from '@/lib/dates';
 import { db, useEntity, useKV } from '@/lib/db';
 import { autoSyncTask, removeTaskFromCalendar, saveTaskToCalendar } from '@/lib/devicecal';
 import { exportTask } from '@/lib/gcal';
@@ -21,7 +22,7 @@ const NO_LISTS: TaskList[] = [];
 import { logError } from '@/lib/errlog';
 import { Btn, Chips, Input, Progress, Row, Sheet, Suggest, Toggle, Txt, confirm, notice, opts } from '@/ui/kit';
 import { DateField, DatePickerSheet, TimeField } from '@/ui/pickers';
-import { DaysPicker, VoiceToText, useCelebrate } from '@/ui/shared';
+import { DaysPicker, VoiceToText, useCelebrate, useUndo } from '@/ui/shared';
 import { Text, useFontFamily } from '@/ui/text';
 
 export const prioColor = (c: Colors, p?: Priority) => (p === 'high' ? c.danger : p === 'medium' ? c.warn : p === 'low' ? c.primary : c.muted);
@@ -41,37 +42,99 @@ export function useAI() {
   };
 }
 
+export type PostponeTo = 'hour' | 'tonight' | 'tomorrow' | 'dayAfter' | 'nextWeek' | { date: string };
+const hhmm = (d: Date) => `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+
+// Where a postponed task lands: the clock moves by an hour, or the task moves to another day keeping its time.
+export function postponed(task: DailyTask, to: PostponeTo): Pick<DailyTask, 'date' | 'time' | 'end_time'> {
+  const day = today();
+  if (to === 'hour') {
+    const base = task.time && task.date === day ? new Date(`${day}T${task.time}:00`) : new Date();
+    const next = new Date(Math.max(base.getTime(), Date.now()) + 60 * 60000);
+    next.setMinutes(next.getMinutes() < 30 ? 0 : 30, 0, 0);
+    const shift = task.time && task.end_time ? (new Date(`${day}T${task.end_time}:00`).getTime() - new Date(`${day}T${task.time}:00`).getTime()) : 0;
+    return { date: ymdLocal(next), time: hhmm(next), end_time: shift > 0 ? hhmm(new Date(next.getTime() + shift)) : task.end_time };
+  }
+  if (to === 'tonight') return { date: day, time: '20:00', end_time: task.end_time };
+  const date = typeof to === 'object' ? to.date : addDays(day, to === 'tomorrow' ? 1 : to === 'dayAfter' ? 2 : 7);
+  return { date, time: task.time, end_time: task.end_time };
+}
+const ymdLocal = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
 export function useTaskActions() {
   const celebrate = useCelebrate();
-  return useMemo(
-    () => ({
+  const undo = useUndo();
+  const { t } = useLang();
+  return useMemo(() => {
+    const snapshot = async (ids: Set<string>) => (await db.list('DailyTask')).filter((x) => ids.has(x.id) || (!!x.parent_id && ids.has(x.parent_id)));
+    return {
       toggle: async (task: DailyTask) => {
         const done = !task.completed;
         await db.update('DailyTask', task.id, { completed: done });
         // subtasks carry no points of their own
-        if (!task.parent_id) await addPoints(done ? POINTS[task.priority ?? 'medium'] : -POINTS[task.priority ?? 'medium']);
-        if (done && !task.parent_id) celebrate(undefined, 1300, true);
+        const pts = POINTS[task.priority ?? 'medium'];
+        if (!task.parent_id) await addPoints(done ? pts : -pts);
+        if (done && !task.parent_id) {
+          if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+          undo(`✓ ${task.title}`, async () => {
+            await db.update('DailyTask', task.id, { completed: false });
+            await addPoints(-pts);
+          });
+        }
+        autoSyncTask(task.id);
       },
       remove: async (task: DailyTask) => {
+        const before = await snapshot(new Set([task.id]));
         await removeTaskFromCalendar(task);
         await db.removeWhere('DailyTask', (x) => x.id === task.id || x.parent_id === task.id);
+        undo(`🗑 ${task.title}`, async () => {
+          await db.restore('DailyTask', before.map((x) => ({ ...x, calendar_event_id: undefined })));
+          autoSyncTask(task.id);
+        });
       },
-    }),
-    [celebrate],
-  );
+      // several tasks at once; one undo puts every one of them back where it was
+      postpone: async (list: DailyTask[], to: PostponeTo) => {
+        const before = await snapshot(new Set(list.map((x) => x.id)));
+        for (const task of list) {
+          const p = postponed(task, to);
+          await db.update('DailyTask', task.id, p);
+          if (p.date !== task.date) for (const sub of before.filter((x) => x.parent_id === task.id)) await db.update('DailyTask', sub.id, { date: p.date });
+          autoSyncTask(task.id);
+        }
+        undo(`📅 ${t.undo.moved.replace('{n}', String(list.length))}`, async () => {
+          await db.restore('DailyTask', before);
+          for (const task of list) autoSyncTask(task.id);
+        });
+      },
+      completeMany: async (list: DailyTask[]) => {
+        const before = await snapshot(new Set(list.map((x) => x.id)));
+        for (const task of list) if (!task.completed) await db.update('DailyTask', task.id, { completed: true });
+        await addPoints(list.filter((x) => !x.completed).reduce((a, x) => a + POINTS[x.priority ?? 'medium'], 0));
+        undo(`✓ ${t.undo.done.replace('{n}', String(list.length))}`, () => db.restore('DailyTask', before));
+      },
+      removeMany: async (list: DailyTask[]) => {
+        const ids = new Set(list.map((x) => x.id));
+        const before = await snapshot(ids);
+        for (const task of list) await removeTaskFromCalendar(task);
+        await db.removeWhere('DailyTask', (x) => ids.has(x.id) || (!!x.parent_id && ids.has(x.parent_id)));
+        undo(`🗑 ${t.undo.deleted.replace('{n}', String(list.length))}`, () => db.restore('DailyTask', before.map((x) => ({ ...x, calendar_event_id: undefined }))));
+      },
+    };
+  }, [celebrate, undo, t]);
 }
 
-type RowProps = { task: DailyTask; subDone: number; subTotal: number; showDate?: boolean; onToggle: (t: DailyTask) => void; onOpen: (t: DailyTask) => void };
+type RowProps = { task: DailyTask; subDone: number; subTotal: number; showDate?: boolean; onToggle: (t: DailyTask) => void; onOpen: (t: DailyTask) => void; selecting?: boolean; selected?: boolean };
 
 // One line per task: a round box in the priority colour, the title, and the time or date at the far end.
-export const TaskRow = memo(function TaskRow({ task, subDone, subTotal, showDate, onToggle, onOpen }: RowProps) {
+export const TaskRow = memo(function TaskRow({ task, subDone, subTotal, showDate, onToggle, onOpen, selecting, selected }: RowProps) {
   const c = useTheme();
   const { t, lang, dir } = useLang();
   const color = prioColor(c, task.priority);
   const late = !task.completed && task.date < today();
   const meta = [showDate || late ? fmtDate(task.date, lang, t.c) : '', task.time].filter(Boolean).join(' ');
   return (
-    <Pressable onPress={() => onOpen(task)} accessibilityRole="button" style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 14, backgroundColor: c.card, borderBottomWidth: 1, borderColor: c.border }}>
+    <Pressable onPress={() => onOpen(task)} accessibilityRole="button" style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 14, backgroundColor: selected ? c.soft : c.card, borderBottomWidth: 1, borderColor: c.border }}>
+      {selecting ? <Ionicons name={selected ? 'checkmark-circle' : 'ellipse-outline'} size={22} color={selected ? c.primary : c.muted} /> : null}
       <Pressable onPress={() => onToggle(task)} hitSlop={10} accessibilityRole="checkbox" accessibilityState={{ checked: !!task.completed }} accessibilityLabel={task.title}
         style={{ width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: task.completed ? c.muted : color, backgroundColor: task.completed ? c.muted : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
         {task.completed ? <Ionicons name="checkmark" size={15} color={c.card} /> : null}

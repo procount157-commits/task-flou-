@@ -25,7 +25,7 @@ import type { Alarm } from '@/lib/types';
 import { IntentionModal, Landing, Login, Onboarding } from '@/screens/Entry';
 import { Loading } from '@/ui/kit';
 import { NAV_CATALOG, NAV_DEFAULT, NavBar } from '@/ui/NavBar';
-import { CelebrationProvider } from '@/ui/shared';
+import { CelebrationProvider, UndoProvider } from '@/ui/shared';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 installGlobalErrorLog();
@@ -180,7 +180,7 @@ function Gate() {
   return (
     <NavThemeProvider value={{ ...nav, colors: { ...nav.colors, background: c.bg, card: c.card, text: c.text, border: c.border, primary: c.primary } }}>
       <StatusBar style={isDark ? 'light' : 'dark'} />
-      <CelebrationProvider>{body}</CelebrationProvider>
+      <CelebrationProvider><UndoProvider>{body}</UndoProvider></CelebrationProvider>
     </NavThemeProvider>
   );
 }

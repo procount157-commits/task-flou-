@@ -74,6 +74,12 @@ export const db = {
     await ensure(name);
     await commit(name, cache[name]!.filter((r) => r.id !== id));
   },
+  // Puts records back exactly as they were (same ids), replacing any newer copy: the undo of a delete or edit.
+  async restore<K extends EntityName>(name: K, recs: EntityMap[K][]): Promise<void> {
+    await ensure(name);
+    const ids = new Set(recs.map((r) => r.id));
+    await commit(name, [...cache[name]!.filter((r) => !ids.has(r.id)), ...recs]);
+  },
   async removeWhere<K extends EntityName>(name: K, pred: (r: EntityMap[K]) => boolean): Promise<void> {
     await ensure(name);
     await commit(name, cache[name]!.filter((r) => !pred(r)));

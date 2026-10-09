@@ -287,6 +287,12 @@ const ar = {
     missing: 'أضف رمز البوت ورقم المحادثة من الإعدادات أولاً', noChat: 'لم أجد رسالة — أرسل /start للبوت ثم أعد المحاولة', hello: 'تم ربط تطبيق حياتي بتيليجرام ✓',
     sendPlan: '✈️ أرسل خطة اليوم إلى تيليجرام', plan: 'خطة اليوم',
   },
+  undo: { undo: 'تراجع', moved: 'نُقلت {n} مهمة', done: 'اكتملت {n} مهمة', deleted: 'حُذفت {n} مهمة' },
+  swipe: {
+    done: 'تمّت', later: 'أجّل', title: 'أجّل إلى…', hour: 'بعد ساعة', tonight: 'الليلة 8:00', tomorrow: 'بكرة', dayAfter: 'بعد بكرة', nextWeek: 'الأسبوع القادم', pick: 'اختر يوماً',
+    overdue: 'عندك {n} مهام متأخرة', toToday: 'انقلها كلها لليوم', spread: 'وزّعها على الأسبوع',
+    selected: '{n} محددة', all: 'الكل', complete: 'إكمال', postpone: 'تأجيل', remove: 'حذف', up: 'لأعلى', down: 'لأسفل', hint: 'اسحب المهمة يميناً لإكمالها ويساراً لتأجيلها، واضغط مطولاً لتحديد عدة مهام',
+  },
   nlp: { understood: 'فهمت', hint: 'اكتب أو قل جملة كاملة: «اجتماع مع أحمد بكرة 5 العصر مهم»' },
   timebox: {
     title: 'قسّم المهمة على الوقت', min: 'د', split: 'قسّمها بالذكاء إلى خطوات على {n} دقيقة', pick: 'اختر الخطوات التي تريدها ثم اضغط قبول',
@@ -634,6 +640,12 @@ const en: Translations = {
     hint: 'Create a bot with @BotFather, paste the token here, send /start to the bot from your account, then press "Detect the chat".', sent: 'Sent to Telegram ✓',
     missing: 'Add the bot token and chat ID in Settings first', noChat: 'No message found — send /start to the bot and try again', hello: 'Hayati is now linked to Telegram ✓',
     sendPlan: "✈️ Send today's plan to Telegram", plan: "Today's plan",
+  },
+  undo: { undo: 'Undo', moved: '{n} tasks moved', done: '{n} tasks completed', deleted: '{n} tasks deleted' },
+  swipe: {
+    done: 'Done', later: 'Later', title: 'Postpone to…', hour: 'In an hour', tonight: 'Tonight 8:00', tomorrow: 'Tomorrow', dayAfter: 'Day after', nextWeek: 'Next week', pick: 'Pick a day',
+    overdue: 'You have {n} overdue tasks', toToday: 'Move them all to today', spread: 'Spread them over the week',
+    selected: '{n} selected', all: 'All', complete: 'Complete', postpone: 'Postpone', remove: 'Delete', up: 'Up', down: 'Down', hint: 'Swipe a task right to finish it, left to postpone it; long-press to select several',
   },
   nlp: { understood: 'Understood', hint: 'Type or say a whole sentence: “meeting with Ahmed tomorrow 5pm important”' },
   timebox: {

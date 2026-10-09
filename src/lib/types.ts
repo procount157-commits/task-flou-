@@ -54,6 +54,8 @@ export interface DailyTask extends Base {
   end_time?: string;
   // a timed step of its parent: how long this block takes
   minutes?: number;
+  // position set by hand within its day; unset tasks follow priority and time
+  order?: number;
   completed?: boolean;
   priority?: Priority;
   repeat_days?: number[];

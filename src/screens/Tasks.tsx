@@ -4,7 +4,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Modal, Pressable, ScrollView, SectionList, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { QuickAdd, SubRow, TaskDetail, TaskRow, useTaskActions } from './taskparts';
+import { QuickAdd, SubRow, TaskDetail, useTaskActions } from './taskparts';
+import { PostponeSheet, SwipeTask } from './taskswipe';
 import { PALETTE, useLang, useTheme } from '@/ctx/Lang';
 import { addDays, fmtDate, isDate, today } from '@/lib/dates';
 import { db, useEntity, useKV } from '@/lib/db';
@@ -36,7 +37,18 @@ export default function Tasks() {
   const goals = useEntity('Goal').items;
   const [points] = useKV('points', 0);
   const [lists, setLists] = useKV<TaskList[]>('lists', NO_LISTS);
-  const { toggle } = useTaskActions();
+  const { toggle, postpone, completeMany, removeMany } = useTaskActions();
+  // long-press starts selecting; the bar on top then acts on every selected task
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const selecting = selected.size > 0;
+  const [postponing, setPostponing] = useState<DailyTask[] | null>(null);
+  const select = useCallback((x: DailyTask) => setSelected((s) => {
+    const n = new Set(s);
+    if (n.has(x.id)) n.delete(x.id);
+    else n.add(x.id);
+    return n;
+  }), []);
+  const askPostpone = useCallback((x: DailyTask) => setPostponing([x]), []);
   // a smart list key, or "list:<id>" for one of the user's own lists
   const [list, setList] = useState<string>('today');
   const [openId, setOpenId] = useState<string | null>(null);
@@ -97,6 +109,25 @@ export default function Tasks() {
   const tier = tierOf(points);
   const weekly = useMemo(() => goals.filter((g) => g.level === 'one_week' && g.status !== 'completed' && g.status !== 'cancelled').map((g) => g.title), [goals]);
   const open = useCallback((x: DailyTask) => setOpenId(x.id), []);
+  const overdueList = useMemo(() => top.filter((x) => !x.completed && x.date < day), [top, day]);
+  const chosen = () => top.filter((x) => selected.has(x.id));
+  // the overdue tasks dealt out over the next seven days, most important first, one or two a day
+  const spreadOverdue = async () => {
+    const order = sortTasks(overdueList);
+    for (let i = 0; i < order.length; i++) await postpone([order[i]], { date: addDays(day, i % 7) });
+  };
+  // moves the one selected task up or down among the open tasks of its own day
+  const reorder = async (by: number) => {
+    const [id] = [...selected];
+    const task = top.find((x) => x.id === id);
+    if (!task) return;
+    const peers = sortTasks(top.filter((x) => x.date === task.date && !x.completed));
+    const i = peers.findIndex((x) => x.id === id);
+    const j = i + by;
+    if (i < 0 || j < 0 || j >= peers.length) return;
+    [peers[i], peers[j]] = [peers[j], peers[i]];
+    for (const [k, x] of peers.entries()) if (x.order !== k) await db.update('DailyTask', x.id, { order: k });
+  };
   const title = focusDate ? fmtDate(focusDate, lang, t.c, true) : custom ? custom.name : t.tasks.lists[(SMART.some((s) => s.key === list) ? list : 'today') as SmartKey];
   const choose = (key: string) => {
     setList(key);
@@ -157,6 +188,33 @@ export default function Tasks() {
       </View>
       <PomodoroBar />
 
+      {selecting ? (
+        <View style={{ direction: dir, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 8, backgroundColor: c.primary }}>
+          <Pressable onPress={() => setSelected(new Set())} hitSlop={8} accessibilityRole="button" accessibilityLabel={t.c.cancel}><Ionicons name="close" size={22} color={c.onPrimary} /></Pressable>
+          <Text style={{ flex: 1, color: c.onPrimary, fontSize: 15, fontWeight: '700' }}>{t.swipe.selected.replace('{n}', String(selected.size))}</Text>
+          {selected.size === 1 ? (
+            <>
+              <Pressable onPress={() => reorder(-1)} hitSlop={6} accessibilityRole="button" accessibilityLabel={t.swipe.up} style={{ padding: 4 }}><Ionicons name="arrow-up" size={21} color={c.onPrimary} /></Pressable>
+              <Pressable onPress={() => reorder(1)} hitSlop={6} accessibilityRole="button" accessibilityLabel={t.swipe.down} style={{ padding: 4 }}><Ionicons name="arrow-down" size={21} color={c.onPrimary} /></Pressable>
+            </>
+          ) : null}
+          <Pressable onPress={() => setSelected(new Set(sections.filter((x) => x.key !== 'done').flatMap((x) => x.data.map((d) => d.id))))} hitSlop={6} accessibilityRole="button" style={{ padding: 4 }}><Text style={{ color: c.onPrimary, fontSize: 13 }}>{t.swipe.all}</Text></Pressable>
+          <Pressable onPress={() => { completeMany(chosen()); setSelected(new Set()); }} hitSlop={6} accessibilityRole="button" accessibilityLabel={t.swipe.complete} style={{ padding: 4 }}><Ionicons name="checkmark-done" size={22} color={c.onPrimary} /></Pressable>
+          <Pressable onPress={() => setPostponing(chosen())} hitSlop={6} accessibilityRole="button" accessibilityLabel={t.swipe.postpone} style={{ padding: 4 }}><Ionicons name="time-outline" size={22} color={c.onPrimary} /></Pressable>
+          <Pressable onPress={() => { removeMany(chosen()); setSelected(new Set()); }} hitSlop={6} accessibilityRole="button" accessibilityLabel={t.swipe.remove} style={{ padding: 4 }}><Ionicons name="trash-outline" size={21} color={c.onPrimary} /></Pressable>
+        </View>
+      ) : null}
+
+      {overdueList.length && !focusDate && !selecting && (list === 'today' || list === 'week' || list === 'all') ? (
+        <View style={{ direction: dir, margin: 10, marginBottom: 0, padding: 10, borderRadius: 12, backgroundColor: c.card, borderWidth: 1, borderColor: c.danger, gap: 8 }}>
+          <Text style={{ color: c.danger, fontSize: 14, fontWeight: '700', textAlign: dir === 'rtl' ? 'right' : 'left' }}>⏰ {t.swipe.overdue.replace('{n}', String(overdueList.length))}</Text>
+          <Row>
+            <Btn small style={{ flex: 1 }} title={t.swipe.toToday} onPress={() => postpone(overdueList, { date: day })} />
+            <Btn small kind="ghost" style={{ flex: 1 }} title={t.swipe.spread} onPress={spreadOverdue} />
+          </Row>
+        </View>
+      ) : null}
+
       <Pressable onPress={() => router.push('/plan')} accessibilityRole="button"
         style={{ direction: dir, margin: 10, marginBottom: 0, backgroundColor: c.primary, borderRadius: 12, paddingVertical: 11, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <Ionicons name="sparkles" size={18} color={c.onPrimary} />
@@ -182,7 +240,8 @@ export default function Tasks() {
             const subs = subsOf.get(x.id) ?? [];
             return (
               <View>
-                <TaskRow task={x} subDone={subs.filter((s) => s.completed).length} subTotal={subs.length} showDate={list === 'done' || !!custom} onToggle={toggle} onOpen={open} />
+                <SwipeTask task={x} subDone={subs.filter((s) => s.completed).length} subTotal={subs.length} showDate={list === 'done' || !!custom} onToggle={toggle} onOpen={open}
+                  selecting={selecting} selected={selected.has(x.id)} onSelect={select} onPostpone={askPostpone} />
                 {!x.completed ? subs.map((s) => <SubRow key={s.id} task={s} onToggle={toggle} />) : null}
               </View>
             );
@@ -210,6 +269,8 @@ export default function Tasks() {
           <Ionicons name="add" size={32} color={c.onPrimary} />
         </Pressable>
       ) : null}
+
+      <PostponeSheet visible={!!postponing} onClose={() => setPostponing(null)} onPick={(to) => { if (postponing) postpone(postponing, to); setSelected(new Set()); }} />
 
       <Sheet visible={adding} onClose={() => setAdding(false)} title={t.today.addTask}>
         <QuickAdd defaultDate={focusDate ?? (list === 'tomorrow' ? addDays(day, 1) : day)} extraSuggestions={weekly} listId={custom?.id} />

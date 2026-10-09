@@ -110,6 +110,37 @@ export function CelebrationProvider({ children }: { children: React.ReactNode })
   );
 }
 
+/* ───────── Undo ───────── */
+// A bar at the bottom for five seconds after a change, with a button that reverses it.
+type Undo = (message: string, revert: () => unknown) => void;
+const UndoCtx = createContext<Undo>(() => {});
+export const useUndo = () => useContext(UndoCtx);
+
+export function UndoProvider({ children }: { children: React.ReactNode }) {
+  const c = useTheme();
+  const { t, dir } = useLang();
+  const [shown, setShown] = useState<{ id: number; message: string; revert: () => unknown } | null>(null);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const show = useCallback<Undo>((message, revert) => {
+    setShown({ id: Date.now(), message, revert });
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => setShown(null), 5000);
+  }, []);
+  return (
+    <UndoCtx.Provider value={show}>
+      {children}
+      {shown ? (
+        <View key={shown.id} style={{ position: 'absolute', left: 12, right: 12, bottom: 150, flexDirection: 'row', alignItems: 'center', gap: 10, direction: dir, backgroundColor: c.text, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, elevation: 8 }}>
+          <Text style={{ flex: 1, color: c.bg, fontSize: 14, textAlign: dir === 'rtl' ? 'right' : 'left' }} numberOfLines={2}>{shown.message}</Text>
+          <Pressable onPress={() => { shown.revert(); setShown(null); }} hitSlop={10} accessibilityRole="button">
+            <Text style={{ color: c.primary, fontSize: 15, fontWeight: '700' }}>↩ {t.undo.undo}</Text>
+          </Pressable>
+        </View>
+      ) : null}
+    </UndoCtx.Provider>
+  );
+}
+
 /* ───────── RewardPicker ───────── */
 export const REWARD_ICONS = ['🎁', '🍕', '🎮', '✈️', '👟', '📱', '☕', '🎬', '🛍', '🏖', '🍰', '📚'];
 export type RewardValue = { reward_title?: string; reward_icon?: string; reward_description?: string };

@@ -27,6 +27,8 @@ export const sortTasks = (tasks: DailyTask[]) =>
   [...tasks].sort(
     (a, b) =>
       Number(!!a.completed) - Number(!!b.completed) ||
+      // a hand-set order (moved with the arrows) comes before the automatic one
+      (a.order ?? 1e9) - (b.order ?? 1e9) ||
       PRIO_RANK[a.priority ?? 'medium'] - PRIO_RANK[b.priority ?? 'medium'] ||
       (a.time ?? '99:99').localeCompare(b.time ?? '99:99'),
   );
