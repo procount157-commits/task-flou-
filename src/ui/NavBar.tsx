@@ -14,6 +14,7 @@ export type NavItem = { key: string; path: string; route: string; icon: keyof ty
 // Every screen that can sit in the bottom bar.
 export const NAV_CATALOG: NavItem[] = [
   { key: 'tasks', path: '/', route: 'index', icon: 'checkbox-outline', label: (t) => t.nav.tasks },
+  { key: 'day', path: '/day', route: 'day', icon: 'time-outline', label: (t) => t.day.title },
   { key: 'calendar', path: '/calendar', route: 'calendar', icon: 'calendar-outline', label: (t) => t.nav.calendar },
   { key: 'checkin', path: '/checkin', route: 'checkin', icon: 'mic-outline', label: (t) => t.checkin.tab },
   { key: 'ai', path: '/ai-coach', route: 'ai-coach', icon: 'sparkles-outline', label: (t) => t.nav.aiCoach },
@@ -36,7 +37,7 @@ export const NAV_CATALOG: NavItem[] = [
   { key: 'motivation', path: '/motivation', route: 'motivation', icon: 'mail-outline', label: (t) => t.nav.motivation },
   { key: 'settings', path: '/profile-settings', route: 'profile-settings', icon: 'settings-outline', label: (t) => t.nav.settings },
 ];
-export const NAV_DEFAULT = ['tasks', 'calendar', 'checkin', 'ai', 'plan', 'habits', 'matrix', 'focus'];
+export const NAV_DEFAULT = ['tasks', 'day', 'calendar', 'checkin', 'ai', 'plan', 'habits', 'matrix', 'focus'];
 
 type BarProps = { state: { index: number; routes: { name: string }[] } };
 

@@ -59,6 +59,8 @@ export function postponed(task: DailyTask, to: PostponeTo): Pick<DailyTask, 'dat
   const date = typeof to === 'object' ? to.date : addDays(day, to === 'tomorrow' ? 1 : to === 'dayAfter' ? 2 : 7);
   return { date, time: task.time, end_time: task.end_time };
 }
+const toMinutes = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3));
+const fromMinutes = (m: number) => `${String(Math.floor(m / 60) % 24).padStart(2, '0')}:${String(((m % 60) + 60) % 60).padStart(2, '0')}`;
 const ymdLocal = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
 export function useTaskActions() {
@@ -85,7 +87,7 @@ export function useTaskActions() {
       },
       remove: async (task: DailyTask) => {
         const before = await snapshot(new Set([task.id]));
-        await removeTaskFromCalendar(task);
+        for (const x of before) await removeTaskFromCalendar(x);
         await db.removeWhere('DailyTask', (x) => x.id === task.id || x.parent_id === task.id);
         undo(`🗑 ${task.title}`, async () => {
           await db.restore('DailyTask', before.map((x) => ({ ...x, calendar_event_id: undefined })));
@@ -98,7 +100,11 @@ export function useTaskActions() {
         for (const task of list) {
           const p = postponed(task, to);
           await db.update('DailyTask', task.id, p);
-          if (p.date !== task.date) for (const sub of before.filter((x) => x.parent_id === task.id)) await db.update('DailyTask', sub.id, { date: p.date });
+          for (const sub of before.filter((x) => x.parent_id === task.id)) {
+            const shift = p.time && task.time && sub.time ? toMinutes(p.time) - toMinutes(task.time) : 0;
+            if (p.date !== task.date || shift) await db.update('DailyTask', sub.id, { date: p.date, ...(shift ? { time: fromMinutes(toMinutes(sub.time!) + shift) } : {}) });
+            if (sub.time) autoSyncTask(sub.id);
+          }
           autoSyncTask(task.id);
         }
         undo(`📅 ${t.undo.moved.replace('{n}', String(list.length))}`, async () => {
@@ -115,7 +121,7 @@ export function useTaskActions() {
       removeMany: async (list: DailyTask[]) => {
         const ids = new Set(list.map((x) => x.id));
         const before = await snapshot(ids);
-        for (const task of list) await removeTaskFromCalendar(task);
+        for (const x of before) await removeTaskFromCalendar(x);
         await db.removeWhere('DailyTask', (x) => ids.has(x.id) || (!!x.parent_id && ids.has(x.parent_id)));
         undo(`🗑 ${t.undo.deleted.replace('{n}', String(list.length))}`, () => db.restore('DailyTask', before.map((x) => ({ ...x, calendar_event_id: undefined }))));
       },

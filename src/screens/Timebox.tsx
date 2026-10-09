@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAI } from './taskparts';
 import { useLang, useTheme } from '@/ctx/Lang';
 import { db } from '@/lib/db';
+import { autoSyncTask, removeTaskFromCalendar } from '@/lib/devicecal';
 import { timeboxTask } from '@/lib/integrations';
 import { cancel, scheduleAt } from '@/lib/notify';
 import type { DailyTask } from '@/lib/types';
@@ -44,13 +45,17 @@ export function TimeboxPanel({ task, steps, onRun }: { task: DailyTask; steps: D
     if (!plan) return;
     const kept = plan.filter((x) => x.on);
     // replaces an earlier timed split, never the user's own hand-written sub-tasks
+    const replaced = (await db.list('DailyTask')).filter((x) => x.parent_id === task.id && !!x.minutes && !x.completed);
+    for (const x of replaced) await removeTaskFromCalendar(x);
     await db.removeWhere('DailyTask', (x) => x.parent_id === task.id && !!x.minutes && !x.completed);
     let at = toMin(task.time);
-    await db.bulkCreate('DailyTask', kept.map((x) => {
+    const made = await db.bulkCreate('DailyTask', kept.map((x) => {
       const row = { title: x.step, minutes: x.minutes, date: task.date, time: at !== null ? toTime(at) : undefined, parent_id: task.id, priority: task.priority, completed: false };
       if (at !== null) at += x.minutes;
       return row;
     }));
+    // each timed step becomes its own event in the calendar
+    for (const x of made) autoSyncTask(x.id);
     setPlan(null);
   };
 

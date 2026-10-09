@@ -287,6 +287,7 @@ const ar = {
     missing: 'أضف رمز البوت ورقم المحادثة من الإعدادات أولاً', noChat: 'لم أجد رسالة — أرسل /start للبوت ثم أعد المحاولة', hello: 'تم ربط تطبيق حياتي بتيليجرام ✓',
     sendPlan: '✈️ أرسل خطة اليوم إلى تيليجرام', plan: 'خطة اليوم',
   },
+  day: { title: 'يومي', arrange: 'رتّب يومي بالذكاء الاصطناعي', arranged: 'رُتّب اليوم', proposal: 'الترتيب المقترح', apply: 'طبّق الترتيب', noTime: 'بلا وقت', hint: 'اضغط مطولاً على المهمة واسحبها لتغيير وقتها' },
   undo: { undo: 'تراجع', moved: 'نُقلت {n} مهمة', done: 'اكتملت {n} مهمة', deleted: 'حُذفت {n} مهمة' },
   swipe: {
     done: 'تمّت', later: 'أجّل', title: 'أجّل إلى…', hour: 'بعد ساعة', tonight: 'الليلة 8:00', tomorrow: 'بكرة', dayAfter: 'بعد بكرة', nextWeek: 'الأسبوع القادم', pick: 'اختر يوماً',
@@ -641,6 +642,7 @@ const en: Translations = {
     missing: 'Add the bot token and chat ID in Settings first', noChat: 'No message found — send /start to the bot and try again', hello: 'Hayati is now linked to Telegram ✓',
     sendPlan: "✈️ Send today's plan to Telegram", plan: "Today's plan",
   },
+  day: { title: 'My day', arrange: 'Arrange my day with AI', arranged: 'Day arranged', proposal: 'Proposed schedule', apply: 'Apply', noTime: 'No time', hint: 'Hold a task and drag it to change its time' },
   undo: { undo: 'Undo', moved: '{n} tasks moved', done: '{n} tasks completed', deleted: '{n} tasks deleted' },
   swipe: {
     done: 'Done', later: 'Later', title: 'Postpone to…', hour: 'In an hour', tonight: 'Tonight 8:00', tomorrow: 'Tomorrow', dayAfter: 'Day after', nextWeek: 'Next week', pick: 'Pick a day',

@@ -181,6 +181,7 @@ export default function Tasks() {
             <Txt v="h" numberOfLines={1}>{title}</Txt>
           </View>
           <Txt v="small">{tier.icon} {points}</Txt>
+          <Pressable onPress={() => router.push('/day')} hitSlop={8} accessibilityRole="button" accessibilityLabel={t.day.title}><Ionicons name="time-outline" size={21} color={c.muted} /></Pressable>
           <Pressable onPress={() => router.push('/matrix')} hitSlop={8} accessibilityRole="button" accessibilityLabel={t.tasks.matrix}><Ionicons name="grid-outline" size={20} color={c.muted} /></Pressable>
           <Pressable onPress={sendPlan} hitSlop={8} accessibilityRole="button" accessibilityLabel={t.tg.sendPlan}><Ionicons name="paper-plane-outline" size={20} color={c.muted} /></Pressable>
           <Pressable onPress={exportDay} hitSlop={8} accessibilityRole="button" accessibilityLabel={t.today.exportIcs}><Ionicons name="share-outline" size={21} color={c.muted} /></Pressable>

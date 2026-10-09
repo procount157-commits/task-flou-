@@ -34,7 +34,7 @@ async function targetCalendar(): Promise<string | undefined> {
   return found?.id;
 }
 
-function eventDetails(task: DailyTask) {
+function eventDetails(task: DailyTask, parentTitle?: string) {
   const start = parse(task.date);
   let end: Date;
   const timed = isTime(task.time);
@@ -45,10 +45,10 @@ function eventDetails(task: DailyTask) {
     if (isTime(task.end_time)) {
       const [eh, em] = task.end_time!.split(':').map(Number);
       end.setHours(eh, em, 0, 0);
-    }
+    } else if (task.minutes) end = new Date(start.getTime() + task.minutes * 60000);
     if (end <= start) end = new Date(start.getTime() + 60 * 60000);
   } else end = parse(addDays(task.date, 1));
-  return { title: task.title, notes: task.notes, startDate: start, endDate: end, allDay: !timed, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone };
+  return { title: parentTitle ? `${task.title} · ${parentTitle}` : task.title, notes: task.notes, startDate: start, endDate: end, allDay: !timed, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone };
 }
 
 // Creates the task's event, or updates the one it already has. Returns false when no calendar could be written.
@@ -56,7 +56,9 @@ export async function saveTaskToCalendar(task: DailyTask): Promise<boolean> {
   if (Platform.OS === 'web') return false;
   const calendarId = await targetCalendar();
   if (!calendarId) return false;
-  const details = eventDetails(task);
+  // a timed step of a task goes in as its own event, named after its task
+  const parent = task.parent_id ? (await db.list('DailyTask')).find((x) => x.id === task.parent_id) : undefined;
+  const details = eventDetails(task, parent?.title);
   if (task.calendar_event_id) {
     try {
       await Calendar.updateEventAsync(task.calendar_event_id, details);
@@ -79,7 +81,8 @@ export async function removeTaskFromCalendar(task: DailyTask) {
 export async function autoSyncTask(taskId: string) {
   if (Platform.OS === 'web' || !(await getAutoCalendar())) return;
   const task = (await db.list('DailyTask')).find((x) => x.id === taskId);
-  if (task && !task.parent_id) await saveTaskToCalendar(task).catch((e) => logError('calendar', e));
+  // whole tasks always; sub-steps only when they have their own time (a timed split)
+  if (task && (!task.parent_id || isTime(task.time))) await saveTaskToCalendar(task).catch((e) => logError('calendar', e));
 }
 
 export type DeviceEvent = { id: string; title: string; date: string; time?: string; end?: string; allDay: boolean };
@@ -121,7 +124,7 @@ export async function syncAllTasks(): Promise<SyncReport> {
     const calendar = all.find((c) => c.id === id);
     const day = new Date();
     const from = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
-    const tasks = (await db.list('DailyTask')).filter((x) => !x.parent_id && !x.completed && x.date >= from);
+    const tasks = (await db.list('DailyTask')).filter((x) => (!x.parent_id || isTime(x.time)) && !x.completed && x.date >= from);
     let written = 0;
     let failed = 0;
     for (const task of tasks) {
