@@ -47,7 +47,7 @@ shot() { sleep ${2:-3}; adb exec-out screencap -p > "out/step-$1.png"; adb shell
 go() { adb shell am start -W -a android.intent.action.VIEW -d "hayati:///$1" $PKG >/dev/null; sleep 5; }
 
 # v12: swipe, postpone, day view, goals, review, widget, reminders, floating mic
-go index; shot tasks-0 2
+go ""; shot tasks-0 2
 # finger swipes on a row: right finishes, left opens the postpone sheet
 row() { adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb shell cat /sdcard/ui.xml > /tmp/ui.xml; python3 - "$1" <<'PY'
 import re, sys, html
