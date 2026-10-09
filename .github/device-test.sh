@@ -60,17 +60,13 @@ for m in re.finditer(r'<node [^>]*>', open('/tmp/ui.xml', encoding='utf-8').read
 PY
 }
 y=$(row 'مهمة للسحب'); echo "swipe-right y=$y" >> out/steps.txt
-[ -n "$y" ] && adb shell input swipe 150 $y 900 $y 250
-shot tasks-swiped-right 2
+[ -n "$y" ] && adb shell input swipe 150 $y 900 $y 400
+shot tasks-swiped-right 3
+sleep 4
 y=$(row 'مهمة للتأجيل'); echo "swipe-left y=$y" >> out/steps.txt
-[ -n "$y" ] && adb shell input swipe 900 $y 150 $y 250
+[ -n "$y" ] && adb shell input swipe 900 $y 150 $y 400
 shot postpone-sheet 2
 tap 'بكرة'; shot tasks-postponed 2
-go day; shot day 2
-go roadmap; shot roadmap 2
-go "goal?id=g1"; shot goal 2
-go review; shot review 2
-go search; adb shell input text "mhm"; shot search 1
 adb shell dumpsys appwidget > out/appwidget.txt 2>&1
 grep -c "TasksWidget" out/appwidget.txt >> out/steps.txt || true
 adb shell dumpsys alarm > out/alarms.txt 2>&1

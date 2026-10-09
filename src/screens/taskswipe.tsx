@@ -3,7 +3,7 @@ import * as Haptics from 'expo-haptics';
 import React, { memo, useRef, useState } from 'react';
 import { Platform, Pressable, View } from 'react-native';
 import ReanimatedSwipeable, { SwipeDirection, type SwipeableMethods } from 'react-native-gesture-handler/ReanimatedSwipeable';
-import Animated, { FadeIn, FadeOut, LinearTransition } from 'react-native-reanimated';
+import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { PostponeTo, TaskRow } from './taskparts';
 import { useLang, useTheme } from '@/ctx/Lang';
@@ -42,7 +42,8 @@ export const SwipeTask = memo(function SwipeTask({ task, subDone, subTotal, show
     </Pressable>
   );
   return (
-    <Animated.View entering={FadeIn.duration(180)} exiting={FadeOut.duration(160)} layout={LinearTransition.duration(200)}>
+    // only a fade on arrival: exit and layout animations inside a virtualised list leave empty gaps on Android
+    <Animated.View entering={FadeIn.duration(180)}>
       {selecting ? row : (
         <ReanimatedSwipeable
           ref={ref}
