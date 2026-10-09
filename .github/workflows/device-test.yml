@@ -7,7 +7,7 @@ on:
     inputs:
       routes:
         description: Space-separated routes to open
-        default: brainstorm
+        default: index
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -48,6 +48,13 @@ jobs:
           rows = {
             'kv:user': {'id': 'u_test', 'name': 'Test', 'email': '', 'role': 'admin'},
             'db:UserProfile': [{'id': 'p1', 'created_by_id': 'u_test', 'created_date': now, 'updated_date': now, 'target_age': 80, 'birth_date': '1990-01-01', 'onboarding_complete': True, 'last_intention_date': day}],
+            'db:Goal': [{'id': 'g1', 'title': 'الوصول إلى مليون دولار', 'level': 'ten_years', 'status': 'in_progress', 'target_value': 1000000, 'current_value': 12000, 'unit': 'دولار', 'created_date': now, 'updated_date': now, 'created_by_id': 'u_test'}],
+            'db:DailyTask': [
+              {'id': 't1', 'title': 'مهمة للسحب يميناً', 'date': day, 'time': '09:00', 'priority': 'high', 'goal_id': 'g1', 'completed': False, 'created_date': now, 'updated_date': now, 'created_by_id': 'u_test'},
+              {'id': 't2', 'title': 'مهمة للتأجيل', 'date': day, 'time': '11:00', 'priority': 'medium', 'completed': False, 'created_date': now, 'updated_date': now, 'created_by_id': 'u_test'},
+              {'id': 't3', 'title': 'مهمة ثالثة', 'date': day, 'priority': 'low', 'completed': False, 'created_date': now, 'updated_date': now, 'created_by_id': 'u_test'},
+            ],
+            'kv:gcal:setup': True,
           }
           for k, v in rows.items():
               con.execute('INSERT INTO catalystLocalStorage VALUES (?, ?)', (k, json.dumps(v)))

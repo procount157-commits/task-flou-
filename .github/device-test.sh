@@ -46,18 +46,36 @@ PY
 shot() { sleep ${2:-3}; adb exec-out screencap -p > "out/step-$1.png"; adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1 && adb shell cat /sdcard/ui.xml | grep -o 'text="[^"]*"' | sed 's/text="//;s/"$//' | grep -v '^$' > "out/step-$1.txt"; }
 go() { adb shell am start -W -a android.intent.action.VIEW -d "hayati:///$1" $PKG >/dev/null; sleep 5; }
 
-# voice: record a few seconds in brainstorm, stop, and keep whatever the app says
-adb shell pm grant $PKG android.permission.RECORD_AUDIO || true
-go brainstorm; shot voice-0 1
-tap 'تسجيل صوتي'; shot voice-recording 4
-tap 'إيقاف'; shot voice-after 3; shot voice-after-10 10
-adb shell "run-as $PKG ls -la files cache 2>&1" > out/recordings.txt
-adb shell "run-as $PKG sh -c 'find . -name \"*.m4a\" -exec ls -la {} \\;'" >> out/recordings.txt 2>&1
-# a real Arabic clip shipped with the app, through the same transcription path
-tap 'OK'; sleep 1
-go check
-for k in 1 2 3 4 5; do adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb shell cat /sdcard/ui.xml | grep -q 'تحويل الصوت' && break; adb shell input swipe 500 1500 500 500 300; sleep 1; done
-tap 'تحويل الصوت'; shot stt-test 12
+# v12: swipe, postpone, day view, goals, review, widget, reminders, floating mic
+go index; shot tasks-0 2
+# finger swipes on a row: right finishes, left opens the postpone sheet
+row() { adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb shell cat /sdcard/ui.xml > /tmp/ui.xml; python3 - "$1" <<'PY'
+import re, sys, html
+want = sys.argv[1]
+for m in re.finditer(r'<node [^>]*>', open('/tmp/ui.xml', encoding='utf-8').read()):
+    n = m.group(0)
+    if want in html.unescape(re.search(r' text="([^"]*)"', n).group(1)):
+        a, b, c, d = map(int, re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', n).groups())
+        print((b + d) // 2); break
+PY
+}
+y=$(row 'مهمة للسحب'); echo "swipe-right y=$y" >> out/steps.txt
+[ -n "$y" ] && adb shell input swipe 150 $y 900 $y 250
+shot tasks-swiped-right 2
+y=$(row 'مهمة للتأجيل'); echo "swipe-left y=$y" >> out/steps.txt
+[ -n "$y" ] && adb shell input swipe 900 $y 150 $y 250
+shot postpone-sheet 2
+tap 'بكرة'; shot tasks-postponed 2
+go day; shot day 2
+go roadmap; shot roadmap 2
+go "goal?id=g1"; shot goal 2
+go review; shot review 2
+go search; adb shell input text "mhm"; shot search 1
+adb shell dumpsys appwidget > out/appwidget.txt 2>&1
+grep -c "TasksWidget" out/appwidget.txt >> out/steps.txt || true
+adb shell dumpsys alarm > out/alarms.txt 2>&1
+echo "nudge alarms: $(grep -c 'NUDGE' out/alarms.txt)" >> out/steps.txt
+echo "hourly alarms: $(grep -c 'HourlyReceiver' out/alarms.txt)" >> out/steps.txt
 adb shell "run-as $PKG cat databases/RKStorage" > out/RKStorage-after
 grep -E 'ReactNativeJS|AndroidRuntime|FATAL|hayati' out/logcat.txt > out/js.txt || true
 kill %1 || true
