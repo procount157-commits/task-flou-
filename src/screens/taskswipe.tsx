@@ -24,7 +24,7 @@ type Props = {
 /** A task row that is swiped right to finish, left to postpone, and long-pressed to start selecting. */
 export const SwipeTask = memo(function SwipeTask({ task, subDone, subTotal, showDate, selecting, selected, onToggle, onOpen, onPostpone, onSelect }: Props) {
   const c = useTheme();
-  const { t } = useLang();
+  const { t, dir } = useLang();
   const ref = useRef<SwipeableMethods>(null);
   const action = (icon: keyof typeof Ionicons.glyphMap, label: string, color: string, side: 'start' | 'end') => (
     <View style={{ width: 96, backgroundColor: color, alignItems: 'center', justifyContent: 'center', gap: 2, alignSelf: 'stretch', [side === 'start' ? 'paddingStart' : 'paddingEnd']: 8 }}>
@@ -34,7 +34,7 @@ export const SwipeTask = memo(function SwipeTask({ task, subDone, subTotal, show
   );
   const row = (
     <Pressable onLongPress={() => { buzz(); onSelect(task); }} delayLongPress={350} onPress={selecting ? () => onSelect(task) : undefined} disabled={!selecting && false}>
-      <View pointerEvents={selecting ? 'none' : 'auto'} style={{ opacity: 1 }}>
+      <View pointerEvents={selecting ? 'none' : 'auto'} style={{ direction: dir }}>
         <View style={selected ? { backgroundColor: c.soft } : undefined}>
           <TaskRow task={task} subDone={subDone} subTotal={subTotal} showDate={showDate} onToggle={onToggle} onOpen={onOpen} selected={selected} selecting={selecting} />
         </View>
@@ -43,7 +43,9 @@ export const SwipeTask = memo(function SwipeTask({ task, subDone, subTotal, show
   );
   return (
     // only a fade on arrival: exit and layout animations inside a virtualised list leave empty gaps on Android
-    <Animated.View entering={FadeIn.duration(180)}>
+    // the swipeable measures its hidden actions assuming left-to-right; in an RTL parent the right-hand
+    // action measured zero wide and a left swipe could never open, so only the row itself is RTL
+    <Animated.View entering={FadeIn.duration(180)} style={{ direction: 'ltr' }}>
       {selecting ? row : (
         <ReanimatedSwipeable
           ref={ref}
