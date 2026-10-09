@@ -46,6 +46,8 @@ object HourlySession {
       .put("done", false)
     save(context, s)
     post(context, false)
+    // the first question is also spoken, so the hour is noticed without looking at the phone
+    if (Speaker.enabled(context)) Speaker.say(context, steps(context).optJSONObject(0)?.optString("q") ?: "")
   }
 
   private fun broadcast(context: Context, code: Int, action: String, choice: String?, mutable: Boolean): PendingIntent {

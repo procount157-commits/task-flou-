@@ -8,6 +8,7 @@
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT"/>
     <uses-permission android:name="android.permission.VIBRATE"/>
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
+    <uses-permission android:name="android.permission.POST_PROMOTED_NOTIFICATIONS"/>
 
     <application>
         <!-- Device admin with the single "force-lock" policy: it lets the app turn the screen off, nothing else. -->
@@ -29,6 +30,8 @@
         </receiver>
 
         <receiver android:name=".HourlyActionReceiver" android:exported="false"/>
+
+        <receiver android:name=".NudgeReceiver" android:exported="false"/>
 
         <receiver android:name=".LockAlarmReceiver" android:exported="false"/>
 

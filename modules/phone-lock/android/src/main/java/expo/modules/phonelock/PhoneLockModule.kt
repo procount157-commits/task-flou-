@@ -120,6 +120,29 @@ class PhoneLockModule : Module() {
       Hourly.show(context, true)
     }
 
+    // Goal and dream reminders written ahead by the app: [{at, title, body, url?}]
+    Function("scheduleNudges") { json: String ->
+      Nudges.schedule(context, json)
+    }
+
+    // Whether reminders and the hourly question are also read aloud.
+    Function("setSpeak") { on: Boolean ->
+      context.getSharedPreferences(Hourly.PREFS, Context.MODE_PRIVATE).edit().putBoolean("speak", on).apply()
+    }
+
+    Function("speak") { text: String ->
+      Speaker.say(context, text)
+    }
+
+    // The live countdown capsule (Live Update on Android 16, Now Bar on Samsung).
+    Function("showLive") { title: String, text: String, endAt: Double, url: String ->
+      LiveUpdate.show(context, title, text, endAt.toLong(), url)
+    }
+
+    Function("clearLive") {
+      LiveUpdate.clear(context)
+    }
+
     // Sessions answered inside the notification since the app last looked, as a JSON array.
     Function("takeHourly") {
       HourlySession.take(context)

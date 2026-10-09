@@ -287,6 +287,11 @@ const ar = {
     missing: 'أضف رمز البوت ورقم المحادثة من الإعدادات أولاً', noChat: 'لم أجد رسالة — أرسل /start للبوت ثم أعد المحاولة', hello: 'تم ربط تطبيق حياتي بتيليجرام ✓',
     sendPlan: '✈️ أرسل خطة اليوم إلى تيليجرام', plan: 'خطة اليوم',
   },
+  nudge: {
+    title: 'تذكير بهدفك', morning: 'صباح الخير — أهم مهام اليوم', emptyDay: 'لا مهام لليوم بعد — افتح «يومي» واطلب ترتيب يومك', review: 'حان وقت مراجعة أسبوعك — دقيقتان تكفي',
+    settings: 'التنبيهات الذكية', goalsToggle: 'ذكّرني بأهدافي وأحلامي (يكتبها الذكاء الاصطناعي)', timesNow: 'الأوقات', morningToggle: 'موجز الصباح بأهم 3 مهام', morningAt: 'وقت الموجز',
+    reviewToggle: 'تذكير المراجعة الأسبوعية (الجمعة 6 مساءً)', speakToggle: 'اقرأ التنبيهات وسؤال الساعة بصوت مسموع', test: 'جرّب الصوت',
+  },
   roadmap: {
     title: 'أهدافي', daysLeft: 'يوم متبقٍ', idle: 'لم يتحرك منذ {n} أيام', of: 'من', tasksDone: 'مهام منجزة', update: 'حدّث الرقم', makeNumber: 'اجعله رقماً',
     pace: 'لتصل في الموعد تحتاج قرابة {n} {u} كل شهر', next: 'الخطوة التالية', noNext: 'لا خطوة قادمة — اطلب اقتراحاً', suggest: 'اقترح خطوات صغيرة',
@@ -648,6 +653,11 @@ const en: Translations = {
     hint: 'Create a bot with @BotFather, paste the token here, send /start to the bot from your account, then press "Detect the chat".', sent: 'Sent to Telegram ✓',
     missing: 'Add the bot token and chat ID in Settings first', noChat: 'No message found — send /start to the bot and try again', hello: 'Hayati is now linked to Telegram ✓',
     sendPlan: "✈️ Send today's plan to Telegram", plan: "Today's plan",
+  },
+  nudge: {
+    title: 'Your goal', morning: 'Good morning — today’s top tasks', emptyDay: 'No tasks for today yet — open My day and let the AI arrange it', review: 'Time for your weekly review — two minutes is enough',
+    settings: 'Smart reminders', goalsToggle: 'Remind me of my goals and dreams (written by AI)', timesNow: 'Times', morningToggle: 'Morning brief with the top 3 tasks', morningAt: 'Brief time',
+    reviewToggle: 'Weekly review reminder (Friday 6 pm)', speakToggle: 'Read reminders and the hourly question aloud', test: 'Test the voice',
   },
   roadmap: {
     title: 'My goals', daysLeft: 'days left', idle: 'untouched for {n} days', of: 'of', tasksDone: 'tasks done', update: 'Update number', makeNumber: 'Make it a number',

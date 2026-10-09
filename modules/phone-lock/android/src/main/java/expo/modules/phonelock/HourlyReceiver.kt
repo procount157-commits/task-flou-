@@ -8,7 +8,10 @@ import android.content.Intent
 class HourlyReceiver : BroadcastReceiver() {
   override fun onReceive(context: Context, intent: Intent) {
     // a restart wipes every alarm the app had booked
-    if (intent.action == Intent.ACTION_BOOT_COMPLETED) Alarms.restore(context)
+    if (intent.action == Intent.ACTION_BOOT_COMPLETED) {
+      Alarms.restore(context)
+      Nudges.restore(context)
+    }
     if (!Hourly.isEnabled(context)) return
     if (intent.action != Intent.ACTION_BOOT_COMPLETED) Hourly.show(context, false)
     Hourly.scheduleNext(context)

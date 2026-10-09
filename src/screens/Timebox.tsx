@@ -10,6 +10,7 @@ import { db } from '@/lib/db';
 import { autoSyncTask, removeTaskFromCalendar } from '@/lib/devicecal';
 import { timeboxTask } from '@/lib/integrations';
 import { cancel, scheduleAt } from '@/lib/notify';
+import { clearLive, showLive } from '@/lib/phonelock';
 import type { DailyTask } from '@/lib/types';
 import { Btn, Check, Chips, Row, Txt } from '@/ui/kit';
 import { Text } from '@/ui/text';
@@ -114,6 +115,12 @@ export function StepRunner({ task, steps, onClose }: { task: DailyTask; steps: D
     }
   };
 
+  // the countdown also lives in the status bar (a Live Update on Android 16, Samsung's Now Bar)
+  useEffect(() => {
+    if (step) showLive(`⏱ ${step.title}`, `${task.title}${queue[index + 1] ? ` · ${t.timebox.next}: ${queue[index + 1].title}` : ''}`, paused ?? endsAt);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [index, endsAt, paused]);
+
   useEffect(() => {
     book(0, endsAt);
     const tick = setInterval(() => setNow(Date.now()), 500);
@@ -122,6 +129,7 @@ export function StepRunner({ task, steps, onClose }: { task: DailyTask; steps: D
       clearInterval(tick);
       sub.remove();
       cancel(...booked.current);
+      clearLive();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

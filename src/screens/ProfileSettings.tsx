@@ -5,6 +5,8 @@ import { useLang, useTheme } from '@/ctx/Lang';
 import { isDate, isTime } from '@/lib/dates';
 import { useKV } from '@/lib/db';
 import { CalInfo, listWritableCalendars, syncAllTasks } from '@/lib/devicecal';
+import { NUDGE_DEFAULTS, NudgeSettings, refreshNudges } from '@/lib/nudges';
+import { speakNative } from '@/lib/phonelock';
 import { AISettings, getAI, setAI } from '@/lib/integrations';
 import { initNotifications } from '@/lib/notify';
 import { NoTelegramError, TG_DEFAULTS, TelegramSettings, detectChatId, getTelegram, sendTelegram, setTelegram } from '@/lib/telegram';
@@ -14,7 +16,7 @@ import { DaysPicker } from '@/ui/shared';
 
 export default function ProfileSettings() {
   const c = useTheme();
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const { user } = useAuth();
   const { profile, updateProfile } = useProfile();
   const [f, setF] = useState<Record<string, string>>({});
@@ -26,6 +28,12 @@ export default function ProfileSettings() {
   const [calId, setCalId] = useKV<string>('gcal:id', '');
   const [calendars, setCalendars] = useState<CalInfo[] | null>(null);
   const [syncing, setSyncing] = useState(false);
+  const [nudgeRaw, setNudgeRaw] = useKV<Partial<NudgeSettings>>('nudges', {});
+  const nudge = { ...NUDGE_DEFAULTS, ...nudgeRaw };
+  const saveNudge = async (n: NudgeSettings) => {
+    await setNudgeRaw(n);
+    refreshNudges(t, lang, true).catch(() => {});
+  };
   const loadCalendars = async () => {
     const all = await listWritableCalendars().catch(() => []);
     setCalendars(all);
@@ -108,6 +116,19 @@ export default function ProfileSettings() {
           {aiField('fallbackKey', `${t.settings.apiKey} 2`, true)}
           {aiField('fallbackModel', `${t.settings.model} 2`)}
           <Btn title={t.c.save} onPress={async () => { if (ai) { await setAI(ai); notice(t.settings.saved); } }} />
+        </Card>
+      </Section>
+
+      <Section title={`🔔 ${t.nudge.settings}`}>
+        <Card>
+          <Toggle label={`🎯 ${t.nudge.goalsToggle}`} value={nudge.goals} onChange={(goals) => saveNudge({ ...nudge, goals })} />
+          {nudge.goals ? <Chips options={['08:00', '10:00', '13:00', '16:00', '19:00', '21:00'].map((x) => ({ value: x, label: x }))} value={null} onChange={(x) => saveNudge({ ...nudge, times: nudge.times.includes(x) ? nudge.times.filter((k) => k !== x) : [...nudge.times, x].sort() })} /> : null}
+          {nudge.goals ? <Txt v="small">{t.nudge.timesNow}: {nudge.times.join(' · ') || '—'}</Txt> : null}
+          <Toggle label={`☀️ ${t.nudge.morningToggle}`} value={nudge.morning} onChange={(morning) => saveNudge({ ...nudge, morning })} />
+          {nudge.morning ? <TimeField label={t.nudge.morningAt} value={nudge.morningAt} allowClear={false} onChange={(v) => v && saveNudge({ ...nudge, morningAt: v })} /> : null}
+          <Toggle label={`📋 ${t.nudge.reviewToggle}`} value={nudge.review} onChange={(review) => saveNudge({ ...nudge, review })} />
+          <Toggle label={`🔊 ${t.nudge.speakToggle}`} value={nudge.speak} onChange={(speak) => saveNudge({ ...nudge, speak })} />
+          <Btn kind="ghost" title={`🔊 ${t.nudge.test}`} onPress={() => speakNative(t.checkin.notif.steps[0].q)} />
         </Card>
       </Section>
 

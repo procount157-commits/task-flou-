@@ -18,6 +18,7 @@ import { PomodoroProvider } from '@/ctx/Pomodoro';
 import { today } from '@/lib/dates';
 import { db, kv, preload, useEntity, useKV } from '@/lib/db';
 import { hourlyCard } from '@/lib/logic';
+import { refreshNudges } from '@/lib/nudges';
 import { LockSchedule, ringingAlarmId, syncLockSchedules, takeHourlyAnswers } from '@/lib/phonelock';
 import { installGlobalErrorLog, logError } from '@/lib/errlog';
 import { CHECKIN_DEFAULTS, CheckinSettings, initNotifications, onNotificationOpen, scheduleAlarms, scheduleCheckins, syncReminders } from '@/lib/notify';
@@ -104,7 +105,7 @@ function AppTabs() {
 
 // Re-books check-ins and alarms when the app opens, and follows a tapped notification to its screen.
 function Background() {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const router = useRouter();
   const [alarms] = useKV<Alarm[]>('alarms', NO_ALARMS);
   const [checkin] = useKV<CheckinSettings>('checkin', CHECKIN_DEFAULTS);
@@ -137,6 +138,8 @@ function Background() {
       if ((await kv.get('sched:alarms', '')) !== alarmSig && (await scheduleAlarms(alarms, t.alarm.ringing))) await kv.set('sched:alarms', alarmSig);
       if ((await kv.get('sched:checkin', '')) !== checkinSig && (await scheduleCheckins(checkin, card))) await kv.set('sched:checkin', checkinSig);
       syncLockSchedules(await kv.get<LockSchedule[]>('lock:schedules', []));
+      // the week of goal reminders, the morning brief and the review, rewritten once a day
+      refreshNudges(t, lang).catch((e) => logError('nudges', e));
     }, 6000);
     return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps

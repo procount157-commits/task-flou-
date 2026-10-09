@@ -17,6 +17,11 @@ type PhoneLockNative = {
   setHourly(enabled: boolean, fromHour: number, toHour: number, payload: string): void;
   showHourly(): void;
   takeHourly?(): string;
+  scheduleNudges?(json: string): void;
+  setSpeak?(on: boolean): void;
+  speak?(text: string): void;
+  showLive?(title: string, text: string, endAt: number, url: string): void;
+  clearLive?(): void;
   closeHourly?(): void;
   scheduleAlarm(code: number, atMillis: number, id: string, sound: string, label: string): void;
   clearAlarms(): void;
@@ -118,3 +123,12 @@ export const startRinging = (a: Alarm) => safe((m) => m.startRinging(a.id, alarm
 export const stopRinging = () => safe((m) => m.stopRinging(), undefined);
 export const ringingAlarmId = () => safe((m) => m.ringingId(), '');
 export const pickRingtone = async (current = '') => (native ? native.pickRingtone(current).catch((e) => (logError('ringtone', e), null)) : null);
+
+/* ───────── spoken reminders and the live capsule ───────── */
+export type Nudge = { at: number; title: string; body: string; url?: string };
+export const nudgesAvailable = !!native && typeof native.scheduleNudges === 'function';
+export const scheduleNudges = (list: Nudge[]) => safe((m) => (m.scheduleNudges?.(JSON.stringify(list)), true), false);
+export const setSpeakAloud = (on: boolean) => safe((m) => m.setSpeak?.(on), undefined);
+export const speakNative = (text: string) => safe((m) => m.speak?.(text), undefined);
+export const showLive = (title: string, text: string, endAt: number, url = 'hayati://day') => safe((m) => m.showLive?.(title, text, endAt, url), undefined);
+export const clearLive = () => safe((m) => m.clearLive?.(), undefined);
