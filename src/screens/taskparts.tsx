@@ -14,13 +14,14 @@ import { autoSyncTask, removeTaskFromCalendar, saveTaskToCalendar } from '@/lib/
 import { exportTask } from '@/lib/gcal';
 import { NoKeyError, SendEmail, splitTask, suggestTasks } from '@/lib/integrations';
 import { addPoints, POINTS } from '@/lib/logic';
+import { parseTask } from '@/lib/nlp';
 import type { DailyTask, Priority, TaskList } from '@/lib/types';
 
 const NO_LISTS: TaskList[] = [];
 import { logError } from '@/lib/errlog';
 import { Btn, Chips, Input, Progress, Row, Sheet, Suggest, Toggle, Txt, confirm, notice, opts } from '@/ui/kit';
 import { DateField, DatePickerSheet, TimeField } from '@/ui/pickers';
-import { DaysPicker, useCelebrate } from '@/ui/shared';
+import { DaysPicker, VoiceToText, useCelebrate } from '@/ui/shared';
 import { Text, useFontFamily } from '@/ui/text';
 
 export const prioColor = (c: Colors, p?: Priority) => (p === 'high' ? c.danger : p === 'medium' ? c.warn : p === 'low' ? c.primary : c.muted);
@@ -93,6 +94,20 @@ export const TaskRow = memo(function TaskRow({ task, subDone, subTotal, showDate
   );
 });
 
+const addMinutes = (hhmm: string, m: number) => {
+  const total = Number(hhmm.slice(0, 2)) * 60 + Number(hhmm.slice(3)) + m;
+  return `${String(Math.floor(total / 60) % 24).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
+};
+
+function Chip({ text, color }: { text: string; color?: string }) {
+  const c = useTheme();
+  return (
+    <View style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999, backgroundColor: c.soft, borderWidth: color ? 1 : 0, borderColor: color }}>
+      <Text style={{ fontSize: 12, color: color ?? c.primary }}>{text}</Text>
+    </View>
+  );
+}
+
 // The bar pinned above the tab bar: suggestions to tap, or a title to type, plus date and priority.
 export function QuickAdd({ defaultDate, extraSuggestions = [], listId }: { defaultDate: string; extraSuggestions?: string[]; listId?: string }) {
   const c = useTheme();
@@ -109,6 +124,7 @@ export function QuickAdd({ defaultDate, extraSuggestions = [], listId }: { defau
   const [pickDate, setPickDate] = useState(false);
   const [aiItems, setAiItems] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
+  const [lastAdded, setLastAdded] = useState<{ title: string; date: string; time?: string } | null>(null);
 
   useEffect(() => setDate(defaultDate), [defaultDate]);
   useEffect(() => setList(listId), [listId]);
@@ -122,13 +138,18 @@ export function QuickAdd({ defaultDate, extraSuggestions = [], listId }: { defau
     return [...new Set([...aiItems, ...extraSuggestions, ...mine, ...t.sug.tasks])].filter((s) => !onDay.has(s)).slice(0, 14);
   }, [tasks, date, aiItems, extraSuggestions, t]);
 
+  // what the sentence itself says (date, time, priority, length) wins over the pickers
+  const parsed = useMemo(() => (title.trim() ? parseTask(title, today()) : null), [title]);
   const add = async (text: string) => {
-    const clean = text.trim();
+    const p = parseTask(text, today());
+    const clean = p.title.trim();
     if (!clean) return;
-    const made = await db.create('DailyTask', { title: clean, date, priority: prio, completed: false, repeat_days: [], list_id: list });
+    const end = p.time && p.minutes ? addMinutes(p.time, p.minutes) : undefined;
+    const made = await db.create('DailyTask', { title: clean, date: p.date ?? date, time: p.time, end_time: end, priority: p.priority ?? prio, completed: false, repeat_days: [], list_id: list });
     setTitle('');
     setAiItems((xs) => xs.filter((x) => x !== clean));
     autoSyncTask(made.id);
+    setLastAdded({ title: clean, date: p.date ?? date, time: p.time });
     // the breakdown arrives a moment later as subtasks under the new task; a missing key just skips it
     if (autoSplit)
       splitTask(clean, lang)
@@ -162,6 +183,7 @@ export function QuickAdd({ defaultDate, extraSuggestions = [], listId }: { defau
       <Row gap={6}>
         <TextInput value={title} onChangeText={setTitle} placeholder={t.tasks.addTitle} placeholderTextColor={c.muted} onSubmitEditing={() => add(title)} submitBehavior="submit" returnKeyType="done"
           style={{ flex: 1, backgroundColor: c.bg, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 9, color: c.text, fontSize: 15, textAlign: dir === 'rtl' ? 'right' : 'left', writingDirection: dir, fontFamily }} />
+        <VoiceToText compact onText={(v) => v && add(v)} />
         <Pressable onPress={() => setPickDate(true)} accessibilityRole="button" accessibilityLabel={t.c.pickDate} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 8, borderRadius: 10, backgroundColor: c.soft }}>
           <Ionicons name="calendar-outline" size={17} color={c.primary} />
           <Text style={{ color: c.primary, fontSize: 12 }}>{fmtDate(date, lang, t.c)}</Text>
@@ -173,6 +195,18 @@ export function QuickAdd({ defaultDate, extraSuggestions = [], listId }: { defau
           <Ionicons name="arrow-up" size={20} color={c.onPrimary} />
         </Pressable>
       </Row>
+      {parsed && (parsed.date || parsed.time || parsed.priority || parsed.minutes) ? (
+        <Row wrap gap={6}>
+          <Txt v="small" color={c.primary}>✨ {t.nlp.understood}:</Txt>
+          {parsed.date ? <Chip text={`📅 ${fmtDate(parsed.date, lang, t.c)}`} /> : null}
+          {parsed.time ? <Chip text={`🕐 ${parsed.time}${parsed.minutes ? `–${addMinutes(parsed.time, parsed.minutes)}` : ''}`} /> : null}
+          {!parsed.time && parsed.minutes ? <Chip text={`⏱ ${parsed.minutes} ${t.timebox.min}`} /> : null}
+          {parsed.priority ? <Chip text={`🚩 ${t.prio[parsed.priority]}`} color={prioColor(c, parsed.priority)} /> : null}
+        </Row>
+      ) : (
+        <Txt v="small">💡 {t.nlp.hint}</Txt>
+      )}
+      {lastAdded ? <Txt v="small" color={c.success}>✓ {lastAdded.title} · {fmtDate(lastAdded.date, lang, t.c)}{lastAdded.time ? ` ${lastAdded.time}` : ''}</Txt> : null}
       <Toggle label={t.sug.autoSplit} value={autoSplit} onChange={setAutoSplit} />
       <DatePickerSheet visible={pickDate} value={date} onChange={(v) => setDate(v ?? defaultDate)} onClose={() => setPickDate(false)} allowClear={false} />
     </View>

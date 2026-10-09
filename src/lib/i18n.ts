@@ -287,6 +287,7 @@ const ar = {
     missing: 'أضف رمز البوت ورقم المحادثة من الإعدادات أولاً', noChat: 'لم أجد رسالة — أرسل /start للبوت ثم أعد المحاولة', hello: 'تم ربط تطبيق حياتي بتيليجرام ✓',
     sendPlan: '✈️ أرسل خطة اليوم إلى تيليجرام', plan: 'خطة اليوم',
   },
+  nlp: { understood: 'فهمت', hint: 'اكتب أو قل جملة كاملة: «اجتماع مع أحمد بكرة 5 العصر مهم»' },
   timebox: {
     title: 'قسّم المهمة على الوقت', min: 'د', split: 'قسّمها بالذكاء إلى خطوات على {n} دقيقة', pick: 'اختر الخطوات التي تريدها ثم اضغط قبول',
     accept: 'قبول', start: 'ابدأ الخطوات بالمؤقّت', next: 'التالي', allDone: 'أنهيت كل الخطوات 🎉', pause: 'إيقاف مؤقت', resume: 'متابعة',
@@ -634,6 +635,7 @@ const en: Translations = {
     missing: 'Add the bot token and chat ID in Settings first', noChat: 'No message found — send /start to the bot and try again', hello: 'Hayati is now linked to Telegram ✓',
     sendPlan: "✈️ Send today's plan to Telegram", plan: "Today's plan",
   },
+  nlp: { understood: 'Understood', hint: 'Type or say a whole sentence: “meeting with Ahmed tomorrow 5pm important”' },
   timebox: {
     title: 'Split the task over time', min: 'min', split: 'Let AI split it into steps over {n} minutes', pick: 'Tick the steps you want, then accept',
     accept: 'Accept', start: 'Start the steps with a timer', next: 'Next', allDone: 'All steps done 🎉', pause: 'Pause', resume: 'Resume',
