@@ -25,6 +25,8 @@ export default function Goals() {
   const params = useLocalSearchParams<{ level?: string }>();
   const level = (LEVELS.includes(params.level as GoalLevel) ? params.level : 'life') as GoalLevel;
   const goals = useEntity('Goal');
+  // progress counts linked tasks, so finishing one redraws the bars
+  useEntity('DailyTask');
   const rewards = useEntity('Reward');
   const celebrate = useCelebrate();
   const ai = useAI();
@@ -137,7 +139,7 @@ export default function Goals() {
         const progress = goalProgress(g, goals.items);
         const reward = rewards.items.find((r) => r.linked_id === g.id && r.type === 'goal');
         return (
-          <Card key={g.id} style={{ borderStartWidth: 4, borderStartColor: g.color ?? c.primary }}>
+          <Card key={g.id} style={{ borderStartWidth: 4, borderStartColor: g.color ?? c.primary }} onPress={() => router.push(`/goal?id=${g.id}` as any)}>
             <Row>
               <Check on={g.status === 'completed'} onPress={() => advance(g)} />
               <View style={{ flex: 1 }}>

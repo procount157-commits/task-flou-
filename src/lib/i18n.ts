@@ -287,6 +287,13 @@ const ar = {
     missing: 'أضف رمز البوت ورقم المحادثة من الإعدادات أولاً', noChat: 'لم أجد رسالة — أرسل /start للبوت ثم أعد المحاولة', hello: 'تم ربط تطبيق حياتي بتيليجرام ✓',
     sendPlan: '✈️ أرسل خطة اليوم إلى تيليجرام', plan: 'خطة اليوم',
   },
+  roadmap: {
+    title: 'أهدافي', daysLeft: 'يوم متبقٍ', idle: 'لم يتحرك منذ {n} أيام', of: 'من', tasksDone: 'مهام منجزة', update: 'حدّث الرقم', makeNumber: 'اجعله رقماً',
+    pace: 'لتصل في الموعد تحتاج قرابة {n} {u} كل شهر', next: 'الخطوة التالية', noNext: 'لا خطوة قادمة — اطلب اقتراحاً', suggest: 'اقترح خطوات صغيرة',
+    accept: 'أضف المختارة إلى مهامي', milestones: 'خريطة الطريق', noMilestones: 'لا محطات بعد — استخدم «خطة بالذكاء» لصنعها', linked: 'المهام المرتبطة',
+    current: 'الرقم الحالي', target: 'الهدف', unit: 'الوحدة', units: ['دولار', 'درهم', 'كيلو', 'كتاب', 'عميل', 'ساعة', '%'], pyramid: 'هرم الأهداف', empty: 'لا أهداف بعد — ابدأ بخطة بالذكاء',
+  },
+  review: { title: 'المراجعة الأسبوعية', stats: 'هذا الأسبوع: أنجزت {d} من {p} مهمة، و{h} جلسة ساعة', run: 'اكتب مراجعة أسبوعي', again: 'مراجعة جديدة', from: 'آخر مراجعة:', wins: 'ما نجح', slipping: 'ما تأخر', next: 'مقترح للأسبوع القادم', accept: 'أضف المختارة إلى الأسبوع القادم' },
   day: { title: 'يومي', arrange: 'رتّب يومي بالذكاء الاصطناعي', arranged: 'رُتّب اليوم', proposal: 'الترتيب المقترح', apply: 'طبّق الترتيب', noTime: 'بلا وقت', hint: 'اضغط مطولاً على المهمة واسحبها لتغيير وقتها' },
   undo: { undo: 'تراجع', moved: 'نُقلت {n} مهمة', done: 'اكتملت {n} مهمة', deleted: 'حُذفت {n} مهمة' },
   swipe: {
@@ -642,6 +649,13 @@ const en: Translations = {
     missing: 'Add the bot token and chat ID in Settings first', noChat: 'No message found — send /start to the bot and try again', hello: 'Hayati is now linked to Telegram ✓',
     sendPlan: "✈️ Send today's plan to Telegram", plan: "Today's plan",
   },
+  roadmap: {
+    title: 'My goals', daysLeft: 'days left', idle: 'untouched for {n} days', of: 'of', tasksDone: 'tasks done', update: 'Update number', makeNumber: 'Make it a number',
+    pace: 'To land on time you need about {n} {u} a month', next: 'Next step', noNext: 'No next step — ask for a suggestion', suggest: 'Suggest small steps',
+    accept: 'Add the chosen to my tasks', milestones: 'Roadmap', noMilestones: 'No milestones yet — use AI plan to make them', linked: 'Linked tasks',
+    current: 'Current number', target: 'Target', unit: 'Unit', units: ['USD', 'AED', 'kg', 'books', 'clients', 'hours', '%'], pyramid: 'Goal pyramid', empty: 'No goals yet — start with AI plan',
+  },
+  review: { title: 'Weekly review', stats: 'This week: {d} of {p} tasks done, {h} hourly sessions', run: 'Write my weekly review', again: 'New review', from: 'Last review:', wins: 'What worked', slipping: 'What slipped', next: 'Suggested for next week', accept: 'Add the chosen to next week' },
   day: { title: 'My day', arrange: 'Arrange my day with AI', arranged: 'Day arranged', proposal: 'Proposed schedule', apply: 'Apply', noTime: 'No time', hint: 'Hold a task and drag it to change its time' },
   undo: { undo: 'Undo', moved: '{n} tasks moved', done: '{n} tasks completed', deleted: '{n} tasks deleted' },
   swipe: {

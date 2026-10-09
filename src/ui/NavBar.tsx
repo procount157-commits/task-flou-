@@ -22,7 +22,8 @@ export const NAV_CATALOG: NavItem[] = [
   { key: 'habits', path: '/habits', route: 'habits', icon: 'flame-outline', label: (t) => t.nav.habits },
   { key: 'matrix', path: '/matrix', route: 'matrix', icon: 'grid-outline', label: (t) => t.tasks.matrix },
   { key: 'focus', path: '/pomodoro', route: 'pomodoro', icon: 'timer-outline', label: (t) => t.nav.focus },
-  { key: 'goals', path: '/goals/life', route: 'goals/[level]', icon: 'trophy-outline', label: (t) => t.nav.goals },
+  { key: 'goals', path: '/roadmap', route: 'roadmap', icon: 'trophy-outline', label: (t) => t.roadmap.title },
+  { key: 'review', path: '/review', route: 'review', icon: 'clipboard-outline', label: (t) => t.review.title },
   { key: 'dashboard', path: '/dashboard', route: 'dashboard', icon: 'home-outline', label: (t) => t.nav.dashboard },
   { key: 'journal', path: '/journal', route: 'journal', icon: 'book-outline', label: (t) => t.nav.journal },
   { key: 'analytics', path: '/analytics', route: 'analytics', icon: 'stats-chart-outline', label: (t) => t.nav.analytics },
@@ -37,7 +38,7 @@ export const NAV_CATALOG: NavItem[] = [
   { key: 'motivation', path: '/motivation', route: 'motivation', icon: 'mail-outline', label: (t) => t.nav.motivation },
   { key: 'settings', path: '/profile-settings', route: 'profile-settings', icon: 'settings-outline', label: (t) => t.nav.settings },
 ];
-export const NAV_DEFAULT = ['tasks', 'day', 'calendar', 'checkin', 'ai', 'plan', 'habits', 'matrix', 'focus'];
+export const NAV_DEFAULT = ['tasks', 'day', 'calendar', 'checkin', 'goals', 'ai', 'plan', 'habits', 'matrix', 'focus'];
 
 type BarProps = { state: { index: number; routes: { name: string }[] } };
 

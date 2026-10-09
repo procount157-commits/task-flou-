@@ -43,6 +43,9 @@ function commit(name: EntityName, next: any[]) {
 
 type Data<K extends EntityName> = Omit<EntityMap[K], keyof Base>;
 
+// What is already in memory, without waiting: for pure calculations that read another entity.
+export const peek = <K extends EntityName>(name: K): EntityMap[K][] => (cache[name] ?? EMPTY) as EntityMap[K][];
+
 // Reads every store in the background so the first visit to a screen finds its data already in memory.
 export const preload = (names: EntityName[]) => Promise.all(names.map(ensure));
 

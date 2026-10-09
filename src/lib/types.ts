@@ -45,6 +45,11 @@ export interface Goal extends Base, RewardFields {
   due_date?: string;
   description?: string;
   color?: string;
+  // a measurable goal: how far along it is in the user's own unit (e.g. 12000 of 1000000 USD)
+  target_value?: number;
+  current_value?: number;
+  unit?: string;
+  value_log?: { date: string; value: number }[];
 }
 
 export interface DailyTask extends Base {
