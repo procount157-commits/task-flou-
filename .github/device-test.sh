@@ -60,11 +60,12 @@ for m in re.finditer(r'<node [^>]*>', open('/tmp/ui.xml', encoding='utf-8').read
 PY
 }
 y=$(row 'مهمة للسحب'); echo "swipe-right y=$y" >> out/steps.txt
-[ -n "$y" ] && adb shell input swipe 150 $y 900 $y 400
+W=$(adb shell wm size | grep -o '[0-9]*x' | tail -1 | tr -d x); echo "screen width $W" >> out/steps.txt
+[ -n "$y" ] && adb shell input swipe $((W/10)) $y $((W*9/10)) $y 400
 shot tasks-swiped-right 3
 sleep 4
 y=$(row 'مهمة للتأجيل'); echo "swipe-left y=$y" >> out/steps.txt
-[ -n "$y" ] && adb shell input swipe 900 $y 150 $y 400
+[ -n "$y" ] && adb shell input swipe $((W*9/10)) $y $((W/10)) $y 400
 shot postpone-sheet 2
 tap 'بكرة'; shot tasks-postponed 2
 adb shell dumpsys appwidget > out/appwidget.txt 2>&1
