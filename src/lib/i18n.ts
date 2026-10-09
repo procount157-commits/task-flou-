@@ -287,6 +287,7 @@ const ar = {
     missing: 'أضف رمز البوت ورقم المحادثة من الإعدادات أولاً', noChat: 'لم أجد رسالة — أرسل /start للبوت ثم أعد المحاولة', hello: 'تم ربط تطبيق حياتي بتيليجرام ✓',
     sendPlan: '✈️ أرسل خطة اليوم إلى تيليجرام', plan: 'خطة اليوم',
   },
+  calSetup: { title: 'اربط Google Calendar', body: 'اختر تقويم حساب Google في هاتفك مرة واحدة، وبعدها تظهر كل مهامك وخطواتها المؤقّتة فيه تلقائياً، وأي تغيير تعمله هناك يرجع للتطبيق.', start: 'اعرض تقاويمي', connect: 'اربط وزامن الآن', later: 'لاحقاً' },
   nudge: {
     title: 'تذكير بهدفك', morning: 'صباح الخير — أهم مهام اليوم', emptyDay: 'لا مهام لليوم بعد — افتح «يومي» واطلب ترتيب يومك', review: 'حان وقت مراجعة أسبوعك — دقيقتان تكفي',
     settings: 'التنبيهات الذكية', goalsToggle: 'ذكّرني بأهدافي وأحلامي (يكتبها الذكاء الاصطناعي)', timesNow: 'الأوقات', morningToggle: 'موجز الصباح بأهم 3 مهام', morningAt: 'وقت الموجز',
@@ -654,6 +655,7 @@ const en: Translations = {
     missing: 'Add the bot token and chat ID in Settings first', noChat: 'No message found — send /start to the bot and try again', hello: 'Hayati is now linked to Telegram ✓',
     sendPlan: "✈️ Send today's plan to Telegram", plan: "Today's plan",
   },
+  calSetup: { title: 'Connect Google Calendar', body: 'Pick your Google account calendar once; from then on every task and its timed steps appear there by themselves, and changes you make there come back to the app.', start: 'Show my calendars', connect: 'Connect and sync now', later: 'Later' },
   nudge: {
     title: 'Your goal', morning: 'Good morning — today’s top tasks', emptyDay: 'No tasks for today yet — open My day and let the AI arrange it', review: 'Time for your weekly review — two minutes is enough',
     settings: 'Smart reminders', goalsToggle: 'Remind me of my goals and dreams (written by AI)', timesNow: 'Times', morningToggle: 'Morning brief with the top 3 tasks', morningAt: 'Brief time',

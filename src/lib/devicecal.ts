@@ -48,7 +48,7 @@ function eventDetails(task: DailyTask, parentTitle?: string) {
     } else if (task.minutes) end = new Date(start.getTime() + task.minutes * 60000);
     if (end <= start) end = new Date(start.getTime() + 60 * 60000);
   } else end = parse(addDays(task.date, 1));
-  return { title: parentTitle ? `${task.title} · ${parentTitle}` : task.title, notes: task.notes, startDate: start, endDate: end, allDay: !timed, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone };
+  return { title: `${task.completed ? '✓ ' : ''}${parentTitle ? `${task.title} · ${parentTitle}` : task.title}`, notes: task.notes, startDate: start, endDate: end, allDay: !timed, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone };
 }
 
 // Creates the task's event, or updates the one it already has. Returns false when no calendar could be written.
@@ -152,4 +152,61 @@ export async function googleCalendarLinked(): Promise<boolean | null> {
   const id = await getCalendarId();
   const chosen = all.find((c) => c.id === id) ?? all.find((c) => c.allowsModifications);
   return chosen?.source?.type === 'com.google';
+}
+
+const two2 = (n: number) => String(n).padStart(2, '0');
+const hm = (d: Date) => `${two2(d.getHours())}:${two2(d.getMinutes())}`;
+let pulling = false;
+
+/**
+ * Brings changes made in the calendar back into the app: a task whose event was moved takes the new day
+ * and time, a renamed event renames its task, and a task whose event was deleted is unlinked from it.
+ * Returns how many tasks changed.
+ */
+export async function pullCalendarChanges(): Promise<number> {
+  if (Platform.OS === 'web' || pulling || !(await getAutoCalendar())) return 0;
+  pulling = true;
+  try {
+    const perm = await Calendar.getCalendarPermissionsAsync();
+    const id = await getCalendarId();
+    if (!perm.granted || !id) return 0;
+    const now = new Date();
+    const from = new Date(now.getTime() - 7 * 86400000);
+    const to = new Date(now.getTime() + 90 * 86400000);
+    const events = await Calendar.getEventsAsync([id], from, to);
+    const byId = new Map(events.map((e) => [e.id, e]));
+    const fromDay = dayOf(from);
+    const toDay = dayOf(to);
+    const tasks = (await db.list('DailyTask')).filter((x) => x.calendar_event_id && x.date >= fromDay && x.date <= toDay);
+    let changed = 0;
+    for (const task of tasks) {
+      const ev = byId.get(task.calendar_event_id!);
+      if (!ev) {
+        await db.update('DailyTask', task.id, { calendar_event_id: undefined });
+        changed++;
+        continue;
+      }
+      const start = new Date(ev.startDate);
+      const end = new Date(ev.endDate);
+      const patch: Partial<DailyTask> = {};
+      if (dayOf(start) !== task.date) patch.date = dayOf(start);
+      if (!ev.allDay) {
+        if (hm(start) !== task.time) patch.time = hm(start);
+        if (task.end_time && hm(end) !== task.end_time) patch.end_time = hm(end);
+      }
+      // the event title carries "✓ " and " · task" decorations the app added itself
+      const bare = (ev.title ?? '').replace(/^✓\s*/, '').split(' · ')[0].trim();
+      if (bare && bare !== task.title) patch.title = bare;
+      if (Object.keys(patch).length) {
+        await db.update('DailyTask', task.id, patch);
+        changed++;
+      }
+    }
+    return changed;
+  } catch (e) {
+    logError('calendar-pull', e);
+    return 0;
+  } finally {
+    pulling = false;
+  }
 }

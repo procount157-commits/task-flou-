@@ -19,10 +19,12 @@ import { today } from '@/lib/dates';
 import { db, kv, preload, useEntity, useKV } from '@/lib/db';
 import { hourlyCard } from '@/lib/logic';
 import { refreshNudges } from '@/lib/nudges';
+import { pullCalendarChanges } from '@/lib/devicecal';
 import { LockSchedule, ringingAlarmId, syncLockSchedules, takeHourlyAnswers } from '@/lib/phonelock';
 import { installGlobalErrorLog, logError } from '@/lib/errlog';
 import { CHECKIN_DEFAULTS, CheckinSettings, initNotifications, onNotificationOpen, scheduleAlarms, scheduleCheckins, syncReminders } from '@/lib/notify';
 import type { Alarm } from '@/lib/types';
+import { CalendarSetup } from '@/screens/CalendarSetup';
 import { IntentionModal, Landing, Login, Onboarding } from '@/screens/Entry';
 import { Loading } from '@/ui/kit';
 import { NAV_CATALOG, NAV_DEFAULT, NavBar } from '@/ui/NavBar';
@@ -123,6 +125,8 @@ function Background() {
       }
       const id = ringingAlarmId();
       if (id) router.navigate(`/alarm?ring=${id}` as any);
+      // moves and renames made in Google Calendar come back into the tasks
+      pullCalendarChanges().catch(() => {});
     };
     check();
     const sub = AppState.addEventListener('change', (st) => st === 'active' && check());
@@ -175,6 +179,7 @@ function Gate() {
         <AppTabs />
         <Background />
         <IntentionModal />
+        <CalendarSetup />
         <ReminderSync />
       </View>
     );
