@@ -168,7 +168,7 @@ export function RewardPicker({ value, onChange }: { value: RewardValue; onChange
 /* ───────── VoiceToText ───────── */
 // Mic button: record → keep the file → transcribe → hand the text (and the recording's URI) back.
 // `autoStart` begins recording as soon as the button appears; `big` draws the large round microphone.
-export function VoiceToText({ onText, compact, autoStart, big }: { onText: (text: string, audioUri: string) => void; compact?: boolean; autoStart?: boolean; big?: boolean }) {
+export function VoiceToText({ onText, compact, autoStart, big, fab }: { onText: (text: string, audioUri: string) => void; compact?: boolean; autoStart?: boolean; big?: boolean; fab?: boolean }) {
   const { t, lang } = useLang();
   const c = useTheme();
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
@@ -211,6 +211,14 @@ export function VoiceToText({ onText, compact, autoStart, big }: { onText: (text
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // the round button that floats over every screen
+  if (fab)
+    return (
+      <Pressable onPress={state === 'recording' ? stop : start} disabled={state === 'busy'} accessibilityRole="button" accessibilityLabel={state === 'recording' ? t.c.stopRecord : t.c.record}
+        style={{ width: 54, height: 54, borderRadius: 27, alignItems: 'center', justifyContent: 'center', backgroundColor: state === 'recording' ? c.danger : c.card, borderWidth: 2, borderColor: state === 'recording' ? c.danger : c.primary, opacity: state === 'busy' ? 0.6 : 1, elevation: 6, shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 6, shadowOffset: { width: 0, height: 3 } }}>
+        <Text style={{ fontSize: 24 }}>{state === 'recording' ? '⏹' : state === 'busy' ? '⏳' : '🎙'}</Text>
+      </Pressable>
+    );
   if (big)
     return (
       <Pressable onPress={state === 'recording' ? stop : start} disabled={state === 'busy'} accessibilityRole="button" accessibilityLabel={state === 'recording' ? t.c.stopRecord : t.c.record}

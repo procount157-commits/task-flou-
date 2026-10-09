@@ -22,6 +22,7 @@ export default function More() {
       { label: t.roadmap.title, path: '/roadmap', icon: 'trophy-outline' },
       { label: t.review.title, path: '/review', icon: 'clipboard-outline' },
       { label: t.day.title, path: '/day', icon: 'time-outline' },
+      { label: t.search.title, path: '/search', icon: 'search-outline' },
       { label: t.nav.dashboard, path: '/dashboard', icon: 'home-outline' }, { label: t.tasks.matrix, path: '/matrix', icon: 'grid-outline' },
       { label: t.nav.habits, path: '/habits', icon: 'flame-outline' }, { label: t.alarm.title, path: '/alarm', icon: 'alarm-outline' },
       { label: t.lock.title, path: '/lock', icon: 'lock-closed-outline' },

@@ -181,6 +181,7 @@ export default function Tasks() {
             <Txt v="h" numberOfLines={1}>{title}</Txt>
           </View>
           <Txt v="small">{tier.icon} {points}</Txt>
+          <Pressable onPress={() => router.push('/search')} hitSlop={8} accessibilityRole="button" accessibilityLabel={t.search.title}><Ionicons name="search-outline" size={20} color={c.muted} /></Pressable>
           <Pressable onPress={() => router.push('/day')} hitSlop={8} accessibilityRole="button" accessibilityLabel={t.day.title}><Ionicons name="time-outline" size={21} color={c.muted} /></Pressable>
           <Pressable onPress={() => router.push('/matrix')} hitSlop={8} accessibilityRole="button" accessibilityLabel={t.tasks.matrix}><Ionicons name="grid-outline" size={20} color={c.muted} /></Pressable>
           <Pressable onPress={sendPlan} hitSlop={8} accessibilityRole="button" accessibilityLabel={t.tg.sendPlan}><Ionicons name="paper-plane-outline" size={20} color={c.muted} /></Pressable>
@@ -237,6 +238,9 @@ export default function Tasks() {
           keyExtractor={(x) => x.id}
           stickySectionHeadersEnabled={false}
           initialNumToRender={14}
+          maxToRenderPerBatch={12}
+          windowSize={9}
+          removeClippedSubviews
           renderItem={({ item: x }) => {
             const subs = subsOf.get(x.id) ?? [];
             return (

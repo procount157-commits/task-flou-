@@ -36,6 +36,7 @@ export const NAV_CATALOG: NavItem[] = [
   { key: 'alarm', path: '/alarm', route: 'alarm', icon: 'alarm-outline', label: (t) => t.alarm.title },
   { key: 'lock', path: '/lock', route: 'lock', icon: 'lock-closed-outline', label: (t) => t.lock.title },
   { key: 'motivation', path: '/motivation', route: 'motivation', icon: 'mail-outline', label: (t) => t.nav.motivation },
+  { key: 'search', path: '/search', route: 'search', icon: 'search-outline', label: (t) => t.search.title },
   { key: 'settings', path: '/profile-settings', route: 'profile-settings', icon: 'settings-outline', label: (t) => t.nav.settings },
 ];
 export const NAV_DEFAULT = ['tasks', 'day', 'calendar', 'checkin', 'goals', 'ai', 'plan', 'habits', 'matrix', 'focus'];

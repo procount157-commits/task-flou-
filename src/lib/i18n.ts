@@ -287,6 +287,8 @@ const ar = {
     missing: 'أضف رمز البوت ورقم المحادثة من الإعدادات أولاً', noChat: 'لم أجد رسالة — أرسل /start للبوت ثم أعد المحاولة', hello: 'تم ربط تطبيق حياتي بتيليجرام ✓',
     sendPlan: '✈️ أرسل خطة اليوم إلى تيليجرام', plan: 'خطة اليوم',
   },
+  mic: { task: 'مهمة جديدة', idea: 'حُفظت في العصف الذهني', journal: 'أُضيفت إلى يومية اليوم', hour: 'سُجّلت في جلسة الساعة' },
+  search: { title: 'بحث', ph: 'ابحث في كل شيء…', hint: 'اكتب حرفين أو أكثر — يبحث في المهام والأهداف واليوميات والأفكار والمحتوى والتعلم وجلسات الساعة', found: '{n} نتيجة', none: 'لا نتائج' },
   calSetup: { title: 'اربط Google Calendar', body: 'اختر تقويم حساب Google في هاتفك مرة واحدة، وبعدها تظهر كل مهامك وخطواتها المؤقّتة فيه تلقائياً، وأي تغيير تعمله هناك يرجع للتطبيق.', start: 'اعرض تقاويمي', connect: 'اربط وزامن الآن', later: 'لاحقاً' },
   nudge: {
     title: 'تذكير بهدفك', morning: 'صباح الخير — أهم مهام اليوم', emptyDay: 'لا مهام لليوم بعد — افتح «يومي» واطلب ترتيب يومك', review: 'حان وقت مراجعة أسبوعك — دقيقتان تكفي',
@@ -299,7 +301,7 @@ const ar = {
     accept: 'أضف المختارة إلى مهامي', milestones: 'خريطة الطريق', noMilestones: 'لا محطات بعد — استخدم «خطة بالذكاء» لصنعها', linked: 'المهام المرتبطة',
     current: 'الرقم الحالي', target: 'الهدف', unit: 'الوحدة', units: ['دولار', 'درهم', 'كيلو', 'كتاب', 'عميل', 'ساعة', '%'], pyramid: 'هرم الأهداف', empty: 'لا أهداف بعد — ابدأ بخطة بالذكاء',
   },
-  review: { title: 'المراجعة الأسبوعية', stats: 'هذا الأسبوع: أنجزت {d} من {p} مهمة، و{h} جلسة ساعة', run: 'اكتب مراجعة أسبوعي', again: 'مراجعة جديدة', from: 'آخر مراجعة:', wins: 'ما نجح', slipping: 'ما تأخر', next: 'مقترح للأسبوع القادم', accept: 'أضف المختارة إلى الأسبوع القادم' },
+  review: { numbers: 'الأسبوع بالأرقام', rate: 'إنجاز', focus: 'تركيز', distracted: 'ساعات مشتتة', far: 'بعيد عن أهدافي', went: 'أين ذهبت الساعات', title: 'المراجعة الأسبوعية', stats: 'هذا الأسبوع: أنجزت {d} من {p} مهمة، و{h} جلسة ساعة', run: 'اكتب مراجعة أسبوعي', again: 'مراجعة جديدة', from: 'آخر مراجعة:', wins: 'ما نجح', slipping: 'ما تأخر', next: 'مقترح للأسبوع القادم', accept: 'أضف المختارة إلى الأسبوع القادم' },
   day: { title: 'يومي', arrange: 'رتّب يومي بالذكاء الاصطناعي', arranged: 'رُتّب اليوم', proposal: 'الترتيب المقترح', apply: 'طبّق الترتيب', noTime: 'بلا وقت', hint: 'اضغط مطولاً على المهمة واسحبها لتغيير وقتها' },
   undo: { undo: 'تراجع', moved: 'نُقلت {n} مهمة', done: 'اكتملت {n} مهمة', deleted: 'حُذفت {n} مهمة' },
   swipe: {
@@ -655,6 +657,8 @@ const en: Translations = {
     missing: 'Add the bot token and chat ID in Settings first', noChat: 'No message found — send /start to the bot and try again', hello: 'Hayati is now linked to Telegram ✓',
     sendPlan: "✈️ Send today's plan to Telegram", plan: "Today's plan",
   },
+  mic: { task: 'New task', idea: 'Saved to brainstorm', journal: 'Added to today’s journal', hour: 'Logged in the hourly session' },
+  search: { title: 'Search', ph: 'Search everything…', hint: 'Type two letters or more — searches tasks, goals, journal, ideas, content, learning and hourly sessions', found: '{n} results', none: 'No results' },
   calSetup: { title: 'Connect Google Calendar', body: 'Pick your Google account calendar once; from then on every task and its timed steps appear there by themselves, and changes you make there come back to the app.', start: 'Show my calendars', connect: 'Connect and sync now', later: 'Later' },
   nudge: {
     title: 'Your goal', morning: 'Good morning — today’s top tasks', emptyDay: 'No tasks for today yet — open My day and let the AI arrange it', review: 'Time for your weekly review — two minutes is enough',
@@ -667,7 +671,7 @@ const en: Translations = {
     accept: 'Add the chosen to my tasks', milestones: 'Roadmap', noMilestones: 'No milestones yet — use AI plan to make them', linked: 'Linked tasks',
     current: 'Current number', target: 'Target', unit: 'Unit', units: ['USD', 'AED', 'kg', 'books', 'clients', 'hours', '%'], pyramid: 'Goal pyramid', empty: 'No goals yet — start with AI plan',
   },
-  review: { title: 'Weekly review', stats: 'This week: {d} of {p} tasks done, {h} hourly sessions', run: 'Write my weekly review', again: 'New review', from: 'Last review:', wins: 'What worked', slipping: 'What slipped', next: 'Suggested for next week', accept: 'Add the chosen to next week' },
+  review: { numbers: 'The week in numbers', rate: 'done', focus: 'focus', distracted: 'distracted hours', far: 'far from goals', went: 'Where the hours went', title: 'Weekly review', stats: 'This week: {d} of {p} tasks done, {h} hourly sessions', run: 'Write my weekly review', again: 'New review', from: 'Last review:', wins: 'What worked', slipping: 'What slipped', next: 'Suggested for next week', accept: 'Add the chosen to next week' },
   day: { title: 'My day', arrange: 'Arrange my day with AI', arranged: 'Day arranged', proposal: 'Proposed schedule', apply: 'Apply', noTime: 'No time', hint: 'Hold a task and drag it to change its time' },
   undo: { undo: 'Undo', moved: '{n} tasks moved', done: '{n} tasks completed', deleted: '{n} tasks deleted' },
   swipe: {

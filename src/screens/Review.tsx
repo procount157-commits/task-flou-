@@ -51,6 +51,15 @@ export default function Review() {
     setPicks(review.next.map(() => false));
   };
 
+  // the week in numbers, straight from the data: focus time, finish rate, and what the hours went to
+  const sessions = useEntity('PomodoroSession').items.filter((x) => week.includes(x.date));
+  const focusMin = sessions.reduce((n, x) => n + (x.focus_minutes ?? 0) * Math.max(1, x.sessions_completed ?? 1), 0);
+  const weekLogs = logs.filter((l) => week.includes(l.date));
+  const answers = (k: number) => weekLogs.map((l) => (l.dialog ?? []).filter((d) => d.role === 'me')[k]?.text).filter((x): x is string => !!x);
+  const tally = (xs: string[]) => [...xs.reduce((m, x) => m.set(x, (m.get(x) ?? 0) + 1), new Map<string, number>())].sort((a, b) => b[1] - a[1]);
+  const doing = tally(answers(0)).slice(0, 6);
+  const distracted = answers(1).filter((x) => /مشتت|distract/i.test(x)).length;
+  const far = answers(2).filter((x) => /بعيد|far/i.test(x)).length;
   const doneCount = tasks.filter((x) => !x.parent_id && x.completed && week.includes(x.date)).length;
   const plannedCount = tasks.filter((x) => !x.parent_id && week.includes(x.date)).length;
   return (
@@ -60,6 +69,18 @@ export default function Review() {
         <Txt v="muted">{t.review.stats.replace('{d}', String(doneCount)).replace('{p}', String(plannedCount)).replace('{h}', String(logs.filter((l) => week.includes(l.date)).length))}</Txt>
         <Btn title={busy ? t.c.aiWorking : `🤖 ${review ? t.review.again : t.review.run}`} loading={busy} onPress={run} />
         {saved ? <Txt v="small">{t.review.from} {saved.week}</Txt> : null}
+      </Card>
+      <Card style={{ gap: 8 }}>
+        <Txt v="sub">📊 {t.review.numbers}</Txt>
+        <Row wrap>
+          <Txt style={{ flex: 1 }}>✅ {plannedCount ? Math.round((doneCount / plannedCount) * 100) : 0}% {t.review.rate}</Txt>
+          <Txt style={{ flex: 1 }}>⏱ {Math.floor(focusMin / 60)}h {focusMin % 60}m {t.review.focus}</Txt>
+        </Row>
+        <Row wrap>
+          <Txt style={{ flex: 1 }} color={distracted ? c.danger : c.text}>😵 {distracted}/{weekLogs.length} {t.review.distracted}</Txt>
+          <Txt style={{ flex: 1 }} color={far ? c.danger : c.text}>🔴 {far}/{weekLogs.length} {t.review.far}</Txt>
+        </Row>
+        {doing.length ? <Txt v="small">{t.review.went}: {doing.map(([k, n]) => `${k} ×${n}`).join(' · ')}</Txt> : null}
       </Card>
       {review ? (
         <>
