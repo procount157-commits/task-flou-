@@ -6,6 +6,7 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.media.AudioAttributes
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.LinearGradient
@@ -28,7 +29,8 @@ import java.util.Calendar
  */
 object Hourly {
   const val PREFS = "hourly"
-  const val CHANNEL = "hourly-card"
+  // a channel keeps the sound it was created with, so the loud chime needed a new channel
+  const val CHANNEL = "hourly-card-2"
   const val NOTIFICATION_ID = 7342
   private const val ALARM_CODE = 9101
   private const val SIZE = 1080
@@ -59,6 +61,19 @@ object Hourly {
     (context.getSystemService(Context.ALARM_SERVICE) as AlarmManager).cancel(alarmIntent(context))
   }
 
+  /** A high-importance channel with the app's own loud chime and a strong vibration. */
+  fun loudChannel(context: Context, id: String, name: String): NotificationChannel {
+    val channel = NotificationChannel(id, name, NotificationManager.IMPORTANCE_HIGH)
+    channel.setSound(
+      Uri.parse("android.resource://" + context.packageName + "/raw/notify_chime"),
+      AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_NOTIFICATION).setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build()
+    )
+    channel.enableVibration(true)
+    channel.vibrationPattern = longArrayOf(0, 350, 150, 350, 150, 500)
+    channel.lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
+    return channel
+  }
+
   private fun pick(list: JSONArray?, index: Int): String = if (list == null || list.length() == 0) "" else list.optString(index % list.length())
 
   /** Posts the card. Outside the chosen hours it stays quiet unless [force] is set (the test button). */
@@ -71,7 +86,7 @@ object Hourly {
     val payload = try { JSONObject(prefs.getString("payload", "{}") ?: "{}") } catch (e: Exception) { JSONObject() }
     val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-      manager.createNotificationChannel(NotificationChannel(CHANNEL, "Hourly question", NotificationManager.IMPORTANCE_HIGH))
+      manager.createNotificationChannel(loudChannel(context, CHANNEL, "Hourly question"))
     }
     // the questions are answered inside the notification itself when the app sent them
     if ((payload.optJSONArray("steps")?.length() ?: 0) > 0) {
@@ -117,7 +132,7 @@ object Hourly {
     }
   }
 
-  private fun face(context: Context, file: String, fallback: Typeface): Typeface =
+  fun face(context: Context, file: String, fallback: Typeface): Typeface =
     try { Typeface.createFromAsset(context.assets, "fonts/$file") } catch (e: Exception) { fallback }
 
   fun drawCard(context: Context, time: String, title: String, lines: JSONArray?, question: String, goal: String, quote: String, tap: String): Bitmap {

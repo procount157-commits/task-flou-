@@ -8,6 +8,9 @@ import { HourlyCard, hourlyCardAvailable, nativeAlarmAvailable, setHourlyCard, s
 import type { Alarm, DailyTask, Habit } from './types';
 
 const native = Platform.OS !== 'web';
+// the app's own loud three-note chime, and the channel that carries it
+const CHIME = 'notify_chime.wav';
+const MAIN = 'main';
 let ready: Promise<boolean> | undefined;
 let lastSignature = '';
 
@@ -20,7 +23,11 @@ export function initNotifications(): Promise<boolean> {
         handleNotification: async () => ({ shouldPlaySound: true, shouldSetBadge: false, shouldShowBanner: true, shouldShowList: true }),
       });
       if (Platform.OS === 'android')
-        await Notifications.setNotificationChannelAsync('default', { name: 'Reminders', importance: Notifications.AndroidImportance.HIGH });
+        // a new channel id, because Android never changes the sound of a channel that already exists
+        await Notifications.setNotificationChannelAsync(MAIN, {
+          name: 'Reminders', importance: Notifications.AndroidImportance.MAX, sound: CHIME, vibrationPattern: [0, 350, 150, 350, 150, 500],
+          lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+        });
       const cur = await Notifications.getPermissionsAsync();
       const granted = cur.granted || (await Notifications.requestPermissionsAsync()).granted;
       // a refusal is not remembered, so the next attempt asks again instead of failing for good
@@ -43,8 +50,8 @@ export async function scheduleAt(id: string, title: string, body: string, when: 
   if (!(await initNotifications()) || when.getTime() <= Date.now()) return;
   await Notifications.scheduleNotificationAsync({
     identifier: id,
-    content: { title, body, sound: true },
-    trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: when, channelId: 'default' },
+    content: { title, body, sound: CHIME },
+    trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: when, channelId: MAIN },
   }).catch((e) => logError('schedule', e));
 }
 
@@ -54,8 +61,8 @@ export async function scheduleDaily(id: string, title: string, body: string, tim
   const [hour, minute] = time.split(':').map(Number);
   await Notifications.scheduleNotificationAsync({
     identifier: id,
-    content: { title, body, sound: true },
-    trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour, minute, channelId: 'default' },
+    content: { title, body, sound: CHIME },
+    trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour, minute, channelId: MAIN },
   }).catch((e) => logError('schedule', e));
 }
 
@@ -79,8 +86,8 @@ export async function syncReminders(habits: Habit[], tasks: DailyTask[], labels:
     for (const d of h.repeat_days?.length ? h.repeat_days : [0, 1, 2, 3, 4, 5, 6])
       await Notifications.scheduleNotificationAsync({
         identifier: `habit-${h.id}-${d}`,
-        content: { title: labels.habit, body: h.title, sound: true },
-        trigger: { type: Notifications.SchedulableTriggerInputTypes.WEEKLY, weekday: d + 1, hour, minute, channelId: 'default' },
+        content: { title: labels.habit, body: h.title, sound: CHIME },
+        trigger: { type: Notifications.SchedulableTriggerInputTypes.WEEKLY, weekday: d + 1, hour, minute, channelId: MAIN },
       }).catch((e) => logError('schedule', e));
   }
   const upcoming = tasks.filter((t) => t.priority === 'high' && !t.completed && t.time && t.date >= day && !t.parent_id).slice(0, 30);

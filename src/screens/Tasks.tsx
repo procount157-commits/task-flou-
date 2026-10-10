@@ -4,7 +4,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Modal, Pressable, ScrollView, SectionList, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { QuickAdd, SubRow, TaskDetail, useTaskActions } from './taskparts';
+import { AddTask } from './AddTask';
+import { SubRow, TaskDetail, useTaskActions } from './taskparts';
 import { PostponeSheet, SwipeTask } from './taskswipe';
 import { PALETTE, useLang, useTheme } from '@/ctx/Lang';
 import { addDays, fmtDate, isDate, today } from '@/lib/dates';
@@ -285,9 +286,7 @@ export default function Tasks() {
 
       <PostponeSheet visible={!!postponing} onClose={() => setPostponing(null)} onPick={(to) => { if (postponing) postpone(postponing, to); setSelected(new Set()); }} />
 
-      <Sheet visible={adding} onClose={() => setAdding(false)} title={t.today.addTask}>
-        <QuickAdd defaultDate={focusDate ?? (list === 'tomorrow' ? addDays(day, 1) : day)} extraSuggestions={weekly} listId={custom?.id} />
-      </Sheet>
+      <AddTask visible={adding} onClose={() => setAdding(false)} defaultDate={focusDate ?? (list === 'tomorrow' ? addDays(day, 1) : day)} listId={custom?.id} />
 
       {/* the lists drawer, sliding in from the reading-start edge */}
       <Modal visible={panel} transparent animationType="fade" onRequestClose={() => setPanel(false)}>

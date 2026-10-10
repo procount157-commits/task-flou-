@@ -106,6 +106,9 @@ export default function GoalDetail() {
         {series.length > 1 ? <LineChart data={series} color={goal.color ?? c.primary} /> : null}
       </Card>
 
+      <Btn title={`✨ ${t.roadmap.breakdown}`} onPress={() => router.push(`/plan?goal=${encodeURIComponent(goal.title)}&days=${left && left > 0 ? left : 365}` as any)} style={{ paddingVertical: 15 }} />
+      <Txt v="small">{t.roadmap.breakdownHint}</Txt>
+
       <Section title={`👣 ${t.roadmap.next}`}>
         {next ? (
           <Card onPress={() => setOpenTask(next.id)}>

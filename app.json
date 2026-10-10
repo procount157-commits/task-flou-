@@ -64,7 +64,8 @@
             "./assets/sounds/alarm_beeper.wav",
             "./assets/sounds/alarm_buzzer.wav",
             "./assets/sounds/alarm_bell.wav",
-            "./assets/sounds/alarm_alert.wav"
+            "./assets/sounds/alarm_alert.wav",
+            "./assets/sounds/notify_chime.wav"
           ]
         }
       ],

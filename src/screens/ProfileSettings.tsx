@@ -25,6 +25,7 @@ export default function ProfileSettings() {
   const [error, setError] = useState('');
   const [tg, setTg] = useState<TelegramSettings>(TG_DEFAULTS);
   const [autoCal, setAutoCal] = useKV<boolean>('gcal:auto', true);
+  const [subsCal, setSubsCal] = useKV<boolean>('gcal:subs', true);
   const [calId, setCalId] = useKV<string>('gcal:id', '');
   const [calendars, setCalendars] = useState<CalInfo[] | null>(null);
   const [syncing, setSyncing] = useState(false);
@@ -136,6 +137,7 @@ export default function ProfileSettings() {
         <Card>
           <Txt v="small">{t.cal.note}</Txt>
           <Toggle label={t.cal.auto} value={autoCal} onChange={async (on) => { await setAutoCal(on); if (on) loadCalendars(); }} />
+          <Toggle label={t.add.subsToCal} value={subsCal} onChange={setSubsCal} />
           <Btn kind="ghost" title={t.cal.load} onPress={loadCalendars} />
           <Btn title={syncing ? t.c.loading : `🔄 ${t.cal.syncAll}`} loading={syncing} onPress={async () => {
             setSyncing(true);

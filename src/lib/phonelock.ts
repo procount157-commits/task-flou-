@@ -4,6 +4,11 @@ import { logError } from './errlog';
 import type { Alarm } from './types';
 
 type PhoneLockNative = {
+  canOverlay?(): boolean;
+  requestOverlay?(): void;
+  setOverlay?(on: boolean): void;
+  overlayWanted?(): boolean;
+  syncCalendar?(account: string): boolean;
   isAdmin(): boolean;
   requestAdmin(explanation: string): void;
   removeAdmin(): void;
@@ -139,3 +144,14 @@ export const clearLive = () => safe((m) => m.clearLive?.(), undefined);
 export type WidgetData = { header: string; empty: string; items: { id: string; title: string; time?: string; done: boolean }[] };
 export const setWidget = (d: WidgetData) => safe((m) => m.setWidget?.(JSON.stringify(d)), undefined);
 export const takeWidgetDone = (): string[] => safe((m) => (typeof m.takeWidgetDone === 'function' ? JSON.parse(m.takeWidgetDone() || '[]') : []), []);
+
+/* ───────── hourly card over other apps ───────── */
+// The card that sits on top of whatever is open until the hour's questions are answered.
+export const overlayAvailable = !!native && typeof native.canOverlay === 'function';
+export const overlayAllowed = () => safe((m) => m.canOverlay?.() ?? false, false);
+export const requestOverlay = () => safe((m) => m.requestOverlay?.(), undefined);
+export const overlayWanted = () => safe((m) => m.overlayWanted?.() ?? true, true);
+export const setOverlayWanted = (on: boolean) => safe((m) => m.setOverlay?.(on), undefined);
+
+// Pushes calendar changes to Google now rather than at the phone's next routine sync.
+export const syncCalendarNow = (account: string) => safe((m) => m.syncCalendar?.(account) ?? false, false);

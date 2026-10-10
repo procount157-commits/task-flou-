@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
-import { View } from 'react-native';
+import { AppState, View } from 'react-native';
 
 import { DayTimeline, QuickHour } from './HourQuick';
 import { useAI } from './taskparts';
@@ -9,7 +9,7 @@ import { nowTime, today } from '@/lib/dates';
 import { db, kv, useEntity, useKV } from '@/lib/db';
 import { GenerateSpeech, InvokeLLM } from '@/lib/integrations';
 import { hourlyCard } from '@/lib/logic';
-import { closeHourly } from '@/lib/phonelock';
+import { closeHourly, overlayAllowed, overlayAvailable, overlayWanted, requestOverlay, setOverlayWanted, showHourlyCard } from '@/lib/phonelock';
 import { CHECKIN_DEFAULTS, CheckinSettings, notifyReport, scheduleCheckins } from '@/lib/notify';
 import { NoTelegramError, sendTelegram } from '@/lib/telegram';
 import type { ActivityLog } from '@/lib/types';
@@ -47,6 +47,13 @@ export default function Checkin() {
   const [analyzing, setAnalyzing] = useState(false);
   const [open, setOpen] = useState<string | null>(null);
   const [typed, setTyped] = useState('');
+  const [overlayOn, setOverlayOn] = useState(() => overlayWanted());
+  const [overlayOk, setOverlayOk] = useState(() => overlayAllowed());
+  // the permission is granted on a system page, so it is read again whenever the app returns
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (st) => st === 'active' && setOverlayOk(overlayAllowed()));
+    return () => sub.remove();
+  }, []);
   // quick: the notification's four questions with buttons; talk: the spoken conversation with the coach
   const [mode, setMode] = useKV<'quick' | 'talk'>('checkin:mode', 'quick');
   const [fillHour, setFillHour] = useState<string | undefined>();
@@ -228,6 +235,14 @@ export default function Checkin() {
       <Card>
         <Toggle label={`🔔 ${t.checkin.enable}`} value={settings.enabled} onChange={(enabled) => apply({ ...settings, enabled })} />
         <Toggle label={`🔊 ${t.checkin.speak}`} value={speak} onChange={setSpeak} />
+        {overlayAvailable ? (
+          <>
+            <Toggle label={t.overlay.toggle} value={overlayOn} onChange={(on) => { setOverlayWanted(on); setOverlayOn(on); if (on && !overlayAllowed()) requestOverlay(); }} />
+            {overlayOn && !overlayOk ? <Btn kind="danger" title={`⚠️ ${t.overlay.need}`} onPress={requestOverlay} /> : null}
+            {overlayOn && overlayOk ? <Btn small kind="ghost" title={`🟦 ${t.overlay.test}`} onPress={() => { apply(settings); showHourlyCard(); }} /> : null}
+            <Txt v="small">{t.overlay.note}</Txt>
+          </>
+        ) : null}
         <Row>
           <View style={{ flex: 1 }}><TimeField label={t.checkin.from} value={settings.from} allowClear={false} onChange={(v) => v && apply({ ...settings, from: v })} /></View>
           <View style={{ flex: 1 }}><TimeField label={t.checkin.to} value={settings.to} allowClear={false} onChange={(v) => v && apply({ ...settings, to: v })} /></View>

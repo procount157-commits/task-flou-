@@ -68,6 +68,48 @@ y=$(row 'مهمة للتأجيل'); echo "swipe-left y=$y" >> out/steps.txt
 [ -n "$y" ] && adb shell input swipe $((W*9/10)) $y $((W/10)) $y 400
 shot postpone-sheet 2
 tap 'بكرة'; shot tasks-postponed 2
+# v14: the new add-task screen
+go ""; tap 'إضافة مهمة'; shot add-open 3
+adb shell input text 'report'; shot add-typed 2
+tap 'غداً'; tap '60'; tap 'عالية'; shot add-chips 1
+tap 'رتّبها بالذكاء'; shot add-smart 14
+tap 'حفظ + أخرى'; shot add-saved 6
+adb shell input keyevent 4; sleep 1; adb shell input keyevent 4; sleep 1
+go ""; shot tasks-after-add 3
+
+# v14: the hourly question as a card over other apps. It must survive Back and Home and leave only when answered.
+# tapw looks in every window, because the card is not the focused one.
+tapw() {
+  adb shell uiautomator dump --windows /sdcard/uiw.xml >/dev/null 2>&1
+  adb shell cat /sdcard/uiw.xml > /tmp/uiw.xml
+  xy=$(python3 - "$1" <<'PY'
+import re, sys, html
+want = sys.argv[1]
+for m in re.finditer(r'<node [^>]*>', open('/tmp/uiw.xml', encoding='utf-8', errors='ignore').read()):
+    n = m.group(0)
+    t = re.search(r' text="([^"]*)"', n)
+    if t and want in html.unescape(t.group(1)):
+        a, b, c, d = map(int, re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', n).groups())
+        print((a + c) // 2, (b + d) // 2); break
+PY
+)
+  echo "tapw '$1' -> $xy" >> out/steps.txt
+  [ -n "$xy" ] && adb shell input tap $xy
+  sleep 2
+}
+wshot() { sleep ${2:-3}; adb exec-out screencap -p > "out/step-$1.png"; adb shell uiautomator dump --windows /sdcard/uiw.xml >/dev/null 2>&1 && adb shell cat /sdcard/uiw.xml | grep -o 'text="[^"]*"' | sed 's/text="//;s/"$//' | grep -v '^$' > "out/step-$1.txt"; }
+adb shell appops set $PKG SYSTEM_ALERT_WINDOW allow
+adb shell input keyevent 3; sleep 2
+adb shell am broadcast -n $PKG/expo.modules.phonelock.HourlyReceiver
+wshot overlay-1 6
+adb shell input keyevent 4; adb shell input keyevent 3; wshot overlay-after-back-home 3
+tapw 'عمل مركز'; wshot overlay-2 3
+tapw 'مركز'; wshot overlay-3 3
+tapw 'قريب'; wshot overlay-4 3
+tapw 'المستقبل'; wshot overlay-result 16
+adb shell dumpsys window windows 2>/dev/null | grep -c "OverlayService\|type=APPLICATION_OVERLAY" >> out/steps.txt || true
+adb shell dumpsys notification --noredact 2>/dev/null | grep -E "hourly-card-2|sound=|notify_chime" | head -20 > out/channels.txt || true
+
 adb shell dumpsys appwidget > out/appwidget.txt 2>&1
 grep -c "TasksWidget" out/appwidget.txt >> out/steps.txt || true
 adb shell dumpsys alarm > out/alarms.txt 2>&1

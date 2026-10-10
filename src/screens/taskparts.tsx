@@ -12,6 +12,7 @@ import { usePomodoro } from '@/ctx/Pomodoro';
 import { addDays, fmtDate, today } from '@/lib/dates';
 import { db, useEntity, useKV } from '@/lib/db';
 import { autoSyncTask, removeTaskFromCalendar, saveTaskToCalendar } from '@/lib/devicecal';
+import { addSteps } from '@/lib/steps';
 import { exportTask } from '@/lib/gcal';
 import { NoKeyError, SendEmail, splitTask, suggestTasks } from '@/lib/integrations';
 import { addPoints, POINTS } from '@/lib/logic';
@@ -103,7 +104,7 @@ export function useTaskActions() {
           for (const sub of before.filter((x) => x.parent_id === task.id)) {
             const shift = p.time && task.time && sub.time ? toMinutes(p.time) - toMinutes(task.time) : 0;
             if (p.date !== task.date || shift) await db.update('DailyTask', sub.id, { date: p.date, ...(shift ? { time: fromMinutes(toMinutes(sub.time!) + shift) } : {}) });
-            if (sub.time) autoSyncTask(sub.id);
+            autoSyncTask(sub.id);
           }
           autoSyncTask(task.id);
         }
@@ -328,13 +329,13 @@ export function TaskDetail({ taskId, onClose }: { taskId: string | null; onClose
   };
   const addSub = async (text: string) => {
     if (!text.trim()) return;
-    await tasks.create({ title: text.trim(), date: task.date, parent_id: task.id, priority: task.priority, completed: false });
+    await addSteps(task, [text]);
     setSub('');
   };
   const aiSplit = async () => {
     setBusy(true);
     const steps = await ai(() => splitTask(task.title, lang));
-    if (steps?.length) await db.bulkCreate('DailyTask', steps.map((s) => ({ title: s, date: task.date, parent_id: task.id, priority: task.priority, completed: false })));
+    if (steps?.length) await addSteps(task, steps);
     setBusy(false);
   };
   const remind = async () => {

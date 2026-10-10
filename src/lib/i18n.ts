@@ -297,6 +297,7 @@ const ar = {
     reviewToggle: 'تذكير المراجعة الأسبوعية (الجمعة 6 مساءً)', speakToggle: 'اقرأ التنبيهات وسؤال الساعة بصوت مسموع', test: 'جرّب الصوت',
   },
   roadmap: {
+    breakdown: 'قسّم هذا الهدف إلى مراحل ومهام', breakdownHint: 'يرسم الذكاء الاصطناعي مراحل بتواريخ، وتحت كل مرحلة مهامها، وتحت كل مهمة خطواتها — وتُرسل كلها إلى تقويمك بضغطة واحدة.',
     title: 'أهدافي', daysLeft: 'يوم متبقٍ', idle: 'لم يتحرك منذ {n} أيام', of: 'من', tasksDone: 'مهام منجزة', update: 'حدّث الرقم', makeNumber: 'اجعله رقماً',
     pace: 'لتصل في الموعد تحتاج قرابة {n} {u} كل شهر', next: 'الخطوة التالية', noNext: 'لا خطوة قادمة — اطلب اقتراحاً', suggest: 'اقترح خطوات صغيرة',
     accept: 'أضف المختارة إلى مهامي', milestones: 'خريطة الطريق', noMilestones: 'لا محطات بعد — استخدم «خطة بالذكاء» لصنعها', linked: 'المهام المرتبطة',
@@ -363,6 +364,19 @@ const ar = {
     empty: 'لا مهام هنا — اضغط + لإضافة مهمة', left: 'متبقية', noPrio: 'بدون أولوية', smart: 'القوائم الذكية', myLists: 'قوائمي', newList: 'قائمة جديدة', listName: 'اسم القائمة', inbox: 'الوارد', matrix: 'مصفوفة أيزنهاور', addTitle: 'ماذا تريد أن تنجز؟',
     quad: ['عاجل ومهم', 'مهم غير عاجل', 'عاجل غير مهم', 'غير عاجل وغير مهم'],
     listSug: ['العمل', 'شخصي', 'البيت', 'الدراسة', 'التسوق', 'مشاريع'],
+  },
+  add: {
+    title: 'مهمة جديدة', what: 'ماذا تريد أن تنجز؟', multi: 'كل سطر مهمة مستقلة · يمكنك كتابة «بكرة 5 العصر مهم» وسأفهمها', when: '📅 متى', afterTomorrow: 'بعد غد', nextWeek: 'بعد أسبوع', otherDate: 'تاريخ آخر…',
+    time: '🕐 الوقت', noTime: 'بدون وقت', free: 'أول وقت فارغ', otherTime: 'وقت آخر…', duration: '⏱ المدة (دقيقة)', priority: '🚩 الأولوية', goal: '🎯 الهدف المرتبط', list: '📋 القائمة',
+    smart: '✨ رتّبها بالذكاء', smartBusy: 'يرتّبها…', smartHint: 'يختار الوقت الفارغ والمدة والأولوية والهدف ويقسّمها إلى خطوات', steps: 'الخطوات المقترحة (احذف ما لا تريد)',
+    save: 'حفظ', saveMore: 'حفظ + أخرى', saved: '✓ أُضيفت', savedMany: '✓ أُضيفت {n} مهام', inCal: '📅 في تقويم', notInCal: '⚠️ لم تُكتب في التقويم',
+    calTo: '📅 تُضاف مباشرة إلى تقويم', subsToCal: 'انشر المهام الفرعية في التقويم أيضاً', calNotGoogle: '⚠️ هذا تقويم محلي لا يصل إلى Google — اضغط لاختيار تقويم حسابك', calNone: '⚠️ لا يوجد تقويم مربوط — اضغط للربط', calOff: '📅 الإضافة للتقويم متوقفة',
+    speak: 'تكلّم بدل الكتابة', suggestions: 'اقتراحات — اضغط لتعبئتها', empty: 'اكتب أو قل المهمة أولاً', split: '✂️ قسّمها تلقائياً إلى خطوات',
+  },
+  overlay: {
+    toggle: '🟦 أظهر السؤال كبطاقة كبيرة فوق كل التطبيقات', grant: 'اسمح بالظهور فوق التطبيقات', granted: 'إذن الظهور فوق التطبيقات مفعّل ✓',
+    note: 'تظهر البطاقة فوق أي تطبيق مفتوح ولا تُغلق بالرجوع ولا بالرئيسية — تختفي فقط بعد أن تجيب. للطوارئ: اضغط مطوّلاً 5 ثوانٍ على الساعة داخل البطاقة.',
+    need: 'البطاقة الكبيرة تحتاج إذن "الظهور فوق التطبيقات" — اضغط هنا لمنحه', test: 'جرّب البطاقة الآن',
   },
 };
 
@@ -668,6 +682,7 @@ const en: Translations = {
     reviewToggle: 'Weekly review reminder (Friday 6 pm)', speakToggle: 'Read reminders and the hourly question aloud', test: 'Test the voice',
   },
   roadmap: {
+    breakdown: 'Break this goal into stages and tasks', breakdownHint: 'The AI lays out stages with dates; under each stage its tasks, and under each task its steps — all sent to your calendar in one tap.',
     title: 'My goals', daysLeft: 'days left', idle: 'untouched for {n} days', of: 'of', tasksDone: 'tasks done', update: 'Update number', makeNumber: 'Make it a number',
     pace: 'To land on time you need about {n} {u} a month', next: 'Next step', noNext: 'No next step — ask for a suggestion', suggest: 'Suggest small steps',
     accept: 'Add the chosen to my tasks', milestones: 'Roadmap', noMilestones: 'No milestones yet — use AI plan to make them', linked: 'Linked tasks',
@@ -734,6 +749,19 @@ const en: Translations = {
     empty: 'Nothing here — press + to add a task', left: 'left', noPrio: 'No priority', smart: 'Smart lists', myLists: 'My lists', newList: 'New list', listName: 'List name', inbox: 'Inbox', matrix: 'Eisenhower matrix', addTitle: 'What would you like to do?',
     quad: ['Urgent & important', 'Important, not urgent', 'Urgent, not important', 'Neither'],
     listSug: ['Work', 'Personal', 'Home', 'Study', 'Shopping', 'Projects'],
+  },
+  add: {
+    title: 'New task', what: 'What would you like to do?', multi: 'One task per line · you can write "tomorrow 5pm important" and it is understood', when: '📅 When', afterTomorrow: 'In 2 days', nextWeek: 'In a week', otherDate: 'Another date…',
+    time: '🕐 Time', noTime: 'No time', free: 'First free slot', otherTime: 'Another time…', duration: '⏱ Length (minutes)', priority: '🚩 Priority', goal: '🎯 Linked goal', list: '📋 List',
+    smart: '✨ Arrange it with AI', smartBusy: 'Arranging…', smartHint: 'Picks the free time, length, priority and goal, and splits it into steps', steps: 'Suggested steps (remove what you do not want)',
+    save: 'Save', saveMore: 'Save + another', saved: '✓ Added', savedMany: '✓ {n} tasks added', inCal: '📅 in calendar', notInCal: '⚠️ Not written to the calendar',
+    calTo: '📅 Added straight to calendar', subsToCal: 'Publish subtasks to the calendar too', calNotGoogle: '⚠️ This is a local calendar that never reaches Google — tap to pick your account calendar', calNone: '⚠️ No calendar linked — tap to link', calOff: '📅 Calendar adding is off',
+    speak: 'Speak instead of typing', suggestions: 'Suggestions — tap to fill in', empty: 'Type or say the task first', split: '✂️ Split it into steps automatically',
+  },
+  overlay: {
+    toggle: '🟦 Show the question as a big card over every app', grant: 'Allow display over other apps', granted: 'Display over other apps is allowed ✓',
+    note: 'The card appears over whatever app is open and does not close with Back or Home — it leaves only after you answer. Emergency: hold the clock inside the card for 5 seconds.',
+    need: 'The big card needs the "display over other apps" permission — tap here to grant it', test: 'Try the card now',
   },
 };
 

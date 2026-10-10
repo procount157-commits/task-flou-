@@ -35,6 +35,25 @@ object HourlySession {
 
   fun steps(context: Context): JSONArray = payload(context).optJSONArray("steps") ?: JSONArray()
 
+  fun payloadOf(context: Context): JSONObject = payload(context)
+
+  /** The question waiting for an answer, as the overlay card needs it; null when no session is open. */
+  fun state(context: Context): JSONObject? {
+    val s = session(context)
+    val steps = steps(context)
+    if (s.optBoolean("done", true) || steps.length() == 0) return null
+    val index = s.optInt("step", 0).coerceIn(0, steps.length() - 1)
+    val step = steps.optJSONObject(index) ?: return null
+    val quotes = payload(context).optJSONArray("quotes")
+    val turn = Calendar.getInstance().let { it.get(Calendar.HOUR_OF_DAY) + it.get(Calendar.DAY_OF_YEAR) * 7 }
+    return JSONObject()
+      .put("time", s.optString("time").take(2) + ":00")
+      .put("progress", "${index + 1} / ${steps.length()}")
+      .put("q", step.optString("q"))
+      .put("choices", step.optJSONArray("choices") ?: JSONArray())
+      .put("quote", if (quotes == null || quotes.length() == 0) "" else quotes.optString(turn % quotes.length()))
+  }
+
   /** Starts a fresh session for this hour and shows its first question. */
   fun start(context: Context) {
     val now = Calendar.getInstance()
@@ -115,6 +134,8 @@ object HourlySession {
       }
     }
     notify(context, builder)
+    // and the same question as a card over whatever is on screen
+    HourlyOverlay.show(context)
   }
 
   private fun notify(context: Context, builder: NotificationCompat.Builder) {
@@ -161,7 +182,12 @@ object HourlySession {
     notify(context, builder)
 
     val routes = p.optJSONArray("ai")
-    if (routes == null || routes.length() == 0) { pending?.finish(); return }
+    if (routes == null || routes.length() == 0) {
+      HourlyOverlay.result(context, p.optString("doneTitle", "✅"))
+      pending?.finish()
+      return
+    }
+    HourlyOverlay.result(context, "")
     // the network call runs off the main thread; the receiver stays alive until it is done
     thread {
       try {
@@ -175,6 +201,8 @@ object HourlySession {
           reply = try { chat(r.optString("url"), r.optString("key"), r.optString("model"), p.optString("system"), dialog.toString()) } catch (e: Exception) { "" }
           if (reply.isNotEmpty()) break
         }
+        // the card shows the reading, or simply closes if the AI could not be reached
+        if (reply.isNotEmpty()) HourlyOverlay.result(context, reply) else HourlyOverlay.hide(context)
         if (reply.isNotEmpty()) {
           setInsight(context, id, reply)
           notify(
@@ -237,6 +265,7 @@ object HourlySession {
   fun close(context: Context) {
     save(context, session(context).put("done", true))
     (context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).cancel(Hourly.NOTIFICATION_ID)
+    HourlyOverlay.hide(context)
   }
 }
 

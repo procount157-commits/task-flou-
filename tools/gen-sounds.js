@@ -56,3 +56,18 @@ wav('alarm_buzzer', Array.from({ length: AL }, (_, i) => (T(i) % 1.1 < 0.8 ? (Ma
 wav('alarm_bell', Array.from({ length: AL }, (_, i) => { const s = T(i) % (1 / 22); return (T(i) % 3 < 2.4 ? 1 : 0) * Math.exp(-s * 70) * (Math.sin(2 * Math.PI * 1480 * T(i)) + 0.6 * Math.sin(2 * Math.PI * 2960 * T(i)) + 0.4 * Math.sin(2 * Math.PI * 4170 * T(i))); }));
 // nuclear-plant style alert: three rising tones, repeated
 wav('alarm_alert', Array.from({ length: AL }, (_, i) => { const t = T(i) % 1.5; const f = t < 0.35 ? 880 : t < 0.7 ? 1175 : t < 1.05 ? 1568 : 0; return f ? Math.sin(2 * Math.PI * f * T(i)) * 0.6 + (Math.sin(2 * Math.PI * f * 2 * T(i)) > 0 ? 0.4 : -0.4) : 0; }));
+
+// The notification chime: three bright, rising bell notes with a hard attack, mixed loud.
+{
+  const out = new Array(Math.floor(SR * 1.5)).fill(0);
+  [[1318.5, 0], [1568, 0.13], [2093, 0.26]].forEach(([f, at]) => {
+    for (let i = 0; i < SR * 1.1; i++) {
+      const t = T(i), k = Math.floor(at * SR) + i;
+      if (k >= out.length) break;
+      const attack = Math.min(1, t / 0.004);
+      out[k] += attack * (Math.sin(2 * Math.PI * f * t) * Math.exp(-t * 6) + 0.45 * Math.sin(2 * Math.PI * f * 2.76 * t) * Math.exp(-t * 14) + 0.25 * Math.sin(2 * Math.PI * f * 4 * t) * Math.exp(-t * 20));
+    }
+  });
+  // gentle saturation so it stays loud without clipping harshly
+  wav('notify_chime', out.map((v) => Math.tanh(v * 1.8)));
+}

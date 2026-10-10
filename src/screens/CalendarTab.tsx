@@ -3,7 +3,8 @@ import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 
-import { QuickAdd, TaskDetail, TaskRow, useTaskActions } from './taskparts';
+import { AddTask } from './AddTask';
+import { TaskDetail, TaskRow, useTaskActions } from './taskparts';
 import { useLang, useTheme } from '@/ctx/Lang';
 import { addDays, fmtDate, parse, today } from '@/lib/dates';
 import { useEntity } from '@/lib/db';
@@ -166,9 +167,7 @@ export default function CalendarTab() {
         style={{ position: 'absolute', bottom: 20, [dir === 'rtl' ? 'left' : 'right']: 20, width: 58, height: 58, borderRadius: 29, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center', elevation: 6 }}>
         <Ionicons name="add" size={32} color={c.onPrimary} />
       </Pressable>
-      <Sheet visible={adding} onClose={() => setAdding(false)} title={`${t.today.addTask} · ${fmtDate(day, lang, t.c)}`}>
-        <QuickAdd defaultDate={day} />
-      </Sheet>
+      <AddTask visible={adding} onClose={() => setAdding(false)} defaultDate={day} />
       <TaskDetail taskId={openId} onClose={() => setOpenId(null)} />
     </View>
   );

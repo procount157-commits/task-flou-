@@ -5,6 +5,11 @@ import android.app.PendingIntent
 import android.app.admin.DevicePolicyManager
 import android.content.ComponentName
 import android.content.Context
+import android.accounts.Account
+import android.content.ContentResolver
+import android.os.Bundle
+import android.provider.CalendarContract
+import android.provider.Settings
 import android.content.Intent
 import android.os.Build
 import androidx.core.content.ContextCompat
@@ -116,6 +121,40 @@ class PhoneLockModule : Module() {
     }
 
     // Shows the card straight away, for the test button.
+    /* the hourly card drawn over other apps */
+
+    Function("canOverlay") {
+      HourlyOverlay.allowed(context)
+    }
+
+    // Opens the system page where "display over other apps" is granted for this app.
+    Function("requestOverlay") {
+      val intent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + context.packageName)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+      val activity = appContext.currentActivity
+      if (activity != null) activity.startActivity(intent) else context.startActivity(intent)
+    }
+
+    Function("setOverlay") { on: Boolean ->
+      HourlyOverlay.setWanted(context, on)
+    }
+
+    Function("overlayWanted") {
+      HourlyOverlay.wanted(context)
+    }
+
+    // Asks the phone to push calendar changes to Google now instead of at its next routine sync.
+    Function("syncCalendar") { account: String ->
+      try {
+        val extras = Bundle()
+        extras.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true)
+        extras.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true)
+        ContentResolver.requestSync(Account(account, "com.google"), CalendarContract.AUTHORITY, extras)
+        true
+      } catch (e: Exception) {
+        false
+      }
+    }
+
     Function("showHourly") {
       Hourly.show(context, true)
     }

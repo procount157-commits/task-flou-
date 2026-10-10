@@ -4,6 +4,7 @@ import { Platform } from 'react-native';
 import { addDays, isTime, parse } from './dates';
 import { db, kv } from './db';
 import { logError } from './errlog';
+import { syncCalendarNow } from './phonelock';
 import type { DailyTask } from './types';
 
 export type CalInfo = { id: string; title: string; account: string };
@@ -24,6 +25,28 @@ export async function listWritableCalendars(): Promise<CalInfo[]> {
 export const getCalendarId = () => kv.get<string>('gcal:id', '');
 export const setCalendarId = (id: string) => kv.set('gcal:id', id);
 // on by default: tasks go to the calendar unless the user turns it off
+let pushTimer: ReturnType<typeof setTimeout> | undefined;
+// A burst of writes ends in one request to the phone to sync that account with Google straight away.
+function pushToGoogle() {
+  if (pushTimer) clearTimeout(pushTimer);
+  pushTimer = setTimeout(async () => {
+    const status = await calendarStatus().catch(() => null);
+    if (status?.google && status.account) syncCalendarNow(status.account);
+  }, 1500);
+}
+
+export type CalendarStatus = { name: string; account: string; google: boolean };
+// The calendar tasks are being written to, or null when there is none (no permission, or no account).
+export async function calendarStatus(): Promise<CalendarStatus | null> {
+  if (Platform.OS === 'web') return null;
+  const perm = await Calendar.getCalendarPermissionsAsync().catch(() => null);
+  if (!perm?.granted) return null;
+  const all = await Calendar.getCalendarsAsync(Calendar.EntityTypes.EVENT).catch(() => []);
+  const id = await getCalendarId();
+  const chosen = all.find((c) => c.id === id) ?? all.filter((c) => c.allowsModifications).sort((a, b) => Number(b.source?.type === 'com.google') - Number(a.source?.type === 'com.google'))[0];
+  return chosen ? { name: chosen.title, account: chosen.source?.name ?? '', google: chosen.source?.type === 'com.google' } : null;
+}
+
 export const getAutoCalendar = () => kv.get<boolean>('gcal:auto', true);
 
 async function targetCalendar(): Promise<string | undefined> {
@@ -48,7 +71,12 @@ function eventDetails(task: DailyTask, parentTitle?: string) {
     } else if (task.minutes) end = new Date(start.getTime() + task.minutes * 60000);
     if (end <= start) end = new Date(start.getTime() + 60 * 60000);
   } else end = parse(addDays(task.date, 1));
-  return { title: `${task.completed ? '✓ ' : ''}${parentTitle ? `${task.title} · ${parentTitle}` : task.title}`, notes: task.notes, startDate: start, endDate: end, allDay: !timed, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone };
+  return {
+    title: `${task.completed ? '✓ ' : ''}${parentTitle ? `${task.title} · ${parentTitle}` : task.title}`, notes: task.notes, startDate: start, endDate: end, allDay: !timed,
+    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    // Google Calendar itself reminds ten minutes before a timed task
+    alarms: timed && !task.completed ? [{ relativeOffset: -10 }] : [],
+  };
 }
 
 // Creates the task's event, or updates the one it already has. Returns false when no calendar could be written.
@@ -62,6 +90,7 @@ export async function saveTaskToCalendar(task: DailyTask): Promise<boolean> {
   if (task.calendar_event_id) {
     try {
       await Calendar.updateEventAsync(task.calendar_event_id, details);
+      pushToGoogle();
       return true;
     } catch {
       // the event was deleted in the calendar app; fall through and make a new one
@@ -69,6 +98,7 @@ export async function saveTaskToCalendar(task: DailyTask): Promise<boolean> {
   }
   const id = await Calendar.createEventAsync(calendarId, details);
   await db.update('DailyTask', task.id, { calendar_event_id: id });
+  pushToGoogle();
   return true;
 }
 
@@ -81,8 +111,8 @@ export async function removeTaskFromCalendar(task: DailyTask) {
 export async function autoSyncTask(taskId: string) {
   if (Platform.OS === 'web' || !(await getAutoCalendar())) return;
   const task = (await db.list('DailyTask')).find((x) => x.id === taskId);
-  // whole tasks always; sub-steps only when they have their own time (a timed split)
-  if (task && (!task.parent_id || isTime(task.time))) await saveTaskToCalendar(task).catch((e) => logError('calendar', e));
+  // whole tasks always; their steps too unless the user turned that off (timed steps always go)
+  if (task && (!task.parent_id || isTime(task.time) || (await kv.get<boolean>('gcal:subs', true)))) await saveTaskToCalendar(task).catch((e) => logError('calendar', e));
 }
 
 export type DeviceEvent = { id: string; title: string; date: string; time?: string; end?: string; allDay: boolean };

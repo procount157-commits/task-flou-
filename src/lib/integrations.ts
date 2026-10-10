@@ -249,3 +249,38 @@ export const suggestTasks = (goals: string[], existing: string[], lang: string) 
     `Suggest 5 small, concrete tasks a person can do today.${goals.length ? ` Their goals: ${goals.slice(0, 8).join('; ')}.` : ''}${existing.length ? ` Do not repeat these: ${existing.slice(0, 12).join('; ')}.` : ''} Each task at most 6 words.`,
     lang,
   );
+
+export type SmartTask = { title?: string; date?: string; time?: string; minutes?: number; priority?: 'low' | 'medium' | 'high'; goal?: string; steps?: string[] };
+
+// Turns a rough sentence into a ready task: a clean title, the best free time, a length, a priority,
+// the goal it serves and its steps. `busy` lists what is already booked so the time does not collide.
+export async function smartTask(text: string, ctx: { today: string; now: string; date: string; busy: string[]; goals: string[] }, lang: string): Promise<SmartTask> {
+  const reply = await InvokeLLM(
+    [
+      {
+        role: 'system',
+        content:
+          `You plan one task for a person. Today is ${ctx.today}, the time is ${ctx.now}. The day they picked is ${ctx.date}. ` +
+          `Already booked that day: ${ctx.busy.join('; ') || 'nothing'}. Their goals: ${ctx.goals.join('; ') || 'none'}. ` +
+          `Reply ONLY with a JSON object: {"title": short clear title in ${lang === 'ar' ? 'Arabic' : 'English'}, "date": "YYYY-MM-DD", "time": "HH:MM" in a free slot after now and before 22:00, ` +
+          `"minutes": realistic length as a number, "priority": "low"|"medium"|"high", "goal": the exact goal text it serves or "", "steps": 3 to 5 short concrete steps in ${lang === 'ar' ? 'Arabic' : 'English'}}. ` +
+          `Keep any date or time the person stated.`,
+      },
+      { role: 'user', content: text },
+    ],
+    0.3,
+  );
+  const m = reply.match(/\{[\s\S]*\}/);
+  if (!m) throw new Error('bad AI reply');
+  const o = JSON.parse(m[0]);
+  const clean = (v: unknown) => (typeof v === 'string' ? v.trim() : '');
+  return {
+    title: clean(o.title) || undefined,
+    date: /^\d{4}-\d{2}-\d{2}$/.test(clean(o.date)) ? clean(o.date) : undefined,
+    time: /^([01]\d|2[0-3]):[0-5]\d$/.test(clean(o.time)) ? clean(o.time) : undefined,
+    minutes: Number(o.minutes) > 0 && Number(o.minutes) <= 600 ? Math.round(Number(o.minutes)) : undefined,
+    priority: ['low', 'medium', 'high'].includes(o.priority) ? o.priority : undefined,
+    goal: clean(o.goal) || undefined,
+    steps: Array.isArray(o.steps) ? o.steps.map((x: unknown) => String(x).trim()).filter(Boolean).slice(0, 6) : undefined,
+  };
+}

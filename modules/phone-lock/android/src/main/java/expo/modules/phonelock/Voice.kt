@@ -62,7 +62,7 @@ object Speaker {
  * like any notification and, when the user asked for it, is read aloud. Survives a restart.
  */
 object Nudges {
-  private const val CHANNEL = "nudges"
+  private const val CHANNEL = "nudges-2"
   private const val BASE = 9500
   private const val MAX = 60
 
@@ -100,7 +100,7 @@ object Nudges {
   fun post(context: Context, title: String, body: String, url: String?) {
     val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-      manager.createNotificationChannel(NotificationChannel(CHANNEL, "Goals and dreams", NotificationManager.IMPORTANCE_HIGH))
+      manager.createNotificationChannel(Hourly.loudChannel(context, CHANNEL, "Goals and dreams"))
     }
     val open = Intent(Intent.ACTION_VIEW, Uri.parse(url ?: "hayati://roadmap"))
       .setPackage(context.packageName)
