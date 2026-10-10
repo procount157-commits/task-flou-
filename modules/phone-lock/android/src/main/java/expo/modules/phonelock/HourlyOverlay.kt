@@ -128,7 +128,9 @@ class OverlayService : Service() {
     val background = GradientDrawable(GradientDrawable.Orientation.TL_BR, intArrayOf(0xFF4772FA.toInt(), 0xFF6A4DF5.toInt(), 0xFF1B1F3B.toInt()))
     background.cornerRadii = floatArrayOf(0f, 0f, 0f, 0f, radius, radius, radius, radius)
     card.background = background
-    card.minimumHeight = (resources.displayMetrics.heightPixels * 0.62f).toInt()
+    // never the whole screen: the bottom fifth stays free, so a call can still be answered
+    val cardHeight = (resources.displayMetrics.heightPixels * 0.78f).toInt()
+    card.minimumHeight = cardHeight
 
     fun label(text: String, size: Float, color: Int, face: Typeface, top: Int): TextView {
       val view = TextView(this)
@@ -209,7 +211,7 @@ class OverlayService : Service() {
 
     val params = WindowManager.LayoutParams(
       WindowManager.LayoutParams.MATCH_PARENT,
-      WindowManager.LayoutParams.WRAP_CONTENT,
+      cardHeight,
       WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
       // not focusable, so Back and Home go to the app underneath and never close the card
       WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,

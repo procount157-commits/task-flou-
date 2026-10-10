@@ -104,9 +104,10 @@ adb shell am broadcast -n $PKG/expo.modules.phonelock.HourlyReceiver
 wshot overlay-1 6
 adb shell input keyevent 4; adb shell input keyevent 3; wshot overlay-after-back-home 3
 tapw 'عمل مركز'; wshot overlay-2 3
-tapw 'مركز'; wshot overlay-3 3
-tapw 'قريب'; wshot overlay-4 3
-tapw 'المستقبل'; wshot overlay-result 16
+tapw 'مركز 🎯'; wshot overlay-3 3
+tapw 'قريب 🟢'; wshot overlay-4 3
+tapw 'الفشل'; wshot overlay-result 14
+wshot overlay-gone 34
 adb shell dumpsys window windows 2>/dev/null | grep -c "OverlayService\|type=APPLICATION_OVERLAY" >> out/steps.txt || true
 adb shell dumpsys notification --noredact 2>/dev/null | grep -E "hourly-card-2|sound=|notify_chime" | head -20 > out/channels.txt || true
 
