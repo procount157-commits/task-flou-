@@ -61,9 +61,9 @@ export function NavBar({ state }: BarProps) {
   const active = state.routes[state.index]?.name;
   const items = keys.map((k) => NAV_CATALOG.find((x) => x.key === k)).filter((x): x is NavItem => !!x);
 
-  const tab = (key: string, icon: keyof typeof Ionicons.glyphMap, label: string, on: boolean, go: () => void) => (
+  const tab = (key: string, icon: keyof typeof Ionicons.glyphMap, label: string, on: boolean, go: () => void, width?: number) => (
     <Pressable key={key} onPress={go} onLongPress={() => router.push('/navbar')} accessibilityRole="tab" accessibilityState={{ selected: on }} accessibilityLabel={label}
-      style={{ minWidth: 64, flex: 1, alignItems: 'center', paddingTop: 7, paddingBottom: 5, gap: 2 }}>
+      style={{ ...(width ? { width } : { flex: 1 }), alignItems: 'center', paddingTop: 7, paddingBottom: 5, gap: 2 }}>
       <View style={{ paddingHorizontal: 14, paddingVertical: 3, borderRadius: 14, backgroundColor: on ? c.soft : 'transparent' }}>
         <Ionicons name={on ? (icon.replace('-outline', '') as typeof icon) : icon} size={22} color={on ? c.primary : c.muted} />
       </View>
@@ -73,11 +73,18 @@ export function NavBar({ state }: BarProps) {
 
   return (
     <View style={{ flexDirection: 'row', direction: dir, backgroundColor: c.card, borderTopWidth: 1, borderColor: c.border, paddingBottom: insets.bottom }}>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1, justifyContent: 'space-around' }}>
-        {items.map((x) => tab(x.key, x.icon, x.label(t), active === x.route, () => router.navigate(x.path as any)))}
-      </ScrollView>
-      <View style={{ width: 1, backgroundColor: c.border, marginVertical: 8 }} />
-      {tab('more', 'apps-outline', t.nav.more, active === 'more' || active === 'navbar', () => router.navigate('/more'))}
+      {/* up to five places share the width evenly; a longer custom bar scrolls sideways */}
+      {items.length <= 4 ? (
+        <View style={{ flex: items.length, flexDirection: 'row' }}>
+          {items.map((x) => tab(x.key, x.icon, x.label(t), active === x.route, () => router.navigate(x.path as any)))}
+        </View>
+      ) : (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1, justifyContent: 'space-around' }}>
+          {items.map((x) => tab(x.key, x.icon, x.label(t), active === x.route, () => router.navigate(x.path as any), 70))}
+        </ScrollView>
+      )}
+      {items.length <= 4 ? null : <View style={{ width: 1, backgroundColor: c.border, marginVertical: 8 }} />}
+      <View style={{ flex: items.length <= 4 ? 1 : undefined, width: items.length <= 4 ? undefined : 70 }}>{tab('more', 'apps-outline', t.nav.more, active === 'more' || active === 'navbar', () => router.navigate('/more'))}</View>
     </View>
   );
 }
