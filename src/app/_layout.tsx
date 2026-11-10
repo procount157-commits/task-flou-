@@ -63,7 +63,7 @@ const TABS: { name: string; icon: keyof typeof Ionicons.glyphMap }[] = [
   { name: 'pomodoro', icon: 'timer-outline' },
   { name: 'more', icon: 'apps-outline' },
 ];
-const HIDDEN = ['search', 'goal', 'roadmap', 'review', 'day', 'navbar', 'plan', 'dashboard', 'today', 'matrix', 'habits', 'alarm', 'lock', 'check', 'journal', 'progress', 'analytics', 'motivation', 'brainstorm', 'kolb', 'finance', 'invite', 'pricing', 'content', 'learning', 'goals/[level]', 'profile-settings', 'join', 'explore'];
+const HIDDEN = ['search', 'goal', 'roadmap', 'review', 'day', 'navbar', 'plan', 'interview', 'dashboard', 'today', 'matrix', 'habits', 'alarm', 'lock', 'check', 'journal', 'progress', 'analytics', 'motivation', 'brainstorm', 'kolb', 'finance', 'invite', 'pricing', 'content', 'learning', 'goals/[level]', 'profile-settings', 'join', 'explore'];
 
 function AppTabs() {
   const c = useTheme();
@@ -75,7 +75,7 @@ function AppTabs() {
   const top = new Set(pinned.map((k) => NAV_CATALOG.find((x) => x.key === k)?.route));
   const titles: Record<string, string> = {
     index: t.nav.tasks, calendar: t.nav.calendar, 'ai-coach': t.nav.aiCoach, pomodoro: t.nav.focus, habits: t.nav.habits, more: t.nav.more,
-    search: t.search.title, goal: t.nav.goals, roadmap: t.roadmap.title, review: t.review.title, day: t.day.title, navbar: t.navbar.title, plan: t.plan.title, dashboard: t.nav.dashboard, matrix: t.tasks.matrix, checkin: t.checkin.tab, alarm: t.alarm.title, lock: t.lock.title, check: t.diag.title, journal: t.nav.journal, progress: t.nav.progress,
+    search: t.search.title, goal: t.nav.goals, roadmap: t.roadmap.title, review: t.review.title, day: t.day.title, navbar: t.navbar.title, plan: t.plan.title, interview: t.plan.interview, dashboard: t.nav.dashboard, matrix: t.tasks.matrix, checkin: t.checkin.tab, alarm: t.alarm.title, lock: t.lock.title, check: t.diag.title, journal: t.nav.journal, progress: t.nav.progress,
     analytics: t.nav.analytics, motivation: t.nav.motivation, brainstorm: t.nav.brainstorm, kolb: t.nav.kolb, finance: t.nav.finance, invite: t.nav.invite,
     pricing: t.nav.pricing, content: t.nav.content, learning: t.nav.learning, 'goals/[level]': t.nav.goals, 'profile-settings': t.nav.settings,
   };

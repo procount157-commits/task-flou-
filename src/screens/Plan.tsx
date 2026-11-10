@@ -32,13 +32,9 @@ export default function Plan() {
   const open = goals.filter((g) => g.status !== 'completed' && g.status !== 'cancelled');
   // opened from a goal's page: the goal is already written and the plan is asked for at once
   const params = useLocalSearchParams<{ goal?: string; days?: string }>();
+  // opened from a goal: go straight to the discovery interview (the plan comes after understanding the person)
   useEffect(() => {
-    if (!params.goal) return;
-    setGoal(params.goal);
-    const days = Number(params.days);
-    const h = HORIZONS.find((x) => x.days >= days) ?? HORIZONS[HORIZONS.length - 1];
-    if (days > 0) setHorizon(h.days);
-    make(params.goal, days > 0 ? h.days : horizon);
+    if (params.goal) router.replace(`/interview?goal=${encodeURIComponent(params.goal)}` as any);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.goal]);
   // each task belongs to the first stage that ends on or after its day
@@ -51,18 +47,15 @@ export default function Plan() {
     return loose.length ? [...groups, { m: null, tasks: loose }] : groups;
   }, [plan, goal]);
 
+  // a goal is never decomposed from its title alone: the interview asks first, then designs the plan
   const make = async (text = goal, days = horizon) => {
     if (!text.trim()) return;
-    setBusy(true);
-    setPlan(null);
-    const p = await ai(() => makePlan(text.trim(), days, open.map((g) => g.title).filter((x) => x !== text.trim()), lang));
-    setBusy(false);
-    if (p) {
-      setPlan(p);
-      setOff(new Set());
-      setOffM(new Set());
-    }
+    const existing = open.find((g) => g.title === text.trim());
+    const q = existing ? `goalId=${existing.id}` : `goal=${encodeURIComponent(`${text.trim()}`)}`;
+    void days;
+    router.push(`/interview?${q}` as any);
   };
+  void makePlan; void ai; void setBusy; void setPlan;
 
   const approve = async () => {
     if (!plan) return;

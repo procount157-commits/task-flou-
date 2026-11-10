@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { GoalForm } from './forms';
+import { GoalAdapt } from './GoalAdapt';
 import { TaskDetail, useAI } from './taskparts';
 import { useLang, useTheme } from '@/ctx/Lang';
 import { addDays, fmtDate, today } from '@/lib/dates';
@@ -106,8 +107,14 @@ export default function GoalDetail() {
         {series.length > 1 ? <LineChart data={series} color={goal.color ?? c.primary} /> : null}
       </Card>
 
-      <Btn title={`✨ ${t.roadmap.breakdown}`} onPress={() => router.push(`/plan?goal=${encodeURIComponent(goal.title)}&days=${left && left > 0 ? left : 365}` as any)} style={{ paddingVertical: 15 }} />
-      <Txt v="small">{t.roadmap.breakdownHint}</Txt>
+      {/* planning starts with understanding the person: the interview, never a plan from the title alone */}
+      {!goal.interview_id ? (
+        <>
+          <Btn title={`🧭 ${t.roadmap.breakdown}`} onPress={() => router.push(`/interview?goalId=${goal.id}` as any)} style={{ paddingVertical: 15 }} />
+          <Txt v="small">{t.roadmap.breakdownHint}</Txt>
+        </>
+      ) : null}
+      {goal.interview_id ? <GoalAdapt goal={goal} ids={new Set([goal.id, ...kids.map((k) => k.id)])} /> : null}
 
       <Section title={`👣 ${t.roadmap.next}`}>
         {next ? (

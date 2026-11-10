@@ -297,7 +297,7 @@ const ar = {
     reviewToggle: 'تذكير المراجعة الأسبوعية (الجمعة 6 مساءً)', speakToggle: 'اقرأ التنبيهات وسؤال الساعة بصوت مسموع', test: 'جرّب الصوت',
   },
   roadmap: {
-    breakdown: 'قسّم هذا الهدف إلى مراحل ومهام', breakdownHint: 'يرسم الذكاء الاصطناعي مراحل بتواريخ، وتحت كل مرحلة مهامها، وتحت كل مهمة خطواتها — وتُرسل كلها إلى تقويمك بضغطة واحدة.',
+    breakdown: 'خطّط لهذا الهدف معي', breakdownHint: 'أسألك أولاً عن النتيجة التي تريدها ودافعك ووقتك ومواردك وعوائقك، ثم أصمم خطة على مقاسك تراجعها وتعدّلها قبل أن يُحفظ أي شيء.',
     title: 'أهدافي', daysLeft: 'يوم متبقٍ', idle: 'لم يتحرك منذ {n} أيام', of: 'من', tasksDone: 'مهام منجزة', update: 'حدّث الرقم', makeNumber: 'اجعله رقماً',
     pace: 'لتصل في الموعد تحتاج قرابة {n} {u} كل شهر', next: 'الخطوة التالية', noNext: 'لا خطوة قادمة — اطلب اقتراحاً', suggest: 'اقترح خطوات صغيرة',
     accept: 'أضف المختارة إلى مهامي', milestones: 'خريطة الطريق', noMilestones: 'لا محطات بعد — استخدم «خطة بالذكاء» لصنعها', linked: 'المهام المرتبطة',
@@ -322,9 +322,9 @@ const ar = {
     inBar: 'في الشريط', available: 'أضف إلى الشريط', allIn: 'كل الشاشات موجودة في الشريط', reset: 'استعادة الترتيب الافتراضي',
   },
   plan: {
-    title: 'خطة بالذكاء', banner: '🎯 حوّل هدفك إلى خطة ومهام تلقائياً', ask: 'ما الهدف الذي تريد الوصول إليه؟', goalPh: 'مثلاً: الوصول إلى مليون دولار',
+    title: 'خطة بالذكاء', interview: 'لنفهم هدفك أولاً', banner: '🎯 حوّل هدفك إلى خطة ومهام تلقائياً', ask: 'ما الهدف الذي تريد الوصول إليه؟', goalPh: 'مثلاً: الوصول إلى مليون دولار',
     examples: ['الوصول إلى مليون دولار', 'إطلاق مشروعي الخاص', 'خسارة 10 كيلو', 'إتقان اللغة الإنجليزية', 'شراء بيت', 'زيادة دخلي الشهري للضعف'],
-    horizon: 'خلال', make: 'اصنع الخطة', milestones: 'المحطات', tasks: 'المهام', weekly: 'متكررة',
+    horizon: 'خلال', make: 'ابدأ بفهم هدفي', milestones: 'المحطات', tasks: 'المهام', weekly: 'متكررة',
     addAll: 'أضف الكل إلى مهامي وتقويمي', again: 'خطة أخرى', added: 'تمت إضافة {n} مهمة مع تذكيراتها',
   },
   sug: {
@@ -685,7 +685,7 @@ const en: Translations = {
     reviewToggle: 'Weekly review reminder (Friday 6 pm)', speakToggle: 'Read reminders and the hourly question aloud', test: 'Test the voice',
   },
   roadmap: {
-    breakdown: 'Break this goal into stages and tasks', breakdownHint: 'The AI lays out stages with dates; under each stage its tasks, and under each task its steps — all sent to your calendar in one tap.',
+    breakdown: 'Plan this goal with me', breakdownHint: 'I first ask about the result you want, your motivation, time, resources and obstacles, then design a plan that fits you — you review and edit it before anything is saved.',
     title: 'My goals', daysLeft: 'days left', idle: 'untouched for {n} days', of: 'of', tasksDone: 'tasks done', update: 'Update number', makeNumber: 'Make it a number',
     pace: 'To land on time you need about {n} {u} a month', next: 'Next step', noNext: 'No next step — ask for a suggestion', suggest: 'Suggest small steps',
     accept: 'Add the chosen to my tasks', milestones: 'Roadmap', noMilestones: 'No milestones yet — use AI plan to make them', linked: 'Linked tasks',
@@ -710,9 +710,9 @@ const en: Translations = {
     inBar: 'In the bar', available: 'Add to the bar', allIn: 'Every screen is already in the bar', reset: 'Restore the default order',
   },
   plan: {
-    title: 'AI plan', banner: '🎯 Turn a goal into a plan and tasks automatically', ask: 'What goal do you want to reach?', goalPh: 'e.g. reach one million dollars',
+    title: 'AI plan', interview: 'Understanding your goal', banner: '🎯 Turn a goal into a plan and tasks automatically', ask: 'What goal do you want to reach?', goalPh: 'e.g. reach one million dollars',
     examples: ['Reach one million dollars', 'Launch my own business', 'Lose 10 kg', 'Master English', 'Buy a house', 'Double my monthly income'],
-    horizon: 'Within', make: 'Make the plan', milestones: 'Milestones', tasks: 'Tasks', weekly: 'repeats',
+    horizon: 'Within', make: 'Start by understanding my goal', milestones: 'Milestones', tasks: 'Tasks', weekly: 'repeats',
     addAll: 'Add all to my tasks and calendar', again: 'Another plan', added: '{n} tasks added with their reminders',
   },
   sug: {

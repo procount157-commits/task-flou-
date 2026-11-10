@@ -50,6 +50,52 @@ export interface Goal extends Base, RewardFields {
   current_value?: number;
   unit?: string;
   value_log?: { date: string; value: number }[];
+  // a milestone made by the goal planner: why it exists, when it is done, and its own window
+  purpose?: string;
+  done_when?: string;
+  start_date?: string;
+  estimated_hours?: number;
+  depends_on?: string[];
+  plan_key?: string;
+  // the interview and profile this goal was planned from
+  interview_id?: string;
+  category?: import('../core/goalinterview').GoalCategory;
+}
+
+// ── goal discovery (src/core/goalinterview.ts, src/core/roadmap.ts) ──
+// One interview per planning attempt; answers are appended, never overwritten, so it resumes after a restart.
+export interface GoalInterview extends Base, Omit<import('../core/goalinterview').InterviewState, never> {
+  goal_id?: string;
+  status: 'active' | 'previewing' | 'approved' | 'rejected' | 'abandoned';
+  /** the last roadmap shown in the preview (with the person's edits), kept so the preview survives a restart */
+  draft?: import('../core/roadmap').Roadmap;
+  calendar?: import('../core/goalinterview').Capacity['calendar'];
+  calendar_minutes?: number;
+}
+// What the planner knew about the person for this goal: motivation, time, execution style, risks, success.
+export interface GoalProfile extends Base {
+  goal_id: string;
+  interview_id: string;
+  brief: import('../core/goalinterview').GoalBrief;
+  success: import('../core/roadmap').SuccessCriterion[];
+  risks: import('../core/roadmap').Risk[];
+  version: number;
+}
+// Every approved roadmap and every approved replan, so earlier plans stay visible.
+export interface GoalPlanVersion extends Base {
+  goal_id: string;
+  version: number;
+  reason: 'initial' | 'replan' | 'deadline' | 'availability';
+  roadmap: import('../core/roadmap').Roadmap;
+  feasibility?: import('../core/roadmap').Feasibility;
+}
+// Audit history: interview steps, approvals, rejections, reviews and replans of a goal.
+export interface GoalActivity extends Base {
+  goal_id?: string;
+  interview_id?: string;
+  kind: 'interview_started' | 'plan_generated' | 'plan_rejected' | 'plan_approved' | 'review' | 'replan_applied' | 'deadline_changed';
+  text: string;
+  data?: Record<string, unknown>;
 }
 
 export interface DailyTask extends Base {
@@ -88,6 +134,11 @@ export interface DailyTask extends Base {
   timezone?: string;
   version?: number;
   schema_version?: number;
+  // goal planner: the workstream this task belongs to, what it waits for, and its key in the approved roadmap
+  project?: string;
+  dependencies?: string[];
+  plan_key?: string;
+  actual_minutes?: number;
 }
 
 export type TaskList = { id: string; name: string; color: string };
@@ -333,5 +384,9 @@ export interface EntityMap {
   Client: Client;
   MotivationSettings: MotivationSettings;
   Reward: Reward;
+  GoalInterview: GoalInterview;
+  GoalProfile: GoalProfile;
+  GoalPlanVersion: GoalPlanVersion;
+  GoalActivity: GoalActivity;
 }
 export type EntityName = keyof EntityMap;
