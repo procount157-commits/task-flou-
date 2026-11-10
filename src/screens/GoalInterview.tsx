@@ -127,6 +127,7 @@ export default function GoalInterview() {
   const [step, setStep] = useState<Step>('interview');
   const [editing, setEditing] = useState<Slot | null>(null);
   const [showWhy, setShowWhy] = useState(false);
+  const [showCat, setShowCat] = useState(false);
   const [multi, setMulti] = useState<string[]>([]);
   const [free, setFree] = useState('');
   const [numVal, setNumVal] = useState('');
@@ -374,19 +375,16 @@ export default function GoalInterview() {
     const pick = (v: string) => (q.multi ? setMulti((m) => (m.includes(v) ? m.filter((x) => x !== v) : [...m, v])) : give({ status: 'answered', value: v, num: q.kind === 'number' ? Number(v) : undefined }));
     return (
       <Screen>
-        {head}
-        {answered.length ? (
-          <Section title={L.answers}>
-            {answered.slice(-4).map((a) => (
-              <Pressable key={a.slot} onPress={() => setEditing(a.slot)} accessibilityRole="button">
-                <Txt v="small">• {a.text} <Txt v="small" color={c.primary}>✎</Txt></Txt>
-              </Pressable>
-            ))}
-          </Section>
-        ) : null}
         <Card style={{ gap: 10, borderWidth: 1, borderColor: c.primary }}>
+          {/* compact header: the question and its answers must fit a small screen without scrolling */}
+          <Row>
+            <Txt v="small" numberOfLines={1} style={{ flex: 1 }}>🧭 {title}</Txt>
+            <Pressable onPress={() => setShowCat((x) => !x)} accessibilityRole="button"><Badge text={`${L.cat[state.category]} ✎`} color={c.primary} /></Pressable>
+          </Row>
+          {showCat ? <Chips scroll options={GOAL_CATEGORIES.map((x) => ({ value: x, label: L.cat[x] }))} value={state.category} onChange={(v) => { save({ category: v as GoalCategory }); setShowCat(false); }} /> : null}
+          <Progress value={Math.round((prog.done / Math.max(1, prog.total)) * 100)} height={4} />
           <Txt v="small" color={c.muted}>{L.progress.replace('{a}', String(Math.min(prog.done + 1, prog.total))).replace('{b}', String(prog.total))}</Txt>
-          <Txt v="h">{q.text}</Txt>
+          <Txt style={{ fontSize: 18, fontWeight: '700' }}>{q.text}</Txt>
           {q.why ? (
             <Pressable onPress={() => setShowWhy((x) => !x)} accessibilityRole="button">
               <Txt v="small" color={c.primary}>💡 {L.whyAsk}</Txt>
@@ -404,6 +402,12 @@ export default function GoalInterview() {
               );
             })}
           </View>
+          <Row wrap>
+            {q.multi || free.trim() ? <Btn small title={L.done} disabled={!multi.length && !free.trim()} onPress={() => give({ status: 'answered', picks: q.multi ? multi : undefined, value: free.trim() || undefined })} /> : null}
+            <Btn small kind="ghost" title={L.unknown} onPress={() => give({ status: 'unknown' })} />
+            <Btn small kind="ghost" title={L.skip} onPress={() => give({ status: 'skipped' })} />
+            {editing ? <Btn small kind="ghost" title={t.c.cancel} onPress={() => setEditing(null)} /> : null}
+          </Row>
           {q.kind === 'number' ? (
             <Row>
               <View style={{ flex: 1 }}><Input keyboardType="numeric" value={numVal} onChangeText={setNumVal} placeholder={q.unit ?? ''} /></View>
@@ -415,14 +419,18 @@ export default function GoalInterview() {
               <VoiceToText compact onText={(x) => x && setFree((f) => (f ? `${f} ${x}` : x))} />
             </>
           )}
-          <Row wrap>
-            {q.multi || free.trim() ? <Btn small title={L.done} disabled={!multi.length && !free.trim()} onPress={() => give({ status: 'answered', picks: q.multi ? multi : undefined, value: free.trim() || undefined })} /> : null}
-            <Btn small kind="ghost" title={L.unknown} onPress={() => give({ status: 'unknown' })} />
-            <Btn small kind="ghost" title={L.skip} onPress={() => give({ status: 'skipped' })} />
-            {editing ? <Btn small kind="ghost" title={t.c.cancel} onPress={() => setEditing(null)} /> : null}
-          </Row>
         </Card>
         {ready?.canGenerate ? <Btn kind="ghost" title={`✨ ${L.build}`} onPress={() => { setEditing(null); setStep('gate'); }} /> : null}
+        {!state.answers.some((a) => a.source === 'user') ? <Txt v="small">{L.intro}</Txt> : null}
+        {answered.length ? (
+          <Section title={L.answers}>
+            {answered.slice(-4).map((a) => (
+              <Pressable key={a.slot} onPress={() => setEditing(a.slot)} accessibilityRole="button">
+                <Txt v="small">• {a.text} <Txt v="small" color={c.primary}>✎</Txt></Txt>
+              </Pressable>
+            ))}
+          </Section>
+        ) : null}
       </Screen>
     );
   }
@@ -435,6 +443,7 @@ export default function GoalInterview() {
     return (
       <Screen>
         {head}
+        <Btn title={`✨ ${ready!.canGenerate ? L.build : L.buildAnyway}`} disabled={!ready!.canGenerate && ready!.missing.some((m) => m.essential && m.field === 'goal_clarity')} onPress={() => design()} style={{ paddingVertical: 15 }} />
         <Card style={{ gap: 8 }}>
           <Txt v="h">{L.gateTitle}</Txt>
           {Object.entries(ready!.fields).map(([f, v]) => (
@@ -448,7 +457,6 @@ export default function GoalInterview() {
             <Btn key={m.slot} small kind="ghost" title={`${m.essential ? '❗' : '＋'} ${L.fields[m.field]}`} onPress={() => { setEditing(m.slot); setStep('interview'); }} />
           ))}
         </Card>
-        <Btn title={`✨ ${ready!.canGenerate ? L.build : L.buildAnyway}`} disabled={!ready!.canGenerate && ready!.missing.some((m) => m.essential && m.field === 'goal_clarity')} onPress={() => design()} style={{ paddingVertical: 15 }} />
         <Btn kind="ghost" title={L.more} onPress={() => { save({ extra: true }); setStep('interview'); }} />
         <Btn kind="ghost" title={L.back} onPress={() => { setEditing('outcome'); setStep('interview'); }} />
       </Screen>
