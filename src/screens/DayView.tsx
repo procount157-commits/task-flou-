@@ -12,8 +12,9 @@ import { addDays, fmtDate, today } from '@/lib/dates';
 import { db, useEntity, useKV } from '@/lib/db';
 import { DeviceEvent, autoSyncTask, readDeviceEvents } from '@/lib/devicecal';
 import { Slot, arrangeDay, lengthOf, toHHMM, toMin } from '@/lib/schedule';
+import { overlaps, planDay } from '@/core/scheduler';
 import type { DailyTask } from '@/lib/types';
-import { Btn, Row, Sheet, Txt } from '@/ui/kit';
+import { Btn, Row, Sheet, Txt, notice } from '@/ui/kit';
 import { useUndo } from '@/ui/shared';
 import { Text } from '@/ui/text';
 
@@ -119,9 +120,27 @@ export default function DayView() {
     if (!open.length) return;
     setBusy(true);
     const now = new Date();
-    const slots = await ai(() => arrangeDay(day, open, events.map((e) => ({ title: e.title, start: e.time ?? '00:00', end: e.end ?? e.time ?? '00:00' })), profile, day === today() ? toHHMM(now.getHours() * 60 + now.getMinutes()) : null, lang));
+    const nowHHMM = day === today() ? toHHMM(now.getHours() * 60 + now.getMinutes()) : null;
+    const slots = await ai(() => arrangeDay(day, open, events.map((e) => ({ title: e.title, start: e.time ?? '00:00', end: e.end ?? e.time ?? '00:00' })), profile, nowHHMM, lang));
     setBusy(false);
-    if (slots?.length) setPlan(slots);
+    // the AI's answer is checked: a block over a calendar event, over another block, in the past or for an unknown task is dropped,
+    // and whatever is left over is placed by the deterministic scheduler in real free time
+    const busyIv = events.map((e) => ({ start: toMin(e.time) ?? 0, end: toMin(e.end) ?? (toMin(e.time) ?? 0) + 60 }));
+    const ok: Slot[] = [];
+    for (const sl of slots ?? []) {
+      const st = toMin(sl.time);
+      const iv = st === null ? null : { start: st, end: st + sl.minutes };
+      if (!iv || !open.some((x) => x.id === sl.id) || ok.some((o) => o.id === sl.id) || overlaps(iv, busyIv) || (nowHHMM && sl.time < nowHHMM) || iv.end > 24 * 60) continue;
+      ok.push(sl);
+      busyIv.push(iv);
+    }
+    const rest = open.filter((x) => !ok.some((o) => o.id === x.id));
+    const det = planDay(rest.map((x) => ({ id: x.id, minutes: lengthOf(x, subsOf(x.id)), priority: x.priority, due_date: x.due_date })), busyIv, {
+      dayStart: profile?.wake_time && /^\d\d:\d\d$/.test(profile.wake_time) ? profile.wake_time : '08:00', dayEnd: profile?.sleep_time && profile.sleep_time > '12:00' ? profile.sleep_time : '22:00', buffer: 5, notBefore: nowHHMM ?? undefined,
+    });
+    const all2 = [...ok, ...det.placed.map((p) => ({ id: p.id, time: p.time, minutes: p.minutes }))];
+    if (det.unplaced.length) notice(t.cap.noRoom.replace('{n}', String(det.unplaced.length)));
+    if (all2.length) setPlan(all2);
   };
   const applyPlan = async () => {
     if (!plan) return;

@@ -8,10 +8,13 @@ import { prioColor, useAI } from './taskparts';
 import { useLang, useTheme } from '@/ctx/Lang';
 import { addDays, fmtDate, nowTime, today } from '@/lib/dates';
 import { db, useEntity, useKV } from '@/lib/db';
-import { CalendarStatus, calendarStatus, saveTaskToCalendar } from '@/lib/devicecal';
+import { CalendarStatus, DeviceEvent, calendarStatus, readDeviceEvents, saveTaskToCalendar } from '@/lib/devicecal';
+import { capture } from '@/core/capture';
+import { freeSlots } from '@/core/scheduler';
+import { fromMinutes, toMinutes } from '@/core/task';
+import { BreakdownEditor } from '@/ui/BreakdownEditor';
 import { logError } from '@/lib/errlog';
-import { smartTask, splitTask, suggestTasks, timeboxTask } from '@/lib/integrations';
-import { parseTask } from '@/lib/nlp';
+import { Step, breakdownTask, smartTask, suggestTasks } from '@/lib/integrations';
 import { addSteps } from '@/lib/steps';
 import type { DailyTask, Priority, TaskList } from '@/lib/types';
 import { Txt, notice } from '@/ui/kit';
@@ -72,10 +75,13 @@ export function AddTask({ visible, onClose, defaultDate, listId, goalId }: Props
   const [prio, setPrio] = useState<Priority | undefined>();
   const [goal, setGoal] = useState<string | undefined>(goalId);
   const [list, setList] = useState<string | undefined>(listId);
-  const [steps, setSteps] = useState<string[]>([]);
+  const [steps, setSteps] = useState<Step[]>([]);
+  const [due, setDue] = useState<string | undefined>();
+  const [bdErr, setBdErr] = useState('');
+  const [events, setEvents] = useState<DeviceEvent[]>([]);
   const [typed, setTyped] = useState('');
   const [picking, setPicking] = useState<'date' | 'time' | null>(null);
-  const [busy, setBusy] = useState<'smart' | 'save' | 'suggest' | null>(null);
+  const [busy, setBusy] = useState<'smart' | 'save' | 'suggest' | 'split' | null>(null);
   const [done, setDone] = useState('');
   const [cal, setCal] = useState<CalendarStatus | null | undefined>(undefined);
   const [aiItems, setAiItems] = useState<string[]>([]);
@@ -91,6 +97,8 @@ export function AddTask({ visible, onClose, defaultDate, listId, goalId }: Props
     setGoal(goalId);
     setList(listId);
     setSteps([]);
+    setDue(undefined);
+    setBdErr('');
     setDone('');
     setTyped('');
     calendarStatus().then(setCal).catch(() => setCal(null));
@@ -99,19 +107,29 @@ export function AddTask({ visible, onClose, defaultDate, listId, goalId }: Props
   const openGoals = useMemo(() => goals.filter((g) => g.status !== 'completed' && g.status !== 'cancelled').slice(0, 8), [goals]);
   const dayTasks = useMemo(() => tasks.filter((x) => x.date === date && !x.parent_id && !x.completed), [tasks, date]);
 
-  // the first whole hour from now (or from 09:00 on another day) that no task of that day sits in
+  // the phone calendar's own events of that day count as busy, so a suggested time never sits on a meeting
+  useEffect(() => {
+    if (!visible || !date) return setEvents([]);
+    readDeviceEvents(date, date).then(setEvents).catch((e) => (logError('calendar-read', e), setEvents([])));
+  }, [visible, date]);
+  // the first gap long enough for the task, after now, between 08:00 and 22:00, around tasks and calendar events
   const freeTime = useMemo(() => {
-    const taken = new Set(dayTasks.map((x) => x.time?.slice(0, 2)).filter(Boolean));
-    let h = date === day ? Number(nowTime().slice(0, 2)) + 1 : 9;
-    while (h < 22 && taken.has(pad(h))) h++;
-    return h <= 22 ? `${pad(h)}:00` : undefined;
-  }, [dayTasks, date, day]);
+    if (!date) return undefined;
+    const busyIv = [
+      ...dayTasks.filter((x) => x.time).map((x) => ({ start: toMinutes(x.time!), end: toMinutes(x.time!) + (x.minutes ?? 30) })),
+      ...events.filter((e) => e.date === date).map((e) => (e.allDay ? null : { start: toMinutes(e.time ?? '00:00'), end: e.end ? toMinutes(e.end) : toMinutes(e.time ?? '00:00') + 60 })).filter((x): x is { start: number; end: number } => !!x),
+    ];
+    const need = minutes ?? 30;
+    const gaps = freeSlots(busyIv, '08:00', '22:00', 5, date === day ? nowTime() : undefined);
+    const g = gaps.map((x) => ({ start: Math.ceil(x.start / 15) * 15, end: x.end })).find((x) => x.end - x.start >= need);
+    return g ? fromMinutes(g.start) : undefined;
+  }, [dayTasks, events, date, day, minutes]);
 
   // what the sentence itself says is shown at once, so there is no doubt about what will be saved
   const parsed = useMemo(() => {
     const first = typed.split('\n').find((l) => l.trim());
-    return first ? parseTask(first, day) : null;
-  }, [typed, day]);
+    return first ? capture(first, day, openGoals) : null;
+  }, [typed, day, openGoals]);
   const onPause = useCallback((text: string) => setTyped(text), []);
 
   const suggestions = useMemo(() => {
@@ -144,7 +162,21 @@ export function AddTask({ visible, onClose, defaultDate, listId, goalId }: Props
     if (s.priority) setPrio(s.priority);
     const linked = s.goal && openGoals.find((g) => g.title === s.goal);
     if (linked) setGoal(linked.id);
-    setSteps(s.steps ?? []);
+    const n = s.steps?.length ?? 0;
+    setSteps((s.steps ?? []).map((title) => ({ title, minutes: s.minutes && n ? Math.max(5, Math.round(s.minutes / n / 5) * 5) : 15 })));
+  };
+
+  // AI steps shown in an editor first; nothing is saved until the task is saved
+  const split = async (again = false) => {
+    const text = (input.current?.get() ?? '').split('\n').find((l) => l.trim());
+    if (!text) return notice(t.add.empty);
+    setBusy('split');
+    setBdErr('');
+    const title = capture(text, day).title;
+    const xs = await ai(() => breakdownTask(title, { total: minutes ?? parsed?.minutes, avoid: again ? steps.map((x) => x.title) : undefined }, lang));
+    setBusy(null);
+    if (xs?.length) setSteps(xs);
+    else setBdErr(t.bd.invalid);
   };
 
   const suggest = async () => {
@@ -163,21 +195,25 @@ export function AddTask({ visible, onClose, defaultDate, listId, goalId }: Props
     try {
       for (const line of lines) {
         // a date, time or priority said in the sentence wins over the chips
-        const p = parseTask(line, day);
-        const when = p.date ?? date;
-        const at = p.time ?? time;
-        const length = p.minutes ?? minutes;
+        const p = capture(line, day, openGoals);
+        // the sentence wins over the chips; «لاحقاً» or an Inbox chip keeps it off the calendar
+        const when = p.inbox && !p.understood.includes('date') ? (p.understood.includes('deadline') || /لاحق|later|inbox|بدون موعد|الوارد|someday/i.test(line) ? '' : date) : p.date ?? date;
+        const at = when ? p.time ?? time : undefined;
+        const length = p.minutes ?? minutes ?? (lines.length === 1 && steps.length ? steps.reduce((n, x) => n + (x.minutes ?? 0), 0) || undefined : undefined);
+        const days = p.recurrence?.freq === 'daily' ? [0, 1, 2, 3, 4, 5, 6] : p.recurrence?.days ?? [];
         const made = await db.create('DailyTask', {
-          title: p.title.trim() || line, date: when, time: at, end_time: at && length ? plus(at, length) : undefined, minutes: length,
-          priority: p.priority ?? prio, goal_id: goal, list_id: list, completed: false, repeat_days: [],
+          title: p.title.trim() || line, date: when, time: at, end_time: p.end_time ?? (at && length ? plus(at, length) : undefined), minutes: length,
+          priority: p.priority ?? prio, goal_id: p.goal_id ?? goal, list_id: list, completed: false, repeat_days: days,
+          due_date: p.due_date ?? due, description: p.description, tags: p.tags.length ? p.tags : undefined, reminder_minutes: p.reminder_minutes,
+          effort: p.effort, status: when ? 'planned' : 'inbox', source: 'quick_capture', schema_version: 2, version: 1,
         });
         last = made;
         // written to the calendar now, so the confirmation below is the truth
-        if (autoCal && (await saveTaskToCalendar(made).catch((e) => (logError('calendar', e), false)))) written++;
+        if (autoCal && made.date && (await saveTaskToCalendar(made).catch((e) => (logError('calendar', e), false)))) written++;
         // steps follow the task: timed one after another when it has a time, each with its own calendar entry
         if (lines.length === 1 && steps.length) await addSteps(made, steps);
         else if (autoSplit)
-          (at ? timeboxTask(made.title, length ?? 60, undefined, lang).then((xs) => xs.map((x) => ({ title: x.step, minutes: x.minutes }))) : splitTask(made.title, lang))
+          breakdownTask(made.title, { total: at ? length ?? 60 : undefined }, lang)
             .then((xs) => addSteps(made, xs))
             .catch((e) => logError('auto-split', e));
       }
@@ -185,7 +221,8 @@ export function AddTask({ visible, onClose, defaultDate, listId, goalId }: Props
       setBusy(null);
     }
     const head = lines.length === 1 ? `${t.add.saved}: ${last?.title ?? ''}` : t.add.savedMany.replace('{n}', String(lines.length));
-    const tail = !autoCal ? '' : written === lines.length ? ` · ${t.add.inCal} ${cal?.name ?? ''}` : ` · ${t.add.notInCal}`;
+    const dated = lines.length - (last && !last.date && lines.length === 1 ? 1 : 0);
+    const tail = !autoCal || !dated ? (last && !last.date ? ` · 📥 ${t.tasks.inbox}` : '') : written === dated ? ` · ${t.add.inCal} ${cal?.name ?? ''}` : ` · ${t.add.notInCal}`;
     if (!keepOpen) return onClose();
     setDone(head + tail);
     fill('');
@@ -238,26 +275,41 @@ export function AddTask({ visible, onClose, defaultDate, listId, goalId }: Props
               </Pressable>
             </View>
             <Txt v="small">{t.add.smartHint}</Txt>
-            {parsed && (parsed.date || parsed.time || parsed.priority || parsed.minutes) ? (
+            {parsed && parsed.understood.length ? (
               <Txt v="small" color={c.primary}>
-                ✨ {t.nlp.understood}: {[parsed.date && `📅 ${fmtDate(parsed.date, lang, t.c)}`, parsed.time && `🕐 ${parsed.time}`, parsed.minutes && `⏱ ${parsed.minutes}`, parsed.priority && `🚩 ${t.prio[parsed.priority]}`].filter(Boolean).join('  ')}
+                ✨ {t.nlp.understood}: {[
+                  parsed.date && `📅 ${fmtDate(parsed.date, lang, t.c)}`, parsed.time && `🕐 ${parsed.time}${parsed.end_time ? `–${parsed.end_time}` : ''}`, parsed.minutes && `⏱ ${parsed.minutes}`,
+                  parsed.priority && `🚩 ${t.prio[parsed.priority]}`, parsed.due_date && `⏳ ${fmtDate(parsed.due_date, lang, t.c)}`, parsed.recurrence && `🔁 ${parsed.recurrence.freq}`,
+                  parsed.reminder_minutes && `⏰ ${parsed.reminder_minutes[0]}`, parsed.tags.length && parsed.tags.map((x) => `#${x}`).join(' '), parsed.project && `+${parsed.project}`,
+                  parsed.goal_id && `🎯 ${openGoals.find((g) => g.id === parsed.goal_id)?.title ?? ''}`, !parsed.date && parsed.inbox && '📥',
+                ].filter(Boolean).join('  ')}
               </Txt>
             ) : null}
+            <Pressable onPress={() => split(false)} disabled={!!busy} accessibilityRole="button" style={{ paddingVertical: 10, borderRadius: 12, borderWidth: 1, borderColor: c.primary, alignItems: 'center', opacity: busy ? 0.6 : 1 }}>
+              <Text style={{ color: c.primary, fontSize: 15, fontWeight: '700' }}>{busy === 'split' ? t.c.aiWorking : t.bd.make}</Text>
+            </Pressable>
           </View>
 
-          {steps.length ? group(t.add.steps, steps.map((s, i) => chip(`s${i}`, `${i + 1}. ${s}  ✕`, false, () => setSteps(steps.filter((_, k) => k !== i))))) : null}
+          {steps.length || bdErr ? <BreakdownEditor steps={steps} onChange={setSteps} onRegenerate={() => split(true)} busy={busy === 'split'} error={bdErr} /> : null}
 
           {group(t.add.when, [
+            chip('inbox', t.cap.inbox, !date, () => { setDate(''); setTime(undefined); }),
             ...quickDates.map((d, i) => chip(d, dateLabels[i], date === d, () => setDate(d))),
-            chip('other', quickDates.includes(date) ? t.add.otherDate : `📅 ${fmtDate(date, lang, t.c, true)}`, !quickDates.includes(date), () => setPicking('date')),
+            chip('other', !date || quickDates.includes(date) ? t.add.otherDate : `📅 ${fmtDate(date, lang, t.c, true)}`, !!date && !quickDates.includes(date), () => setPicking('date')),
           ])}
 
-          {group(t.add.time, [
+          {group(t.due.label, [
+            chip('nodue', t.due.none, !due, () => setDue(undefined)),
+            ...[[day, t.c.today], [addDays(day, 1), t.c.tomorrow], [addDays(day, 3), t.due.in3], [addDays(day, 7), t.add.nextWeek]].map(([d, l]) => chip(`due${d}`, `⏳ ${l}`, due === d, () => setDue(due === d ? undefined : d), c.warn)),
+          ])}
+
+          {date ? group(t.add.time, [
             chip('none', t.add.noTime, !time, () => setTime(undefined)),
             ...(freeTime ? [chip('free', `${t.add.free} ${freeTime}`, time === freeTime, () => setTime(freeTime))] : []),
             ...TIMES.filter((x) => x !== freeTime).map((x) => chip(x, x, time === x, () => setTime(x))),
             chip('othertime', time && time !== freeTime && !TIMES.includes(time) ? `🕐 ${time}` : t.add.otherTime, !!time && time !== freeTime && !TIMES.includes(time), () => setPicking('time')),
-          ])}
+          ]) : null}
+          {date && events.length ? <Txt v="small">📅 {t.cap.busyNote}</Txt> : null}
 
           {group(t.add.duration, DURATIONS.map((m) => chip(String(m), String(m), minutes === m, () => setMinutes(minutes === m ? undefined : m))))}
 
@@ -283,7 +335,7 @@ export function AddTask({ visible, onClose, defaultDate, listId, goalId }: Props
           ])}
         </ScrollView>
 
-        <DatePickerSheet visible={picking === 'date'} value={date} onChange={(v) => v && setDate(v)} onClose={() => setPicking(null)} allowClear={false} />
+        <DatePickerSheet visible={picking === 'date'} value={date || day} onChange={(v) => v && setDate(v)} onClose={() => setPicking(null)} allowClear={false} />
         <TimePickerSheet visible={picking === 'time'} value={time} onChange={setTime} onClose={() => setPicking(null)} />
       </View>
     </Modal>

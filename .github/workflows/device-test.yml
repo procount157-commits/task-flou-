@@ -23,6 +23,7 @@ jobs:
           distribution: temurin
           java-version: 17
       - run: npm ci
+      - run: npm test
       - run: npx expo prebuild --platform android --no-install
       # debuggable so run-as can seed the storage; everything else is the release build
       - run: sed -i 's/^\(\s*\)release {/\1release {\n\1    debuggable true/' android/app/build.gradle

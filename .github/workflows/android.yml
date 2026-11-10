@@ -28,6 +28,7 @@ jobs:
           distribution: temurin
           java-version: 17
       - run: npm ci
+      - run: npm test
       - run: npx tsc --noEmit
       - run: npx expo prebuild --platform android --no-install
       - name: Build release APK

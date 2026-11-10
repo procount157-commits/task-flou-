@@ -304,7 +304,7 @@ const ar = {
     current: 'الرقم الحالي', target: 'الهدف', unit: 'الوحدة', units: ['دولار', 'درهم', 'كيلو', 'كتاب', 'عميل', 'ساعة', '%'], pyramid: 'هرم الأهداف', empty: 'لا أهداف بعد — ابدأ بخطة بالذكاء',
   },
   review: { numbers: 'الأسبوع بالأرقام', rate: 'إنجاز', focus: 'تركيز', distracted: 'ساعات مشتتة', far: 'بعيد عن أهدافي', went: 'أين ذهبت الساعات', title: 'المراجعة الأسبوعية', stats: 'هذا الأسبوع: أنجزت {d} من {p} مهمة، و{h} جلسة ساعة', run: 'اكتب مراجعة أسبوعي', again: 'مراجعة جديدة', from: 'آخر مراجعة:', wins: 'ما نجح', slipping: 'ما تأخر', next: 'مقترح للأسبوع القادم', accept: 'أضف المختارة إلى الأسبوع القادم' },
-  day: { title: 'يومي', arrange: 'رتّب يومي بالذكاء الاصطناعي', arranged: 'رُتّب اليوم', proposal: 'الترتيب المقترح', apply: 'طبّق الترتيب', noTime: 'بلا وقت', hint: 'اضغط مطولاً على المهمة واسحبها لتغيير وقتها' },
+  day: { title: 'اليوم', arrange: 'رتّب يومي بالذكاء الاصطناعي', arranged: 'رُتّب اليوم', proposal: 'الترتيب المقترح', apply: 'طبّق الترتيب', noTime: 'بلا وقت', hint: 'اضغط مطولاً على المهمة واسحبها لتغيير وقتها' },
   undo: { undo: 'تراجع', moved: 'نُقلت {n} مهمة', done: 'اكتملت {n} مهمة', deleted: 'حُذفت {n} مهمة' },
   swipe: {
     done: 'تمّت', later: 'أجّل', title: 'أجّل إلى…', hour: 'بعد ساعة', tonight: 'الليلة 8:00', tomorrow: 'بكرة', dayAfter: 'بعد بكرة', nextWeek: 'الأسبوع القادم', pick: 'اختر يوماً',
@@ -359,12 +359,15 @@ const ar = {
     suggestAI: '✨ اقترح لي مهام', suggested: 'اقتراحات', addAll: '➕ أضف الكل', autoSplit: '✂️ قسّم كل مهمة جديدة إلى مهام فرعية تلقائياً',
   },
   tasks: {
-    lists: { today: 'اليوم', tomorrow: 'غداً', week: 'الأيام السبعة القادمة', all: 'الكل', done: 'المكتملة' },
+    lists: { today: 'اليوم', tomorrow: 'غداً', week: 'الأيام السبعة القادمة', inbox: '📥 الوارد (بدون موعد)', all: 'الكل', done: 'المكتملة' },
     overdue: 'متأخرة', completed: 'مكتملة', quickPh: 'أضف مهمة…', notes: 'ملاحظات', moreOptions: 'الربط وخيارات أخرى',
     empty: 'لا مهام هنا — اضغط + لإضافة مهمة', left: 'متبقية', noPrio: 'بدون أولوية', smart: 'القوائم الذكية', myLists: 'قوائمي', newList: 'قائمة جديدة', listName: 'اسم القائمة', inbox: 'الوارد', matrix: 'مصفوفة أيزنهاور', addTitle: 'ماذا تريد أن تنجز؟',
     quad: ['عاجل ومهم', 'مهم غير عاجل', 'عاجل غير مهم', 'غير عاجل وغير مهم'],
     listSug: ['العمل', 'شخصي', 'البيت', 'الدراسة', 'التسوق', 'مشاريع'],
   },
+  due: { today: 'موعدها النهائي اليوم', label: '⏳ الموعد النهائي (اختياري)', none: 'بلا موعد نهائي', in3: 'بعد 3 أيام', hint: 'الموعد النهائي لا يُحجز في التقويم — هو آخر يوم للإنجاز' },
+  bd: { title: '✂️ خطوات المهمة (عدّلها قبل الحفظ)', make: '✂️ قسّمها بالذكاء', remake: '🔄 اقتراح آخر', add: '+ خطوة', ph: 'خطوة جديدة…', invalid: 'رد الذكاء غير صالح — جرّب «اقتراح آخر»', total: 'المجموع', min: 'د', clear: 'إلغاء الخطوات' },
+  cap: { inbox: '📥 بدون موعد (الوارد)', repeat: '🔁', remind: '⏰ تذكير قبل', tags: '#', range: 'من–إلى', busyNote: 'الأوقات المقترحة تتجنب مواعيدك في تقويم الهاتف', planDay: '🧠 رتّب يومي حول مواعيدي', planned: 'رُتّبت {n} مهام في أوقات فارغة', noRoom: 'لم يتسع اليوم لـ {n}', nothing: 'لا مهام بلا وقت لترتيبها اليوم' },
   add: {
     title: 'مهمة جديدة', what: 'ماذا تريد أن تنجز؟', multi: 'كل سطر مهمة مستقلة · يمكنك كتابة «بكرة 5 العصر مهم» وسأفهمها', when: '📅 متى', afterTomorrow: 'بعد غد', nextWeek: 'بعد أسبوع', otherDate: 'تاريخ آخر…',
     time: '🕐 الوقت', noTime: 'بدون وقت', free: 'أول وقت فارغ', otherTime: 'وقت آخر…', duration: '⏱ المدة (دقيقة)', priority: '🚩 الأولوية', goal: '🎯 الهدف المرتبط', list: '📋 القائمة',
@@ -689,7 +692,7 @@ const en: Translations = {
     current: 'Current number', target: 'Target', unit: 'Unit', units: ['USD', 'AED', 'kg', 'books', 'clients', 'hours', '%'], pyramid: 'Goal pyramid', empty: 'No goals yet — start with AI plan',
   },
   review: { numbers: 'The week in numbers', rate: 'done', focus: 'focus', distracted: 'distracted hours', far: 'far from goals', went: 'Where the hours went', title: 'Weekly review', stats: 'This week: {d} of {p} tasks done, {h} hourly sessions', run: 'Write my weekly review', again: 'New review', from: 'Last review:', wins: 'What worked', slipping: 'What slipped', next: 'Suggested for next week', accept: 'Add the chosen to next week' },
-  day: { title: 'My day', arrange: 'Arrange my day with AI', arranged: 'Day arranged', proposal: 'Proposed schedule', apply: 'Apply', noTime: 'No time', hint: 'Hold a task and drag it to change its time' },
+  day: { title: 'Today', arrange: 'Arrange my day with AI', arranged: 'Day arranged', proposal: 'Proposed schedule', apply: 'Apply', noTime: 'No time', hint: 'Hold a task and drag it to change its time' },
   undo: { undo: 'Undo', moved: '{n} tasks moved', done: '{n} tasks completed', deleted: '{n} tasks deleted' },
   swipe: {
     done: 'Done', later: 'Later', title: 'Postpone to…', hour: 'In an hour', tonight: 'Tonight 8:00', tomorrow: 'Tomorrow', dayAfter: 'Day after', nextWeek: 'Next week', pick: 'Pick a day',
@@ -744,12 +747,15 @@ const en: Translations = {
     suggestAI: '✨ Suggest tasks for me', suggested: 'Suggestions', addAll: '➕ Add all', autoSplit: '✂️ Split every new task into subtasks automatically',
   },
   tasks: {
-    lists: { today: 'Today', tomorrow: 'Tomorrow', week: 'Next 7 days', all: 'All', done: 'Completed' },
+    lists: { today: 'Today', tomorrow: 'Tomorrow', week: 'Next 7 days', inbox: '📥 Inbox (no date)', all: 'All', done: 'Completed' },
     overdue: 'Overdue', completed: 'Completed', quickPh: 'Add a task…', notes: 'Notes', moreOptions: 'Links and more options',
     empty: 'Nothing here — press + to add a task', left: 'left', noPrio: 'No priority', smart: 'Smart lists', myLists: 'My lists', newList: 'New list', listName: 'List name', inbox: 'Inbox', matrix: 'Eisenhower matrix', addTitle: 'What would you like to do?',
     quad: ['Urgent & important', 'Important, not urgent', 'Urgent, not important', 'Neither'],
     listSug: ['Work', 'Personal', 'Home', 'Study', 'Shopping', 'Projects'],
   },
+  due: { today: 'Due today', label: '⏳ Deadline (optional)', none: 'No deadline', in3: 'In 3 days', hint: 'A deadline is not booked on the calendar — it is the last day to finish' },
+  bd: { title: '✂️ Steps (edit before saving)', make: '✂️ Break it down with AI', remake: '🔄 Another suggestion', add: '+ Step', ph: 'New step…', invalid: 'The AI reply was not valid — try "Another suggestion"', total: 'Total', min: 'm', clear: 'Remove steps' },
+  cap: { inbox: '📥 No date (Inbox)', repeat: '🔁', remind: '⏰ Remind before', tags: '#', range: 'From–to', busyNote: 'Suggested times avoid your phone calendar events', planDay: '🧠 Plan my day around my events', planned: 'Placed {n} tasks in free time', noRoom: 'No room today for {n}', nothing: 'No untimed tasks to place today' },
   add: {
     title: 'New task', what: 'What would you like to do?', multi: 'One task per line · you can write "tomorrow 5pm important" and it is understood', when: '📅 When', afterTomorrow: 'In 2 days', nextWeek: 'In a week', otherDate: 'Another date…',
     time: '🕐 Time', noTime: 'No time', free: 'First free slot', otherTime: 'Another time…', duration: '⏱ Length (minutes)', priority: '🚩 Priority', goal: '🎯 Linked goal', list: '📋 List',

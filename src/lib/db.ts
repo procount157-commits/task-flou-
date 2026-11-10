@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 
 import type { Base, EntityMap, EntityName } from './types';
+import { TASK_SCHEMA_VERSION, migrateTask } from '../core/task';
 
 // Every entity is one AsyncStorage key holding a JSON array, mirrored in memory so screens read synchronously.
 const cache: Partial<Record<EntityName, any[]>> = {};
@@ -24,8 +25,17 @@ function emit(name: EntityName) {
 function ensure(name: EntityName): Promise<void> {
   if (!pending[name]) {
     pending[name] = AsyncStorage.getItem(key(name))
-      .then((raw) => {
-        cache[name] = raw ? JSON.parse(raw) : [];
+      .then(async (raw) => {
+        const rows: any[] = raw ? JSON.parse(raw) : [];
+        // tasks from before the v2 model are migrated once; the original JSON is kept as a backup first
+        if (name === 'DailyTask' && rows.some((r) => (r.schema_version ?? 1) < TASK_SCHEMA_VERSION)) {
+          const bk = `backup:v1:${key(name)}`;
+          if (!(await AsyncStorage.getItem(bk))) await AsyncStorage.setItem(bk, raw!);
+          const tz = (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone; } catch { return undefined; } })();
+          const next = rows.map((r) => migrateTask(r, tz));
+          await AsyncStorage.setItem(key(name), JSON.stringify(next));
+          cache[name] = next;
+        } else cache[name] = rows;
       })
       .catch(() => {
         cache[name] = [];

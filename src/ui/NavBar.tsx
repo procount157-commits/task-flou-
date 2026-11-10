@@ -22,7 +22,7 @@ export const NAV_CATALOG: NavItem[] = [
   { key: 'habits', path: '/habits', route: 'habits', icon: 'flame-outline', label: (t) => t.nav.habits },
   { key: 'matrix', path: '/matrix', route: 'matrix', icon: 'grid-outline', label: (t) => t.tasks.matrix },
   { key: 'focus', path: '/pomodoro', route: 'pomodoro', icon: 'timer-outline', label: (t) => t.nav.focus },
-  { key: 'goals', path: '/roadmap', route: 'roadmap', icon: 'trophy-outline', label: (t) => t.roadmap.title },
+  { key: 'goals', path: '/roadmap', route: 'roadmap', icon: 'trophy-outline', label: (t) => t.nav.goals },
   { key: 'review', path: '/review', route: 'review', icon: 'clipboard-outline', label: (t) => t.review.title },
   { key: 'dashboard', path: '/dashboard', route: 'dashboard', icon: 'home-outline', label: (t) => t.nav.dashboard },
   { key: 'journal', path: '/journal', route: 'journal', icon: 'book-outline', label: (t) => t.nav.journal },
@@ -39,7 +39,9 @@ export const NAV_CATALOG: NavItem[] = [
   { key: 'search', path: '/search', route: 'search', icon: 'search-outline', label: (t) => t.search.title },
   { key: 'settings', path: '/profile-settings', route: 'profile-settings', icon: 'settings-outline', label: (t) => t.nav.settings },
 ];
-export const NAV_DEFAULT = ['tasks', 'day', 'calendar', 'checkin', 'goals', 'ai', 'plan', 'habits', 'matrix', 'focus'];
+// Five places: Today, Tasks, Goals, Calendar + More. Everything else lives in More (and can be pinned by long-press).
+export const NAV_DEFAULT = ['day', 'tasks', 'goals', 'calendar'];
+export const NAV_VERSION = 2;
 
 type BarProps = { state: { index: number; routes: { name: string }[] } };
 
@@ -50,13 +52,18 @@ export function NavBar({ state }: BarProps) {
   const { t, dir } = useLang();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const [keys] = useKV<string[]>('navbar', NAV_DEFAULT);
+  const [keys, setKeys] = useKV<string[]>('navbar', NAV_DEFAULT);
+  const [navV, setNavV] = useKV<number>('navbar:v', 0);
+  // the old ten-item bar is replaced once by the five-place layout; later edits by the user are kept
+  React.useEffect(() => {
+    if (navV < NAV_VERSION) setKeys(NAV_DEFAULT).then(() => setNavV(NAV_VERSION));
+  }, [navV, setKeys, setNavV]);
   const active = state.routes[state.index]?.name;
   const items = keys.map((k) => NAV_CATALOG.find((x) => x.key === k)).filter((x): x is NavItem => !!x);
 
   const tab = (key: string, icon: keyof typeof Ionicons.glyphMap, label: string, on: boolean, go: () => void) => (
     <Pressable key={key} onPress={go} onLongPress={() => router.push('/navbar')} accessibilityRole="tab" accessibilityState={{ selected: on }} accessibilityLabel={label}
-      style={{ width: 70, alignItems: 'center', paddingTop: 7, paddingBottom: 5, gap: 2 }}>
+      style={{ minWidth: 64, flex: 1, alignItems: 'center', paddingTop: 7, paddingBottom: 5, gap: 2 }}>
       <View style={{ paddingHorizontal: 14, paddingVertical: 3, borderRadius: 14, backgroundColor: on ? c.soft : 'transparent' }}>
         <Ionicons name={on ? (icon.replace('-outline', '') as typeof icon) : icon} size={22} color={on ? c.primary : c.muted} />
       </View>

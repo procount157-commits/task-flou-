@@ -77,6 +77,20 @@ tap 'حفظ + أخرى'; shot add-saved 6
 adb shell input keyevent 4; sleep 1; adb shell input keyevent 4; sleep 1
 go ""; shot tasks-after-add 3
 
+# v15 journeys. A: a deadline-only sentence lands in the Inbox (no date, no calendar event)
+go ""; tap 'إضافة مهمة'; adb shell input text 'submit%stax%sform%sby%sfriday'; shot jA-typed 3
+tap 'حفظ + أخرى'; shot jA-saved 5
+# B: a time range + AI breakdown shown in the editor before saving
+adb shell input text 'gym%stomorrow%s6-7pm'; shot jB-typed 3
+tap 'قسّمها بالذكاء'; shot jB-breakdown 16
+tap 'اقتراح آخر'; shot jB-regenerated 16
+tap 'حفظ + أخرى'; shot jB-saved 6
+adb shell input keyevent 4; sleep 1; adb shell input keyevent 4; sleep 1
+# C: the Inbox list, Today with "arrange", Goals, the 5-place bar
+go ""; tap 'القوائم الذكية'; shot jC-drawer 2; tap 'الوارد'; shot jC-inbox 3
+go "day"; shot jC-today 3; tap 'رتّب يومي'; shot jC-arranged 16
+go "roadmap"; shot jC-goals 3
+
 # v14: the hourly question as a card over other apps. It must survive Back and Home and leave only when answered.
 # tapw looks in every window, because the card is not the focused one.
 tapw() {

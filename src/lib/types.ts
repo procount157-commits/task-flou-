@@ -76,6 +76,18 @@ export interface DailyTask extends Base {
   notes?: string;
   // a user-made list (see TaskList); tasks without one live in the inbox
   list_id?: string;
+  // v2 model (src/core/task.ts): '' date = not scheduled (Inbox); a deadline is separate from the scheduled day
+  status?: import('../core/task').TaskStatus;
+  due_date?: string;
+  description?: string;
+  tags?: string[];
+  reminder_minutes?: number[];
+  effort?: 1 | 2 | 3 | 4 | 5;
+  source?: import('../core/task').TaskSource;
+  completed_at?: string;
+  timezone?: string;
+  version?: number;
+  schema_version?: number;
 }
 
 export type TaskList = { id: string; name: string; color: string };

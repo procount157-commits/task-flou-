@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { isOverdue } from '@/core/task';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Modal, Pressable, ScrollView, SectionList, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -22,6 +23,7 @@ const SMART = [
   { key: 'today', icon: 'today-outline' },
   { key: 'tomorrow', icon: 'sunny-outline' },
   { key: 'week', icon: 'calendar-outline' },
+  { key: 'inbox', icon: 'mail-unread-outline' },
   { key: 'all', icon: 'file-tray-full-outline' },
   { key: 'done', icon: 'checkmark-done-outline' },
 ] as const;
@@ -85,17 +87,20 @@ export default function Tasks() {
   const sections = useMemo<Section[]>(() => {
     const scope = custom ? top.filter((x) => x.list_id === custom.id) : top;
     const open = scope.filter((x) => !x.completed);
-    const overdue: Section = { key: 'overdue', title: t.tasks.overdue, danger: true, data: sortTasks(open.filter((x) => x.date < day)) };
+    const overdue: Section = { key: 'overdue', title: t.tasks.overdue, danger: true, data: sortTasks(open.filter((x) => isOverdue(x as any, day))) };
+    const inbox: Section = { key: 'inbox', title: t.tasks.lists.inbox, data: sortTasks(open.filter((x) => !isDate(x.date))) };
+    const dueToday: Section = { key: 'due', title: `⏳ ${t.due.today}`, data: sortTasks(open.filter((x) => x.due_date === day && x.date !== day && !isOverdue(x as any, day))) };
     const on = (d: string): Section => ({ key: d, title: fmtDate(d, lang, t.c, true), data: sortTasks(open.filter((x) => x.date === d)) });
     const done = (xs: DailyTask[]): Section => ({ key: 'done', title: `${t.tasks.completed} (${xs.length})`, data: showDone ? xs : [] });
-    const upcoming = () => [...new Set(open.filter((x) => x.date >= day).map((x) => x.date))].sort().map(on);
+    const upcoming = () => [...new Set(open.filter((x) => isDate(x.date) && x.date >= day).map((x) => x.date))].sort().map(on);
     let out: Section[];
     if (focusDate) out = [on(focusDate), done(scope.filter((x) => x.completed && x.date === focusDate))];
     else if (custom) out = [overdue, ...upcoming(), done(scope.filter((x) => x.completed).slice(-60).reverse())];
-    else if (list === 'today') out = [overdue, on(day), done(scope.filter((x) => x.completed && x.date === day))];
+    else if (list === 'today') out = [overdue, on(day), dueToday, done(scope.filter((x) => x.completed && x.date === day))];
     else if (list === 'tomorrow') out = [on(addDays(day, 1)), done(scope.filter((x) => x.completed && x.date === addDays(day, 1)))];
     else if (list === 'week') out = [overdue, ...Array.from({ length: 7 }, (_, i) => on(addDays(day, i)))];
-    else if (list === 'all') out = [overdue, ...upcoming()];
+    else if (list === 'inbox') out = [inbox];
+    else if (list === 'all') out = [overdue, inbox, ...upcoming()];
     else out = [{ key: 'alldone', title: t.tasks.completed, data: scope.filter((x) => x.completed).sort((a, b) => b.date.localeCompare(a.date)).slice(0, 150) }];
     return out.filter((s) => s.data.length || (s.key === 'done' && s.title !== `${t.tasks.completed} (0)`));
   }, [top, list, custom, day, focusDate, showDone, lang, t]);
@@ -103,9 +108,10 @@ export default function Tasks() {
   const counts = useMemo(() => {
     const open = top.filter((x) => !x.completed);
     const m: Record<string, number> = {
-      today: open.filter((x) => x.date <= day).length,
+      today: open.filter((x) => isDate(x.date) && x.date <= day).length,
+      inbox: open.filter((x) => !isDate(x.date)).length,
       tomorrow: open.filter((x) => x.date === addDays(day, 1)).length,
-      week: open.filter((x) => x.date <= addDays(day, 6)).length,
+      week: open.filter((x) => isDate(x.date) && x.date <= addDays(day, 6)).length,
       all: open.length,
       done: top.length - open.length,
     };
@@ -114,11 +120,11 @@ export default function Tasks() {
   }, [top, lists, day]);
 
   const openCount = sections.filter((s) => s.key !== 'done' && s.key !== 'alldone').reduce((n, s) => n + s.data.length, 0);
-  const highPending = top.some((x) => x.priority === 'high' && !x.completed && x.date <= day);
+  const highPending = top.some((x) => x.priority === 'high' && !x.completed && isDate(x.date) && x.date <= day);
   const tier = tierOf(points);
   const weekly = useMemo(() => goals.filter((g) => g.level === 'one_week' && g.status !== 'completed' && g.status !== 'cancelled').map((g) => g.title), [goals]);
   const open = useCallback((x: DailyTask) => setOpenId(x.id), []);
-  const overdueList = useMemo(() => top.filter((x) => !x.completed && x.date < day), [top, day]);
+  const overdueList = useMemo(() => top.filter((x) => isOverdue(x as any, day)), [top, day]);
   const chosen = () => top.filter((x) => selected.has(x.id));
   // the overdue tasks dealt out over the next seven days, most important first, one or two a day
   const spreadOverdue = async () => {

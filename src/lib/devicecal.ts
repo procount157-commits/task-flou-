@@ -1,7 +1,7 @@
 import * as Calendar from 'expo-calendar/legacy';
 import { Platform } from 'react-native';
 
-import { addDays, isTime, parse } from './dates';
+import { addDays, isDate, isTime, parse } from './dates';
 import { db, kv } from './db';
 import { logError } from './errlog';
 import { syncCalendarNow } from './phonelock';
@@ -82,6 +82,11 @@ function eventDetails(task: DailyTask, parentTitle?: string) {
 // Creates the task's event, or updates the one it already has. Returns false when no calendar could be written.
 export async function saveTaskToCalendar(task: DailyTask): Promise<boolean> {
   if (Platform.OS === 'web') return false;
+  // an Inbox task (no day) never goes on the calendar; if it had an event, the event is taken off
+  if (!isDate(task.date) || task.completed) {
+    if (task.calendar_event_id) await removeTaskFromCalendar(task).catch((e) => logError('calendar', e));
+    return false;
+  }
   const calendarId = await targetCalendar();
   if (!calendarId) return false;
   // a timed step of a task goes in as its own event, named after its task

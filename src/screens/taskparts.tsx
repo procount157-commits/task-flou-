@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { isOverdue } from '@/core/task';
 import React, { memo, useEffect, useMemo, useState } from 'react';
 import * as Haptics from 'expo-haptics';
 import { Platform, Pressable, TextInput, View } from 'react-native';
@@ -14,7 +15,8 @@ import { db, useEntity, useKV } from '@/lib/db';
 import { autoSyncTask, removeTaskFromCalendar, saveTaskToCalendar } from '@/lib/devicecal';
 import { addSteps } from '@/lib/steps';
 import { exportTask } from '@/lib/gcal';
-import { NoKeyError, SendEmail, splitTask, suggestTasks } from '@/lib/integrations';
+import { NoKeyError, SendEmail, Step, breakdownTask, splitTask, suggestTasks } from '@/lib/integrations';
+import { BreakdownEditor } from '@/ui/BreakdownEditor';
 import { addPoints, POINTS } from '@/lib/logic';
 import { parseTask } from '@/lib/nlp';
 import type { DailyTask, Priority, TaskList } from '@/lib/types';
@@ -137,8 +139,8 @@ export const TaskRow = memo(function TaskRow({ task, subDone, subTotal, showDate
   const c = useTheme();
   const { t, lang, dir } = useLang();
   const color = prioColor(c, task.priority);
-  const late = !task.completed && task.date < today();
-  const meta = [showDate || late ? fmtDate(task.date, lang, t.c) : '', task.time].filter(Boolean).join(' ');
+  const late = isOverdue(task as any, today());
+  const meta = [!task.date ? '📥' : showDate || late ? fmtDate(task.date, lang, t.c) : '', task.time, task.due_date ? `⏳ ${fmtDate(task.due_date, lang, t.c)}` : ''].filter(Boolean).join(' ');
   return (
     <Pressable onPress={() => onOpen(task)} accessibilityRole="button" style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 14, backgroundColor: selected ? c.soft : c.card, borderBottomWidth: 1, borderColor: c.border }}>
       {selecting ? <Ionicons name={selected ? 'checkmark-circle' : 'ellipse-outline'} size={22} color={selected ? c.primary : c.muted} /> : null}
@@ -299,6 +301,7 @@ export function TaskDetail({ taskId, onClose }: { taskId: string | null; onClose
   const [notes, setNotes] = useState('');
   const [sub, setSub] = useState('');
   const [busy, setBusy] = useState(false);
+  const [proposal, setProposal] = useState<Step[] | null>(null);
   const [full, setFull] = useState(false);
   const [running, setRunning] = useState(false);
 
@@ -332,11 +335,12 @@ export function TaskDetail({ taskId, onClose }: { taskId: string | null; onClose
     await addSteps(task, [text]);
     setSub('');
   };
-  const aiSplit = async () => {
+  // the AI's steps open in an editor; they are added only on "accept"
+  const aiSplit = async (again = false) => {
     setBusy(true);
-    const steps = await ai(() => splitTask(task.title, lang));
-    if (steps?.length) await addSteps(task, steps);
+    const steps = await ai(() => breakdownTask(task.title, { total: task.time ? task.minutes ?? 60 : undefined, notes: task.notes, avoid: again ? proposal?.map((x) => x.title) : undefined }, lang));
     setBusy(false);
+    if (steps?.length) setProposal(steps);
   };
   const remind = async () => {
     await SendEmail({ to: user?.email ?? '', subject: `${t.today.reminderSubject}: ${task.title}`, body: `${task.title}\n${task.date}${task.time ? ' ' + task.time : ''}\n${t.c.priority}: ${t.prio[task.priority ?? 'medium']}` });
@@ -375,7 +379,14 @@ export function TaskDetail({ taskId, onClose }: { taskId: string | null; onClose
         <View style={{ flex: 1 }}><Input placeholder={t.today.addSubtask} value={sub} onChangeText={setSub} onSubmitEditing={() => addSub(sub)} /></View>
         <Btn small title={t.c.add} disabled={!sub.trim()} onPress={() => addSub(sub)} />
       </Row>
-      <Btn kind="ghost" title={`🤖 ${t.c.aiSplit}`} loading={busy} onPress={aiSplit} />
+      {proposal ? (
+        <>
+          <BreakdownEditor steps={proposal} onChange={setProposal} onRegenerate={() => aiSplit(true)} busy={busy} />
+          <Btn title={`✓ ${t.c.save} (${proposal.length})`} disabled={!proposal.length} onPress={async () => { await addSteps(task, proposal); setProposal(null); }} />
+        </>
+      ) : (
+        <Btn kind="ghost" title={`🤖 ${t.c.aiSplit}`} loading={busy} onPress={() => aiSplit(false)} />
+      )}
       <TimeboxPanel task={task} steps={subs} onRun={() => setRunning(true)} />
       {running ? <StepRunner task={task} steps={subs} onClose={() => setRunning(false)} /> : null}
 

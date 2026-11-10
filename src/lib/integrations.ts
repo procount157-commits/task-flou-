@@ -1,3 +1,4 @@
+import { BreakdownSchema, SmartTaskSchema, cleanTitle, parseAI } from '@/core/schema';
 import * as DocumentPicker from 'expo-document-picker';
 import { File, Paths } from 'expo-file-system';
 import * as LegacyFS from 'expo-file-system/legacy';
@@ -270,17 +271,37 @@ export async function smartTask(text: string, ctx: { today: string; now: string;
     ],
     0.3,
   );
-  const m = reply.match(/\{[\s\S]*\}/);
-  if (!m) throw new Error('bad AI reply');
-  const o = JSON.parse(m[0]);
-  const clean = (v: unknown) => (typeof v === 'string' ? v.trim() : '');
-  return {
-    title: clean(o.title) || undefined,
-    date: /^\d{4}-\d{2}-\d{2}$/.test(clean(o.date)) ? clean(o.date) : undefined,
-    time: /^([01]\d|2[0-3]):[0-5]\d$/.test(clean(o.time)) ? clean(o.time) : undefined,
-    minutes: Number(o.minutes) > 0 && Number(o.minutes) <= 600 ? Math.round(Number(o.minutes)) : undefined,
-    priority: ['low', 'medium', 'high'].includes(o.priority) ? o.priority : undefined,
-    goal: clean(o.goal) || undefined,
-    steps: Array.isArray(o.steps) ? o.steps.map((x: unknown) => String(x).trim()).filter(Boolean).slice(0, 6) : undefined,
-  };
+  // validated against a schema: a malformed reply is an error the screen shows, never half-saved data
+  const r = parseAI(SmartTaskSchema, reply);
+  if (!r.ok) throw new Error(`AI reply rejected: ${r.errors.slice(0, 3).join('; ')}`);
+  const o = r.value;
+  return { title: o.title, date: o.date, time: o.time, minutes: o.minutes, priority: o.priority, goal: o.goal, steps: o.steps?.map((x) => cleanTitle(x)).filter(Boolean).slice(0, 6) };
+}
+
+export type Step = { title: string; minutes?: number };
+/**
+ * Breaks a task into concrete steps with realistic minutes. The reply must pass BreakdownSchema;
+ * one automatic retry, then the error reaches the screen. `avoid` asks for a different set (regenerate).
+ */
+export async function breakdownTask(title: string, o: { total?: number; notes?: string; avoid?: string[] }, lang: string): Promise<Step[]> {
+  const language = lang === 'ar' ? 'Arabic' : 'English';
+  const ask = (strict: boolean) =>
+    InvokeLLM(
+      [
+        {
+          role: 'system',
+          content:
+            `You break one task into 3-7 concrete, ordered, physical next actions in ${language}. Each step starts with a verb and is under 12 words. ` +
+            (o.total ? `The minutes of all steps must add up to about ${o.total}. ` : 'Give each step realistic minutes (5-120). ') +
+            (o.avoid?.length ? `Give a DIFFERENT breakdown than: ${o.avoid.join(' | ')}. ` : '') +
+            `Reply ONLY with JSON: {"steps":[{"title":"...","minutes":number}]}` + (strict ? ' No prose, no markdown.' : ''),
+        },
+        { role: 'user', content: o.notes ? `${title}\n${o.notes}` : title },
+      ],
+      o.avoid?.length ? 0.8 : 0.4,
+    );
+  let r = parseAI(BreakdownSchema, await ask(false));
+  if (!r.ok) r = parseAI(BreakdownSchema, await ask(true));
+  if (!r.ok) throw new Error(`AI reply rejected: ${r.errors.slice(0, 3).join('; ')}`);
+  return (r.value.steps ?? []).map((x) => ({ title: cleanTitle(x.title ?? ""), minutes: x.minutes })).filter((x) => x.title.length > 1);
 }
