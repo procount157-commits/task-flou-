@@ -12,6 +12,7 @@ import {
 import {
   buildRecords, daysBetween, feasibility, milestoneDates, scheduleRoadmap, type Issue, type Roadmap, type RoadTask, type ScheduleOptions,
 } from '@/core/roadmap';
+import { freeSlots } from '@/core/scheduler';
 import { toMinutes } from '@/core/task';
 import { addDays, fmtDate, today } from '@/lib/dates';
 import { db, peek, useEntity } from '@/lib/db';
@@ -101,7 +102,6 @@ async function readCapacity(window: { start: string; end: string }, days: number
     }
   }
   if (status !== 'read') return { status, busy };
-  const { freeSlots } = await import('@/core/scheduler');
   let free = 0;
   const allowed = new Set(days);
   for (let i = 0; i < 14; i++) {
@@ -145,9 +145,25 @@ export default function GoalInterview() {
   const day = today();
   const start = addDays(day, 1);
 
+  // the screen can stay mounted when another goal is opened: drop the previous goal's interview first
+  const forGoal = rec && (params.goalId ? rec.goal_id === params.goalId : rec.goal_title === title);
+  useEffect(() => {
+    if (rec && !forGoal) {
+      setRec(null);
+      setStep('interview');
+      setEditing(null);
+      setDeadlineOverride(undefined);
+      setWeeklyOverride(undefined);
+      setCalNote('');
+      setOkSuccess(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [title, params.goalId]);
+
   // resume the open interview for this goal, or start one; never two at once
   useEffect(() => {
-    if (rec || interviews.loading || !title) return;
+    if ((rec && forGoal) || interviews.loading || !title) return;
+    if (rec && !forGoal) return;
     const open = interviews.items.filter((x) => (params.goalId ? x.goal_id === params.goalId : x.goal_title === title) && (x.status === 'active' || x.status === 'previewing'));
     const found = params.fresh ? undefined : open.sort((a, b) => b.updated_date.localeCompare(a.updated_date))[0];
     if (found) {
@@ -164,7 +180,7 @@ export default function GoalInterview() {
       db.create('GoalActivity', { goal_id: params.goalId, interview_id: r.id, kind: 'interview_started', text: title });
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [interviews.loading, title]);
+  }, [interviews.loading, title, params.goalId, rec?.id]);
 
   const state: InterviewState | null = rec;
   const save = (patch: Partial<GI>) => {
