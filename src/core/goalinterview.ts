@@ -390,7 +390,8 @@ export function questionFor(slot: Slot, s: InterviewState, lang: Lang): Question
   const opts = (cat?.options ?? base.options ?? []).map(([value, label]) => ({ value, label }));
   const aiOpts = ai?.options?.map((x) => ({ value: x, label: x })) ?? [];
   // AI options are goal-specific (e.g. the actual sections of the named certificate); the static ones stay as a fallback
-  const options = aiOpts.length ? [...aiOpts.slice(0, 6), ...opts.filter((x) => !aiOpts.some((y) => y.label === x.label))] : opts;
+  // at most 7 choices so the question fits one screen: up to 4 tailored ones, then the standard ones
+  const options = aiOpts.length ? [...aiOpts.slice(0, 4), ...opts.filter((x) => !aiOpts.some((y) => y.label === x.label))].slice(0, 7) : opts;
   return {
     slot, phase: d.phase, kind: d.kind, multi: d.multi, essential: !!d.essential,
     text: ai?.question || cat?.text || base.text,

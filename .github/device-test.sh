@@ -43,6 +43,16 @@ PY
   [ -n "$xy" ] && adb shell input tap $xy
   sleep 2
 }
+# Like tap, but scrolls down (then back up) until the text is on screen.
+taps() {
+  for dir in down down down up up up up up; do
+    adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb shell cat /sdcard/ui.xml > /tmp/ui.xml
+    if grep -q "$1" /tmp/ui.xml; then tap "$1"; return; fi
+    if [ $dir = down ]; then adb shell input swipe 160 500 160 260 400; else adb shell input swipe 160 260 160 500 400; fi
+    sleep 1
+  done
+  echo "tap '$1' -> NOT FOUND" >> out/steps.txt
+}
 shot() { sleep ${2:-3}; adb exec-out screencap -p > "out/step-$1.png"; adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1 && adb shell cat /sdcard/ui.xml | grep -o 'text="[^"]*"' | sed 's/text="//;s/"$//' | grep -v '^$' > "out/step-$1.txt"; }
 go() { adb shell am start -W -a android.intent.action.VIEW -d "hayati:///$1" $PKG >/dev/null; sleep 5; }
 
@@ -93,22 +103,22 @@ go "roadmap"; shot jC-goals 3
 # D (goal discovery): a goal is NOT split from its title. The interview asks first, the gate checks readiness,
 # the plan is previewed and edited, and only approval writes milestones and tasks.
 go "interview?goal=I%20want%20to%20obtain%20a%20professional%20certification%20within%20six%20months"; shot jD-q1 8
-tap 'CMA'; shot jD-q2 8
-tap 'اجتياز الاختبار النهائي'; shot jD-q3 4
-tap 'متطلب في عملي'; tap '✓ تم'; shot jD-q4 8
-tap 'أعمل في المجال'; shot jD-q5 4
-tap 'تخطَّ'; shot jD-q6 4
-tap 'لا أعرف'; shot jD-q7 4
-tap '٦ ساعة'; shot jD-gate 4
-tap 'صمّم خطتي الآن'; shot jD-preview 45
+taps 'CMA'; shot jD-q2 8
+taps 'اجتياز الاختبار النهائي'; shot jD-q3 4
+taps 'متطلب في عملي'; taps '✓ تم'; shot jD-q4 8
+taps 'أعمل في المجال'; shot jD-q5 4
+taps 'تخطَّ'; shot jD-q6 4
+taps 'لا أعرف'; shot jD-q7 4
+taps '٦ ساعة'; shot jD-gate 4
+taps 'صمّم خطتي الآن'; shot jD-preview 45
 adb shell input swipe 160 520 160 160 400; shot jD-preview-2 2
 adb shell input swipe 160 520 160 160 400; shot jD-preview-3 2
 adb shell input swipe 160 160 160 520 300; adb shell input swipe 160 160 160 520 300; sleep 1
-tap 'أوافق على معايير النجاح'; shot jD-success-ok 2
+taps 'أوافق على معايير النجاح'; shot jD-success-ok 2
 for i in 1 2 3 4 5 6 7 8; do adb shell input swipe 160 560 160 120 300; done; shot jD-bottom 2
-tap 'اعتمد الخطة'; shot jD-approved 20
+taps 'اعتمد الخطة'; shot jD-approved 20
 # resume: leaving mid-interview and coming back keeps the answers
-go "interview?goal=Lose%2010%20kg%20within%203%20months"; tap 'خسارة وزن محدد'; adb shell am force-stop $PKG; sleep 2
+go "interview?goal=Lose%2010%20kg%20within%203%20months"; sleep 3; taps 'خسارة وزن محدد'; sleep 2; adb shell am force-stop $PKG; sleep 2
 go "interview?goal=Lose%2010%20kg%20within%203%20months"; shot jD-resumed 6
 
 # v14: the hourly question as a card over other apps. It must survive Back and Home and leave only when answered.
